@@ -2,3 +2,8 @@ Django==3.2.4
 django-cassiopeia==2.1.0
 python-decouple==3.4
 djangorestframework==3.12.4
+django-rest-knox==4.1.0
+djangorestframework-api-key==2.0.0
+django-cors-headers==3.7.0
+google-api-python-client==1.12.8
+google-auth==1.31.0
