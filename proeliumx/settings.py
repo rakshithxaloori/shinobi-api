@@ -125,3 +125,12 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Cassiopeia
+CASSIOPEIA_RIOT_API_KEY = config("RIOT_API_KEY")  # api key in env var
+CASSIOPEIA_DEFAULT_REGION = "NA"   # default region
+CASSIOPEIA_PIPELINE = {   # small pipeine to get started
+    "Omnistone": {},
+    "DDragon": {},
+    "RiotAPI": {},
+}
