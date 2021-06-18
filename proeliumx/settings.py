@@ -125,15 +125,21 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
+import os
 
 STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+AUTH_USER_MODEL = "auth.User"
 
-# API Key Settings
+# CORS
+CORS_ALLOWED_ORIGINS = [config("ANDROID_APP_ROOT_URL")]
+
+# API Key
 API_KEY_CUSTOM_HEADER = "HTTP_X_API_KEY"
 
 from corsheaders.defaults import default_headers
