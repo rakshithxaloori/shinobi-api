@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     "rest_framework_api_key",
     "knox",
     "django_cassiopeia",
-    "auth",
+    "authentication",
 ]
 
 MIDDLEWARE = [
@@ -58,7 +58,7 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
 ]
 
-ROOT_URLCONF = "cass.urls"
+ROOT_URLCONF = "proeliumx.urls"
 
 TEMPLATES = [
     {
@@ -76,7 +76,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "cass.wsgi.application"
+WSGI_APPLICATION = "proeliumx.wsgi.application"
 
 
 # Database
@@ -134,7 +134,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-AUTH_USER_MODEL = "auth.User"
+AUTH_USER_MODEL = "authentication.User"
 
 # CORS
 CORS_ALLOWED_ORIGINS = [config("ANDROID_APP_ROOT_URL")]

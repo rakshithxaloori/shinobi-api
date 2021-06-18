@@ -20,8 +20,8 @@ from google.auth.transport import requests
 from decouple import config
 
 
-from auth.utils import token_response
-from auth.serializers import UserSignupSerializer
+from authentication.utils import token_response
+from authentication.serializers import UserSignupSerializer
 
 
 @api_view(["POST"])
