@@ -148,6 +148,12 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     "x-api-key",
 ]
 
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework_api_key.permissions.HasAPIKey",
+    ]
+}
+
 
 # Cassiopeia
 CASSIOPEIA_RIOT_API_KEY = config("RIOT_API_KEY")  # api key in env var

@@ -1,7 +1,7 @@
-from django.conf.global_settings import AUTH_USER_MODEL as User
-
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
+
+from authentication.models import User
 
 ##########################################
 class UserSignupSerializer(ModelSerializer):
