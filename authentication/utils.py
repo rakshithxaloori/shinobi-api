@@ -19,7 +19,7 @@ def token_response(user):
     return JsonResponse(content, status=status.HTTP_200_OK)
 
 
-def create_user(username, email):
+def create_user(username, email, first_name="", last_name="", picture_url=""):
     try:
         if username is None:
             return JsonResponse(
@@ -36,6 +36,9 @@ def create_user(username, email):
                 "username": username,
                 "password": get_random_string(length=10),
                 "email": email,
+                "first_name": first_name,
+                "last_name": last_name,
+                "picture": picture_url,
             }
         )
         if new_user_serializer.is_valid():

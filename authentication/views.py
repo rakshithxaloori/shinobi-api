@@ -1,6 +1,5 @@
 from django.http import JsonResponse
 
-
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import (
@@ -11,15 +10,12 @@ from rest_framework.decorators import (
 
 from knox.auth import TokenAuthentication
 
-
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
 from decouple import config
 
-
 from authentication.utils import token_response, create_user
-from authentication.serializers import UserSignupSerializer
 from authentication.models import User
 
 
@@ -105,12 +101,19 @@ def google_signup_view(request):
             )
 
         email = id_info["email"]
+        print(id_info)
         user_already_exists = User.objects.get(email=email)
         return token_response(user_already_exists)
 
     except User.DoesNotExist:
         username = request.data.get("username", None)
-        return create_user(username, email)
+        return create_user(
+            username,
+            email,
+            id_info["given_name"],
+            id_info["family_name"],
+            id_info["picture"],
+        )
 
     except ValueError:
         # Invalid token

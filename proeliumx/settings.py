@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     "knox",
     "django_cassiopeia",
     "authentication",
+    # "message",
+    # "league_of_legends",
 ]
 
 MIDDLEWARE = [
@@ -152,6 +154,14 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework_api_key.permissions.HasAPIKey",
     ]
+}
+
+# Knox
+from datetime import timedelta
+
+REST_KNOX = {
+    "TOKEN_TTL": timedelta(days=30),
+    "AUTO_REFRESH": True,
 }
 
 
