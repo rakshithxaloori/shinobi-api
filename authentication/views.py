@@ -24,6 +24,23 @@ from authentication.models import User
 
 
 @api_view(["POST"])
+def check_username_view(request):
+    username = request.data.get("username", None)
+
+    if username is None:
+        return JsonResponse(
+            {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        User.objects.get(username=username)
+        return JsonResponse(
+            {"detail": "Username taken"}, status=status.HTTP_406_NOT_ACCEPTABLE
+        )
+    except User.DoesNotExist:
+        return JsonResponse({"detail": "Username available"}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
 def google_login_view(request):
     google_id_token = request.data.get("id_token", None)
 
