@@ -127,3 +127,19 @@ def google_signup_view(request):
         return JsonResponse(
             {"detail": "Invalid sign up form"}, status=status.HTTP_400_BAD_REQUEST
         )
+
+
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def my_profile_view(request):
+    return JsonResponse(
+        {
+            "detail": "",
+            "payload": {
+                "username": request.user.username,
+                "picture": request.user.picture,
+            },
+        },
+        status=status.HTTP_200_OK,
+    )
