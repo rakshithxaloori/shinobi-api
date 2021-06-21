@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     "django_cassiopeia",
     "authentication",
     # "message",
-    # "league_of_legends",
+    "league_of_legends",
 ]
 
 MIDDLEWARE = [
