@@ -38,7 +38,7 @@ def my_lol_profile_view(request):
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def champion_masteries_view(request, username=None):
+def champion_masteries_view(request, username=None, beginIndex=0, endIndex=10):
     if username is None:
         return JsonResponse(
             {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST
@@ -52,7 +52,7 @@ def champion_masteries_view(request, username=None):
     #     return JsonResponse({"detail": ""}, status=status.HTTP_404_NOT_FOUND)
 
     summoner = cass.get_summoner(name="Kalturi", region="NA")
-    champion_masteries = summoner.champion_masteries[:10]
+    champion_masteries = summoner.champion_masteries[beginIndex:endIndex]
     champion_masteries_to_dict = list()
     for cm in champion_masteries:
         cm_dict = dict()
