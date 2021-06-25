@@ -53,24 +53,32 @@ def champion_masteries_view(request, username=None, beginIndex=0, endIndex=10):
 
     summoner = cass.get_summoner(name="Kalturi", region="NA")
     champion_masteries = summoner.champion_masteries[beginIndex:endIndex]
-    champion_masteries_to_dict = list()
-    for cm in champion_masteries:
-        cm_dict = dict()
-        cm_dict["champion"] = {
-            "name": cm.champion.name,
-            "image": cm.champion.image.url,
-            "key": cm.champion.key,
-        }
-        cm_dict["level"] = cm.level
-        cm_dict["points"] = cm.points
+    # champion_masteries = summoner.champion_masteries
+    champion_mastery_by_level = dict()
 
-        champion_masteries_to_dict.append(cm_dict)
+    for champion_mastery in champion_masteries:
+        if str(champion_mastery.level) not in champion_mastery_by_level.keys():
+            champion_mastery_by_level[str(champion_mastery.level)] = []
+        champion_mastery_dict = dict()
+        champion_mastery_dict["champion"] = {
+            "name": champion_mastery.champion.name,
+            "image": champion_mastery.champion.image.url,
+            "key": champion_mastery.champion.key,
+        }
+        champion_mastery_dict["level"] = champion_mastery.level
+        champion_mastery_by_level[str(champion_mastery.level)].append(
+            champion_mastery_dict
+        )
+
+    champion_masteries_list = list()
+    for key, value in champion_mastery_by_level.items():
+        champion_masteries_list.append({"level": key, "champion_masteries": value})
 
     return JsonResponse(
         {
             "detail": "{}'s champion masteries".format(summoner.name),
             "payload": {
-                "champion_masteries": champion_masteries_to_dict,
+                "champion_masteries": champion_masteries_list,
             },
         },
         status=status.HTTP_200_OK,
