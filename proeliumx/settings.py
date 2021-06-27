@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "knox",
     "django_cassiopeia",
     "authentication",
+    "profiles",
     # "message",
     "league_of_legends",
 ]

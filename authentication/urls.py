@@ -7,5 +7,4 @@ urlpatterns = [
     path("signup/google/", views.google_signup_view, name="google signup"),
     path("check_username/", views.check_username_view, name="check username"),
     path("token_valid/", views.token_valid_view, name="token valid"),
-    path("my_profile/", views.my_profile_view, name="my profile"),
 ]
