@@ -20,6 +20,5 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("auth/", include("authentication.urls")),
     path("profile/", include("profiles.urls")),
-    # path("msg/", include("message.urls")),
     path("lol/", include("league_of_legends.urls")),
 ]

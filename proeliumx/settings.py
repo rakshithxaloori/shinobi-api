@@ -44,9 +44,10 @@ INSTALLED_APPS = [
     "rest_framework_api_key",
     "knox",
     "django_cassiopeia",
+    "channels",
     "authentication",
     "profiles",
-    # "message",
+    "chat",
     "league_of_legends",
 ]
 
@@ -137,11 +138,18 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+################################################################################
 AUTH_USER_MODEL = "authentication.User"
 
+
+################################################################################
 # CORS
 CORS_ALLOWED_ORIGINS = [config("ANDROID_APP_ROOT_URL")]
 
+
+################################################################################
 # API Key
 API_KEY_CUSTOM_HEADER = "HTTP_X_API_KEY"
 
@@ -157,6 +165,8 @@ REST_FRAMEWORK = {
     ]
 }
 
+
+################################################################################
 # Knox
 from datetime import timedelta
 
@@ -166,6 +176,7 @@ REST_KNOX = {
 }
 
 
+################################################################################
 # Cassiopeia
 CASSIOPEIA_RIOT_API_KEY = config("RIOT_API_KEY")  # api key in env var
 CASSIOPEIA_DEFAULT_REGION = "NA"  # default region
@@ -174,3 +185,15 @@ CASSIOPEIA_PIPELINE = {  # small pipeine to get started
     "DDragon": {},
     "RiotAPI": {},
 }
+
+
+################################################################################
+# Chat
+ASGI_APPLICATION = "proeliumx.routing.application"
+CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+# CHANNEL_LAYERS = {
+#     "default": {
+#         "BACKEND": "channels_redis.core.RedisChannelLayer",
+#         "CONFIG": {"hosts": [("127.0.0.1", 6379)]},
+#     }
+# }
