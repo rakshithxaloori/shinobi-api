@@ -48,7 +48,11 @@ def create_user(username, email, first_name="", last_name="", picture_url=""):
             return token_response(new_user)
         else:
             print(new_user_serializer.errors)
+
+            first_error = list(dict(new_user_serializer.errors).items())[0]
+            # print(first_error[0], first_error[1][0])
+
             return JsonResponse(
-                {"detail": new_user_serializer.errors.values()[0]},
+                {"detail": "{}: {}".format(first_error[0], first_error[1][0])},
                 status=status.HTTP_400_BAD_REQUEST,
             )

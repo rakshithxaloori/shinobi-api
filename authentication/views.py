@@ -110,9 +110,9 @@ def google_signup_view(request):
         return create_user(
             username,
             email,
-            id_info["given_name"],
-            id_info["family_name"],
-            id_info["picture"],
+            id_info.get("given_name", ""),
+            id_info.get("family_name", ""),
+            id_info.get("picture", None),
         )
 
     except ValueError:
@@ -132,5 +132,5 @@ def google_signup_view(request):
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def token_valid_view(request):
+def token_valid_view():
     return JsonResponse({"detail": "Valid token"}, status=status.HTTP_200_OK)
