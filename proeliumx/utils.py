@@ -3,7 +3,6 @@ from channels.db import database_sync_to_async
 
 from django.contrib.auth.models import AnonymousUser
 
-
 from knox.models import AuthToken
 
 
@@ -13,6 +12,7 @@ def get_user(headers):
         token_name, token_key = headers[b"authorization"].decode().split()
         if token_name == "Token":
             token = AuthToken.objects.get(token_key=token_key)
+            # TODO also check access to chat from id in message.chat_id
             return token.user
     except AuthToken.DoesNotExist:
         return AnonymousUser()
