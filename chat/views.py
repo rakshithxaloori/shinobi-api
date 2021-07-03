@@ -50,22 +50,38 @@ def chat_messages(request, chat_id, begin_index, end_index):
     try:
         chat = Chat.objects.get(id=chat_id)
 
-        messages_count = chat.messages.count()
+        messages_count = chat.messages.all().count()
+        if messages_count <= begin_index:
+            return JsonResponse(
+                {
+                    "detail": "{}'s chat".format(request.user.username),
+                    "payload": {"messages": None},
+                },
+                status=status.HTTP_200_OK,
+            )
         if messages_count <= end_index:
-            messages = chat.messages[begin_index:]
+            messages = chat.messages.order_by("-sent_at")[begin_index:]
         else:
-            messages = chat.messages[begin_index:end_index]
+            messages = chat.messages.order_by("-sent_at")[begin_index:end_index]
 
         messages_serializer = MessageSerializer(messages, many=True)
         return JsonResponse(
             {
                 "detail": "{}'s chat".format(request.user.username),
-                "payload": {"chats": messages_serializer.data},
+                "payload": {"messages": messages_serializer.data},
             },
             status=status.HTTP_200_OK,
         )
 
     except Chat.DoesNotExist:
-        pass
+        return JsonResponse(
+            {"detail": "Invalid chatId"}, status=status.HTTP_400_BAD_REQUEST
+        )
     except Message.DoesNotExist:
-        pass
+        return JsonResponse(
+            {
+                "detail": "{}'s chat".format(request.user.username),
+                "payload": {"messages": None},
+            },
+            status=status.HTTP_200_OK,
+        )

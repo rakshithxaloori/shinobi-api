@@ -50,11 +50,7 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
         # This method sends the "send.message" type dispatch events
         await self.send(
             text_data=json.dumps(
-                {
-                    "message": message.get("message", None),
-                    "sent_at": message.get("sent_at", None),
-                    "sent_by": message.get("sent_by", None),
-                },
+                message,
                 cls=DjangoJSONEncoder,
             )
         )
@@ -77,9 +73,12 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
                 )
 
                 return {
-                    "message": new_message.text,
+                    "text": new_message.text,
                     "sent_at": new_message.sent_at,
-                    "sent_by": new_message.sent_by.username,
+                    "sent_by": {
+                        "username": new_message.sent_by.username,
+                        "picture": new_message.sent_by.picture,
+                    },
                 }
 
         except (User.DoesNotExist, Chat.DoesNotExist):

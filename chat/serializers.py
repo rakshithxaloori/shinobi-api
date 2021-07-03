@@ -5,10 +5,15 @@ from chat.models import Chat, Message
 
 ##########################################
 class MessageSerializer(ModelSerializer):
+    sent_by = SerializerMethodField()
+
     class Meta:
         model = Message
         fields = ["text", "sent_by", "is_read", "sent_at"]
         read_only_fields = fields
+
+    def get_sent_by(self, obj):
+        return {"username": obj.sent_by.username, "picture": obj.sent_by.picture}
 
 
 class ChatSerializer(ModelSerializer):
