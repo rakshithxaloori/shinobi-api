@@ -1,5 +1,4 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
-from rest_framework.utils.model_meta import _get_fields
 
 from chat.models import Chat, Message
 
