@@ -41,6 +41,8 @@ def profile_view(request, username):
     try:
         user = User.objects.get(username=username)
         profile_serializer = ProfileSerializer(user.profile)
+        me_following = user in request.user.profile.following
+        print("me_following", me_following)
         return JsonResponse(
             {
                 "detail": "{}'s profile data".format(username),

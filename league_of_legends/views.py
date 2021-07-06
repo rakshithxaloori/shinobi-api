@@ -38,7 +38,7 @@ def my_lol_profile_view(request):
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def champion_masteries_view(request, username=None, beginIndex=0, endIndex=10):
+def champion_masteries_view(request, username=None, beginIndex=0, endIndex=20):
     if username is None:
         return JsonResponse(
             {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST

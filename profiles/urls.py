@@ -9,7 +9,7 @@ urlpatterns = [
     path("unfollow/<str:username>/", views.unfollow_user_view, name="unfollow user"),
     path(
         "remove_follower/<str:username>/",
-        views.views.remove_follower_view,
+        views.remove_follower_view,
         name="remove follower",
     ),
 ]
