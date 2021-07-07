@@ -74,11 +74,22 @@ def champion_masteries_view(request, username=None, beginIndex=0, endIndex=20):
     for key, value in champion_mastery_by_level.items():
         champion_masteries_list.append({"level": key, "champion_masteries": value})
 
+    def levelFunc(obj):
+        return obj["level"]
+
+    champion_masteries_list.sort(
+        reverse=True,
+        key=levelFunc,
+    )
+
+    print(champion_masteries_list)
+
     return JsonResponse(
         {
             "detail": "{}'s champion masteries".format(summoner.name),
             "payload": {
                 "champion_masteries": champion_masteries_list,
+                "count": len(champion_masteries),
             },
         },
         status=status.HTTP_200_OK,
