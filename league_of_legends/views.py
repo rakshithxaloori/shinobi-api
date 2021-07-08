@@ -82,8 +82,6 @@ def champion_masteries_view(request, username=None, beginIndex=0, endIndex=20):
         key=levelFunc,
     )
 
-    print(champion_masteries_list)
-
     return JsonResponse(
         {
             "detail": "{}'s champion masteries".format(summoner.name),
