@@ -133,4 +133,7 @@ def google_signup_view(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def token_valid_view(request):
-    return JsonResponse({"detail": "Valid token"}, status=status.HTTP_200_OK)
+    return JsonResponse(
+        {"detail": "Valid token", "payload": {"username": request.user.username}},
+        status=status.HTTP_200_OK,
+    )
