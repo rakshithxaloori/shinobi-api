@@ -28,9 +28,9 @@ class ChatSerializer(ModelSerializer):
     def get_user(self, obj):
         users = obj.users.all()
         if self.context["username"] == users[0].username:
-            user = users[0]
-        else:
             user = users[1]
+        else:
+            user = users[0]
 
         return {"username": user.username, "picture": user.picture}
 
