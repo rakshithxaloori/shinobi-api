@@ -36,7 +36,7 @@ def chats_view(request):
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def chat_messages(request, chat_id, begin_index, end_index):
+def chat_messages(request, chat_id, begin_index=0, end_index=25):
     """Send chat messages."""
     if chat_id is None or begin_index is None or end_index is None:
         return JsonResponse(
