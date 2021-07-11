@@ -51,7 +51,6 @@ def google_login_view(request):
             return JsonResponse(
                 {"detail": "Couldn't verify"}, status=status.HTTP_403_FORBIDDEN
             )
-        print(id_info)
         user = User.objects.get(email=id_info["email"])
 
         if not user.is_active:
@@ -101,7 +100,6 @@ def google_signup_view(request):
             )
 
         email = id_info["email"]
-        print(id_info)
         user_already_exists = User.objects.get(email=email)
         return token_response(user_already_exists)
 
@@ -134,6 +132,12 @@ def google_signup_view(request):
 @permission_classes([IsAuthenticated])
 def token_valid_view(request):
     return JsonResponse(
-        {"detail": "Valid token", "payload": {"username": request.user.username}},
+        {
+            "detail": "Valid token",
+            "payload": {
+                "username": request.user.username,
+                "picture": request.user.picture,
+            },
+        },
         status=status.HTTP_200_OK,
     )
