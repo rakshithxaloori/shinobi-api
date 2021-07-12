@@ -12,11 +12,20 @@ from authentication.models import User
 
 def token_response(user):
     token = AuthToken.objects.create(user)[1]
-    content = {"detail": "Logged in", "token_key": token}
     # Change user's last login to current time
     user.last_login = timezone.now()
     user.save(update_fields=["last_login"])
-    return JsonResponse(content, status=status.HTTP_200_OK)
+    return JsonResponse(
+        {
+            "detail": "Logged in",
+            "payload": {
+                "token_key": token,
+                "username": user.username,
+                "picture": user.picture,
+            },
+        },
+        status=status.HTTP_200_OK,
+    )
 
 
 def create_user(username, email, first_name="", last_name="", picture_url=""):
