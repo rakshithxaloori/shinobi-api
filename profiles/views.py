@@ -156,8 +156,14 @@ def twitch_connect_view(request):
             {"detail": "access_token required"}, status=status.HTTP_400_BAD_REQUEST
         )
     try:
+        twitch_profile = request.user.profile.twitch_profile
+        return JsonResponse(
+            {"detail": "Twitch profile already connected"},
+            status=status.HTTP_208_ALREADY_REPORTED,
+        )
+
+    except TwitchProfile.DoesNotExist:
         user_info = get_user_info(access_token=access_token)
-        print(user_info)
 
         twitch_profile = TwitchProfile.objects.create(
             profile=request.user.profile,
