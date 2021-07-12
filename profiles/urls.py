@@ -12,4 +12,5 @@ urlpatterns = [
         views.remove_follower_view,
         name="remove follower",
     ),
+    path("connect/twitch/", views.twitch_connect_view, name="twitch connect"),
 ]

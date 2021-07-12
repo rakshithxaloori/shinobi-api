@@ -37,3 +37,17 @@ class Profile(models.Model):
 
     class Meta:
         ordering = ["-created"]
+
+
+class TwitchProfile(models.Model):
+    profile = models.OneToOneField(
+        Profile, related_name="twitch_profile", on_delete=models.PROTECT
+    )
+    user_id = models.CharField(max_length=20, blank=False, null=False)
+    login = models.CharField(max_length=25, blank=False, null=False)
+    display_name = models.CharField(max_length=25, blank=False, null=False)
+    profile_image_url = models.URLField(null=True, blank=True)
+    view_count = models.PositiveBigIntegerField(default=0)
+
+    def __str__(self):
+        return self.login

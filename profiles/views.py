@@ -13,7 +13,10 @@ from knox.auth import TokenAuthentication
 
 from authentication.models import User
 from chat.models import Chat
-from profiles.serializers import ProfileSerializer
+from profiles.models import TwitchProfile
+from profiles.serializers import ProfileSerializer, UserSerializer
+from profiles.twitch import get_user_info
+from profiles.utils import add_profile_picture
 
 
 @api_view(["GET"])
@@ -41,7 +44,7 @@ def profile_view(request, username):
     try:
         user = User.objects.get(username=username)
         profile_serializer = ProfileSerializer(user.profile)
-        me_following = user in request.user.profile.following
+        me_following = user in request.user.profile.following.all()
         print("me_following", me_following)
         return JsonResponse(
             {
@@ -140,4 +143,43 @@ def remove_follower_view(request, username):
     except User.DoesNotExist:
         return JsonResponse(
             {"detail": "Invalid username"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def twitch_connect_view(request):
+    access_token = request.data.get("access_token", None)
+    if access_token is None:
+        return JsonResponse(
+            {"detail": "access_token required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        user_info = get_user_info(access_token=access_token)
+        print(user_info)
+
+        twitch_profile = TwitchProfile.objects.create(
+            profile=request.user.profile,
+            user_id=user_info.get("id", None),
+            login=user_info.get("login", None),
+            display_name=user_info.get("display_name", None),
+            profile_image_url=user_info.get("profile_image_url", None),
+            view_count=user_info.get("view_count", None),
+        )
+        twitch_profile.save()
+
+        # Adds the picture if there was None or "" before
+        add_profile_picture(request.user, user_info.get("profile_image_url", None))
+
+        if user_info is None:
+            return JsonResponse(
+                {"detail": "Invalid access_token"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return JsonResponse({"detail": "Twitch connected!"}, status=status.HTTP_200_OK)
+    except Exception as e:
+        print(e)
+        return JsonResponse(
+            {"detail": "Invalid access_token"}, status=status.HTTP_400_BAD_REQUEST
         )
