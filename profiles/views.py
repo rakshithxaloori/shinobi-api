@@ -59,9 +59,10 @@ def profile_view(request, username):
         )
     try:
         user = User.objects.get(username=username)
-        profile_serializer = ProfileSerializer(user.profile)
-        me_following = user in request.user.profile.following.all()
-        print("me_following", me_following)
+        print(request.user)
+        profile_serializer = ProfileSerializer(
+            user.profile, context={"me": request.user, "user_pk": user.pk}
+        )
         return JsonResponse(
             {
                 "detail": "{}'s profile data".format(username),
@@ -89,13 +90,20 @@ def follow_user_view(request, username):
         profile = request.user.profile
 
         profile.following.add(following_user)
-        profile.save()
-        # Create a chat
-        # TODO create only if the chat already doesn't exist
-        new_chat = Chat.objects.create()
-        new_chat.save()
-        new_chat.add(request.user, following_user)
 
+        if (
+            following_user.profile.following.filter(pk=request.user.pk).exists()
+            and not Chat.objects.filter(users__in=[request.user, following_user])
+            .distinct()
+            .exists()
+        ):
+            # Create chat only if bidirectional follow
+            print("CREATING CHAT", request.user.username, username)
+            new_chat = Chat.objects.create()
+            new_chat.save()
+            new_chat.users.add(request.user, following_user)
+
+        profile.save()
         return JsonResponse(
             {"detail": "Following {}".format(username)}, status=status.HTTP_200_OK
         )
@@ -119,11 +127,14 @@ def unfollow_user_view(request, username):
         profile = request.user.profile
 
         profile.following.remove(following_user)
-        profile.save()
-        # Delete the chat
-        chat = Chat.objects.filter(users__in=[request.user, following_user])
-        chat.delete()
 
+        # Delete the chat
+        chat = Chat.objects.filter(users__in=[request.user, following_user]).distinct()
+        if chat.exists():
+            print("DELETING CHAT", request.user.username, following_user.username)
+            chat[0].delete()
+
+        profile.save()
         return JsonResponse(
             {"detail": "Unfollowed {}".format(username)}, status=status.HTTP_200_OK
         )

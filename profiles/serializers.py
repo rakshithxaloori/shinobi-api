@@ -16,18 +16,34 @@ class ProfileSerializer(ModelSerializer):
     user = UserSerializer()
     followers = SerializerMethodField()
     following = SerializerMethodField()
+    me_following = SerializerMethodField()
     twitch = SerializerMethodField()
     youtube = SerializerMethodField()
 
     class Meta:
         model = Profile
-        fields = ["user", "followers", "following", "bio", "twitch", "youtube"]
+        fields = [
+            "user",
+            "followers",
+            "following",
+            "bio",
+            "me_following",
+            "twitch",
+            "youtube",
+        ]
 
     def get_followers(self, obj):
         return obj.user.follower.count()
 
     def get_following(self, obj):
         return obj.following.count()
+
+    def get_me_following(self, obj):
+        me = self.context.get("me", None)
+        if me is None:
+            return False
+        user_pk = self.context.get("user_pk")
+        return me.profile.following.filter(pk=user_pk).exists()
 
     def get_twitch(self, obj):
         try:
