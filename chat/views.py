@@ -75,7 +75,7 @@ def chat_messages(request, chat_id, begin_index=0, end_index=25):
 
     except Chat.DoesNotExist:
         return JsonResponse(
-            {"detail": "Invalid chatId"}, status=status.HTTP_400_BAD_REQUEST
+            {"detail": "Chat doesn't exist"}, status=status.HTTP_400_BAD_REQUEST
         )
     except Message.DoesNotExist:
         return JsonResponse(
