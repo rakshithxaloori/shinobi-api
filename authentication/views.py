@@ -1,4 +1,5 @@
 from django.http import JsonResponse
+from django.utils import timezone
 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -131,6 +132,8 @@ def google_signup_view(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def token_valid_view(request):
+    request.user.last_active = timezone.now()
+    request.user.save(update_fields=["last_active"])
     return JsonResponse(
         {
             "detail": "Valid token",
