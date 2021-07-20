@@ -72,6 +72,9 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
                     text=message,
                 )
 
+                chat.last_updated = new_message.sent_at
+                chat.save(update_fields=["last_updated"])
+
                 return {
                     "text": new_message.text,
                     "sent_at": new_message.sent_at,
