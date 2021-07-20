@@ -18,19 +18,53 @@ from chat.serializers import ChatSerializer, MessageSerializer
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def chats_view(request):
-    """Send chats."""
-    all_chats = request.user.chats
-    all_chats_serializer = ChatSerializer(
-        all_chats, many=True, context={"username": request.user.username}
-    )
-    return JsonResponse(
-        {
-            "detail": "{}'s chats".format(request.user.username),
-            "payload": {"chats": all_chats_serializer.data},
-        },
-        status=status.HTTP_200_OK,
-    )
+def chats_view(request, begin_index, end_index):
+    if begin_index is None or end_index is None:
+        return JsonResponse(
+            {"detail": "Missing query params"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    elif begin_index > end_index:
+        return JsonResponse(
+            {"detail": "Invalid indices"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    user = request.user
+
+    try:
+        chats_count = user.chats.count()
+        if chats_count <= begin_index:
+            return JsonResponse(
+                {
+                    "detail": "{}'s chats".format(user.username),
+                    "payload": {"chats": []},
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        if chats_count <= end_index:
+            chats = user.chats.order_by("-last_updated")[begin_index:]
+        else:
+            chats = user.chats.order_by("-last_updated")[begin_index:end_index]
+
+        chats_serializer = ChatSerializer(
+            chats, many=True, context={"username": user.username}
+        )
+        return JsonResponse(
+            {
+                "detail": "{}'s chats".format(user.username),
+                "payload": {"chats": chats_serializer.data},
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    except Chat.DoesNotExist:
+        return JsonResponse(
+            {
+                "detail": "{}'s chats".format(user.username),
+                "payload": {"chats": []},
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 @api_view(["GET"])
