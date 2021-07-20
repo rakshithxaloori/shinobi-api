@@ -177,6 +177,27 @@ def remove_follower_view(request, username):
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
+def update_profile_view(request):
+    bio = request.data.get("bio", None)
+    if bio is not None:
+        if len(bio) > 150:
+            return JsonResponse(
+                {"detail": "bio is too long"}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        else:
+            profile = request.user.profile
+            profile.bio = bio
+            profile.save(update_fields=["bio"])
+    return JsonResponse(
+        {"detail": "{}'s profile updated".format(request.user.username)},
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def twitch_connect_view(request):
 
     try:

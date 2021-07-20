@@ -4,8 +4,9 @@ from profiles import views
 
 urlpatterns = [
     path("all/", views.all_profiles_view, name="all profiles"),
-    path("", views.my_profile_view, name="my profile"),
-    path("<str:username>/", views.profile_view, name="profile"),
+    path("my/", views.my_profile_view, name="my profile"),
+    path("update/", views.update_profile_view, name="update profile"),
+    path("u/<str:username>/", views.profile_view, name="profile"),
     path("follow/<str:username>/", views.follow_user_view, name="follow user"),
     path("unfollow/<str:username>/", views.unfollow_user_view, name="unfollow user"),
     path(
