@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django.db.models.fields import EmailField
 
 from authentication.models import User
@@ -6,7 +7,7 @@ from authentication.models import User
 
 class Chat(models.Model):
     users = models.ManyToManyField(User, related_name="chats")
-    last_updated = models.DateTimeField(auto_now=True)
+    last_updated = models.DateTimeField(default=timezone.now)
     created = models.DateTimeField(auto_now_add=True)
 
     # TODO limit users.count() to 2
