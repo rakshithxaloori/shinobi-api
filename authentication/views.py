@@ -132,8 +132,6 @@ def google_signup_view(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def token_valid_view(request):
-    request.user.last_active = timezone.now()
-    request.user.save(update_fields=["last_active"])
     return JsonResponse(
         {
             "detail": "Valid token",
@@ -143,4 +141,28 @@ def token_valid_view(request):
             },
         },
         status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def active_view(request):
+    user = request.user
+    user.last_open = timezone.now()
+    user.active = True
+    user.save(update_fields=["last_open", "active"])
+    return JsonResponse({"detail": "Active status updated"}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def inactive_view(request):
+    user = request.user
+    user.last_inactive = timezone.now()
+    user.active = False
+    user.save(update_fields=["last_inactive", "active"])
+    return JsonResponse(
+        {"detail": "Inactive status updated"}, status=status.HTTP_200_OK
     )

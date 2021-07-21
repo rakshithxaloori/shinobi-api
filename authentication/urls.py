@@ -8,4 +8,6 @@ urlpatterns = [
     path("logout/", views.logout_view, name="logout"),
     path("check_username/", views.check_username_view, name="check username"),
     path("token_valid/", views.token_valid_view, name="token valid"),
+    path("active/", views.active_view, name="active"),
+    path("inactive/", views.inactive_view, name="inactive"),
 ]
