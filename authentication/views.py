@@ -160,9 +160,9 @@ def active_view(request):
 @permission_classes([IsAuthenticated])
 def inactive_view(request):
     user = request.user
-    user.last_inactive = timezone.now()
+    user.last_active = timezone.now()
     user.active = False
-    user.save(update_fields=["last_inactive", "active"])
+    user.save(update_fields=["last_active", "active"])
     return JsonResponse(
         {"detail": "Inactive status updated"}, status=status.HTTP_200_OK
     )
