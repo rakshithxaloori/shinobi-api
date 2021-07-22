@@ -19,6 +19,8 @@ from profiles.serializers import ProfileSerializer, UserSerializer
 from profiles import twitch
 from profiles.utils import add_profile_picture
 from profiles import youtube
+from notification.utils import create_notification
+from notification.models import Notification
 
 
 @api_view(["GET"])
@@ -59,7 +61,6 @@ def profile_view(request, username):
         )
     try:
         user = User.objects.get(username=username)
-        print(request.user)
         profile_serializer = ProfileSerializer(
             user.profile, context={"me": request.user, "user_pk": user.pk}
         )
@@ -87,23 +88,25 @@ def follow_user_view(request, username):
         )
     try:
         following_user = User.objects.get(username=username)
-        profile = request.user.profile
+        follower_user = request.user
+        follower_profile = request.user.profile
 
-        profile.following.add(following_user)
+        follower_profile.following.add(following_user)
 
         if (
-            following_user.profile.following.filter(pk=request.user.pk).exists()
-            and not Chat.objects.filter(users__in=[request.user, following_user])
+            following_user.profile.following.filter(pk=follower_user.pk).exists()
+            and not Chat.objects.filter(users__in=[follower_user, following_user])
             .distinct()
             .exists()
         ):
             # Create chat only if bidirectional follow
-            print("CREATING CHAT", request.user.username, username)
+            print("CREATING CHAT", follower_user.username, username)
             new_chat = Chat.objects.create()
             new_chat.save()
-            new_chat.users.add(request.user, following_user)
+            new_chat.users.add(follower_user, following_user)
 
-        profile.save()
+        follower_profile.save()
+        create_notification(Notification.FOLLOW, follower_user, following_user)
         return JsonResponse(
             {"detail": "Following {}".format(username)}, status=status.HTTP_200_OK
         )
