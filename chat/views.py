@@ -10,7 +10,6 @@ from rest_framework.decorators import (
 
 from knox.auth import TokenAuthentication
 
-from authentication.models import User
 from chat.models import Chat, Message
 from chat.serializers import ChatSerializer, MessageSerializer
 
