@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "authentication",
     "profiles",
     "chat",
+    "notification",
     "league_of_legends",
 ]
 

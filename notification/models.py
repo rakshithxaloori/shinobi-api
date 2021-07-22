@@ -9,8 +9,12 @@ class Notification(models.Model):
 
     NOTIFICATION_CHOICES = [(FOLLOW, "follow")]
 
-    sender = models.ForeignKey(User, on_delete=models.CASCADE)
-    receiver = models.ForeignKey(User, on_delete=models.CASCADE)
+    sender = models.ForeignKey(
+        User, on_delete=models.CASCADE
+    )  # Never access notifications with sender
+    receiver = models.ForeignKey(
+        User, related_name="notifications", on_delete=models.CASCADE
+    )
     type = models.CharField(
         max_length=1,
         choices=NOTIFICATION_CHOICES,
