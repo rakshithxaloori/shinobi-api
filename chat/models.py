@@ -1,6 +1,5 @@
 from django.db import models
 from django.utils import timezone
-from django.db.models.fields import EmailField
 
 from authentication.models import User
 
@@ -23,6 +22,6 @@ class Message(models.Model):
     )
     text = models.TextField()
     is_read = models.BooleanField(default=False)
-    sent_at = models.DateTimeField(auto_now_add=True)
+    sent_at = models.DateTimeField(default=timezone.now)
 
     # TODO sent_by__in chat.users
