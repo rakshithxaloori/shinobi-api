@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 
-from profiles.models import Profile
+from authentication.models import User
 
 
 class Notification(models.Model):
@@ -9,7 +9,8 @@ class Notification(models.Model):
 
     NOTIFICATION_CHOICES = [(FOLLOW, "follow")]
 
-    receiver = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE)
     type = models.CharField(
         max_length=1,
         choices=NOTIFICATION_CHOICES,
