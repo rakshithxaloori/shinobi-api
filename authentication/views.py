@@ -18,6 +18,7 @@ from decouple import config
 
 from authentication.utils import token_response, create_user
 from authentication.models import User
+from notification.utils import delete_push_token
 
 
 @api_view(["POST"])
@@ -75,12 +76,23 @@ def google_login_view(request):
         )
 
 
-@api_view(["GET"])
+@api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def logout_view(request):
-    # Logging out is simply deleting the token
+    # Delete auth token
     request._auth.delete()
+
+    # Change active status
+    user = request.user
+    user.last_active = timezone.now()
+    user.active = False
+    user.save(update_fields=["last_active", "active"])
+
+    # Delete push token
+    push_token = request.data.get("token", None)
+    if push_token is not None:
+        delete_push_token(user, push_token)
     return JsonResponse({"detail": "Logged out"}, status=status.HTTP_200_OK)
 
 

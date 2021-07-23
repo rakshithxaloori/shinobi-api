@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 
-from notification.models import Notification
+from notification.models import Notification, ExponentPushToken
 
 
 def create_notification(type, sender, receiver):
@@ -13,3 +13,13 @@ def create_notification(type, sender, receiver):
     except ValidationError:
         # TODO report the error
         return
+
+
+def delete_push_token(user, token):
+    if token is None or user is None:
+        return
+    try:
+        expo_token = ExponentPushToken.objects.get(user=user, token=token)
+        expo_token.delete()
+    except ExponentPushToken.DoesNotExist:
+        pass

@@ -10,7 +10,7 @@ from rest_framework.decorators import (
 
 from knox.auth import TokenAuthentication
 
-from notification.models import Notification
+from notification.models import Notification, ExponentPushToken
 from notification.serializers import NotificationSerializer
 
 
@@ -65,3 +65,25 @@ def notifications_view(request, begin_index, end_index):
             },
             status=status.HTTP_200_OK,
         )
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def push_token_create_view(request):
+    # Happens when the user logs in
+    token = request.data.get("token", None)
+    if token is None:
+        return JsonResponse(
+            {"detail": "token is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        ExponentPushToken.objects.get(user=request.user, token=token)
+    except ExponentPushToken.DoesNotExist:
+        new_expo_push_token = ExponentPushToken.objects.create(
+            user=request.user, token=token
+        )
+        new_expo_push_token.save()
+
+    return JsonResponse({"detail": "Token saved"}, status=status.HTTP_200_OK)
