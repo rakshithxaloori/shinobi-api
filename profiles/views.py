@@ -202,7 +202,6 @@ def update_profile_view(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def twitch_connect_view(request):
-
     try:
         # TODO Reconnect
         TwitchProfile.objects.get(profile=request.user.profile)
@@ -212,12 +211,12 @@ def twitch_connect_view(request):
         )
 
     except TwitchProfile.DoesNotExist:
-        access_token = request.data.get("access_token", None)
-        if access_token is None:
+        code = request.data.get("code", None)
+        if code is None:
             return JsonResponse(
-                {"detail": "access_token required"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "code required"}, status=status.HTTP_400_BAD_REQUEST
             )
-        user_info = twitch.get_user_info(access_token=access_token)
+        user_info = twitch.get_user_info(code=code)
 
         twitch_profile = TwitchProfile.objects.create(
             profile=request.user.profile,
@@ -226,6 +225,8 @@ def twitch_connect_view(request):
             display_name=user_info.get("display_name", None),
             profile_image_url=user_info.get("profile_image_url", None),
             view_count=user_info.get("view_count", None),
+            access_token = user_info.get("access_token", None),
+            refresh_token = user_info.get("refresh_token", None)
         )
         twitch_profile.save()
 
@@ -234,15 +235,26 @@ def twitch_connect_view(request):
 
         if user_info is None:
             return JsonResponse(
-                {"detail": "Invalid access_token"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "Invalid code"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         return JsonResponse({"detail": "Twitch connected!"}, status=status.HTTP_200_OK)
     except Exception as e:
         print(e)
         return JsonResponse(
-            {"detail": "Invalid access_token"}, status=status.HTTP_400_BAD_REQUEST
+            {"detail": "Invalid code"}, status=status.HTTP_400_BAD_REQUEST
         )
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def twitch_callback_view(request):
+    callback_data = request.data
+    # TODO handle callback based on callback_data["data"]["status"]
+
+    # TODO validate access_token, refresh if needed, and make stream info get request 
+    pass
 
 
 @api_view(["POST"])

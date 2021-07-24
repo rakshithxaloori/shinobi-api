@@ -48,6 +48,8 @@ class TwitchProfile(models.Model):
     display_name = models.CharField(max_length=25, blank=False, null=False)
     profile_image_url = models.URLField(null=True, blank=True)
     view_count = models.PositiveBigIntegerField(default=0)
+    access_token = models.CharField(max_length=100, null=False, blank=False)
+    refresh_token = models.CharField(max_length=100, null=False, blank=False)
 
     def __str__(self):
         return "{} || {}".format(self.login, self.profile.user.username)
