@@ -1,5 +1,5 @@
 from os import POSIX_FADV_DONTNEED
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -217,26 +217,27 @@ def twitch_connect_view(request):
                 {"detail": "code required"}, status=status.HTTP_400_BAD_REQUEST
             )
         user_info = twitch.get_user_info(code=code)
+        if user_info is None:
+            return JsonResponse(
+                {"detail": "Invalid code"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         twitch_profile = TwitchProfile.objects.create(
             profile=request.user.profile,
             user_id=user_info.get("id", None),
             login=user_info.get("login", None),
             display_name=user_info.get("display_name", None),
-            profile_image_url=user_info.get("profile_image_url", None),
             view_count=user_info.get("view_count", None),
-            access_token = user_info.get("access_token", None),
-            refresh_token = user_info.get("refresh_token", None)
+            access_token=user_info.get("access_token", None),
+            refresh_token=user_info.get("refresh_token", None),
         )
         twitch_profile.save()
 
         # Adds the picture if there was None or "" before
         add_profile_picture(request.user, user_info.get("profile_image_url", None))
 
-        if user_info is None:
-            return JsonResponse(
-                {"detail": "Invalid code"}, status=status.HTTP_400_BAD_REQUEST
-            )
+        # Create a subscription
+        twitch.create_subscription(twitch_profile)
 
         return JsonResponse({"detail": "Twitch connected!"}, status=status.HTTP_200_OK)
     except Exception as e:
@@ -250,11 +251,57 @@ def twitch_connect_view(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def twitch_callback_view(request):
+    # Handle callback based on callback_data["subscription"]["status"]
     callback_data = request.data
-    # TODO handle callback based on callback_data["data"]["status"]
+    callback_status = callback_data["subscription"]["status"]
+    try:
+        twitch_profile = TwitchProfile.objects.get(
+            user_id=callback_data["subscription"]["condition"]["broadcaster_user_id"]
+        )
+    except TwitchProfile.DoesNotExist:
+        return HttpResponse(status_code=status.HTTP_400_BAD_REQUEST)
 
-    # TODO validate access_token, refresh if needed, and make stream info get request 
-    pass
+    if callback_status == "enabled":
+        # Stream data
+        print(callback_status)
+        # stream_data = twitch.get_stream_data()
+        return HttpResponse(status_code=status.HTTP_200_OK)
+
+    elif callback_status == "webhook_callback_verification_pending":
+        # Verify signature
+        if (
+            twitch.verify_signature(
+                headers=request.headers,
+                request_body=request.body,
+                webhook_secret=twitch_profile.secret,
+            )
+            == 200
+        ):
+            twitch_profile.is_subscription_active = True
+            twitch_profile.save(update_fields=["is_subscription_active"])
+            return HttpResponse(
+                callback_data["challange"], status_code=status.HTTP_200_OK
+            )
+        else:
+            # Signature doesn't match
+            return HttpResponse(status_code=status.HTTP_400_BAD_REQUEST)
+
+    elif callback_status == "webhook_callback_verification_failed":
+        pass
+
+    elif callback_status == "notification_failures_exceeded":
+        pass
+
+    elif callback_status == "authorization_revoked":
+        twitch_profile.is_active = False
+        twitch_profile.is_subscription_active = False
+        twitch_profile.save(update_fields=["is_active", "is_subscription_active"])
+        return HttpResponse(status_code=status.HTTP_200_OK)
+
+    elif callback_status == "user_removed":
+        twitch.revoke_access_token(twitch_profile.access_token)
+        twitch_profile.delete()
+        return HttpResponse(status_code=status.HTTP_200_OK)
 
 
 @api_view(["POST"])

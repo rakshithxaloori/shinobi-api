@@ -1,6 +1,7 @@
 from random import choice
 
 from django.db import models
+from django.utils.crypto import get_random_string
 
 from authentication.models import User
 
@@ -22,6 +23,10 @@ def random_bio():
     ]
 
     return choice(bios)
+
+
+def random_twitch_secret():
+    return get_random_string(length=10)
 
 
 # Create your models here.
@@ -46,13 +51,15 @@ class TwitchProfile(models.Model):
     user_id = models.CharField(max_length=20, blank=False, null=False)
     login = models.CharField(max_length=25, blank=False, null=False)
     display_name = models.CharField(max_length=25, blank=False, null=False)
-    profile_image_url = models.URLField(null=True, blank=True)
     view_count = models.PositiveBigIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
     access_token = models.CharField(max_length=100, null=False, blank=False)
     refresh_token = models.CharField(max_length=100, null=False, blank=False)
+    secret = models.CharField(max_length=10, default=random_twitch_secret)
+    is_subscription_active = models.BooleanField(default=False)
 
     def __str__(self):
-        return "{} || {}".format(self.login, self.profile.user.username)
+        return "t/{} || {}".format(self.login, self.profile.user.username)
 
 
 class YouTubeProfile(models.Model):
