@@ -12,7 +12,7 @@ def get_user_info(access_token=None):
         "Authorization": "Bearer {}".format(access_token),
     }
     response = requests.get(endpoint, headers=headers)
-    if response.status_code == 200:
+    if response.ok:
         return response.json()
     else:
         return None
