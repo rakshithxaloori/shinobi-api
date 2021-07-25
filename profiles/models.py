@@ -52,11 +52,13 @@ class TwitchProfile(models.Model):
     login = models.CharField(max_length=25, blank=False, null=False)
     display_name = models.CharField(max_length=25, blank=False, null=False)
     view_count = models.PositiveBigIntegerField(default=0)
-    is_active = models.BooleanField(default=True)
-    access_token = models.CharField(max_length=100, null=False, blank=False)
-    refresh_token = models.CharField(max_length=100, null=False, blank=False)
     secret = models.CharField(max_length=10, default=random_twitch_secret)
-    is_subscription_active = models.BooleanField(default=False)
+    stream_online_subscription_id = models.CharField(
+        max_length=100, blank=True, null=True
+    )
+    stream_offline_subscription_id = models.CharField(
+        max_length=100, blank=True, null=True
+    )
 
     def __str__(self):
         return "t/{} || {}".format(self.login, self.profile.user.username)

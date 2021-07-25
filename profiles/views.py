@@ -9,6 +9,8 @@ from rest_framework.decorators import (
     permission_classes,
 )
 
+from rest_framework_api_key.permissions import HasAPIKey
+
 from knox.auth import TokenAuthentication
 
 
@@ -25,7 +27,7 @@ from notification.models import Notification
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def all_profiles_view(request):
     user_serializer = UserSerializer(
         User.objects.filter(is_staff=False).exclude(username=request.user.username),
@@ -39,7 +41,7 @@ def all_profiles_view(request):
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def my_profile_view(request):
     profile_serializer = ProfileSerializer(request.user.profile)
     return JsonResponse(
@@ -53,7 +55,7 @@ def my_profile_view(request):
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def profile_view(request, username):
     if username is None:
         return JsonResponse(
@@ -80,7 +82,7 @@ def profile_view(request, username):
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def follow_user_view(request, username):
     if username is None:
         return JsonResponse(
@@ -119,7 +121,7 @@ def follow_user_view(request, username):
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def unfollow_user_view(request, username):
     if username is None:
         return JsonResponse(
@@ -155,7 +157,7 @@ def unfollow_user_view(request, username):
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def remove_follower_view(request, username):
     """Remove the user from my followers list."""
     if username is None:
@@ -179,7 +181,7 @@ def remove_follower_view(request, username):
 
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def update_profile_view(request):
     bio = request.data.get("bio", None)
     if bio is not None:
@@ -200,7 +202,7 @@ def update_profile_view(request):
 
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def twitch_connect_view(request):
     try:
         # TODO Reconnect
@@ -211,15 +213,15 @@ def twitch_connect_view(request):
         )
 
     except TwitchProfile.DoesNotExist:
-        code = request.data.get("code", None)
-        if code is None:
+        access_token = request.data.get("access_token", None)
+        if access_token is None:
             return JsonResponse(
-                {"detail": "code required"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "access_token required"}, status=status.HTTP_400_BAD_REQUEST
             )
-        user_info = twitch.get_user_info(code=code)
+        user_info = twitch.get_user_info(access_token=access_token)
         if user_info is None:
             return JsonResponse(
-                {"detail": "Invalid code"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "Invalid access_token"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         twitch_profile = TwitchProfile.objects.create(
@@ -228,8 +230,6 @@ def twitch_connect_view(request):
             login=user_info.get("login", None),
             display_name=user_info.get("display_name", None),
             view_count=user_info.get("view_count", None),
-            access_token=user_info.get("access_token", None),
-            refresh_token=user_info.get("refresh_token", None),
         )
         twitch_profile.save()
 
@@ -248,65 +248,73 @@ def twitch_connect_view(request):
 
 
 @api_view(["POST"])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
 def twitch_callback_view(request):
     # Handle callback based on callback_data["subscription"]["status"]
+    request_body = request.body
     callback_data = request.data
+    print(callback_data)
+
     callback_status = callback_data["subscription"]["status"]
     try:
         twitch_profile = TwitchProfile.objects.get(
             user_id=callback_data["subscription"]["condition"]["broadcaster_user_id"]
         )
+        if (
+            twitch.verify_signature(
+                headers=request.headers,
+                request_body=request_body,
+                webhook_secret=twitch_profile.secret,
+            )
+            != 200
+        ):
+            # Signature doesn't match
+            return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
     except TwitchProfile.DoesNotExist:
-        return HttpResponse(status_code=status.HTTP_400_BAD_REQUEST)
+        return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
     if callback_status == "enabled":
         # Stream data
         print(callback_status)
         # stream_data = twitch.get_stream_data()
-        return HttpResponse(status_code=status.HTTP_200_OK)
+        return HttpResponse(status=status.HTTP_200_OK)
 
     elif callback_status == "webhook_callback_verification_pending":
-        # Verify signature
-        if (
-            twitch.verify_signature(
-                headers=request.headers,
-                request_body=request.body,
-                webhook_secret=twitch_profile.secret,
-            )
-            == 200
-        ):
-            twitch_profile.is_subscription_active = True
-            twitch_profile.save(update_fields=["is_subscription_active"])
-            return HttpResponse(
-                callback_data["challange"], status_code=status.HTTP_200_OK
-            )
-        else:
-            # Signature doesn't match
-            return HttpResponse(status_code=status.HTTP_400_BAD_REQUEST)
+        if callback_data["subscription"]["type"] == "stream.online":
+            twitch_profile.stream_online_subscription_id = callback_data[
+                "subscription"
+            ]["id"]
+        elif callback_data["subscription"]["type"] == "stream.offline":
+            twitch_profile.stream_offline_subscription_id = callback_data[
+                "subscription"
+            ]["id"]
+        twitch_profile.save(
+            update_fields=[
+                "stream_online_subscription_id",
+                "stream_offline_subscription_id",
+            ]
+        )
+        return HttpResponse(callback_data["challenge"], status=status.HTTP_200_OK)
 
     elif callback_status == "webhook_callback_verification_failed":
-        pass
+        return HttpResponse(status=status.HTTP_200_OK)
 
     elif callback_status == "notification_failures_exceeded":
-        pass
+        return HttpResponse(status=status.HTTP_200_OK)
 
     elif callback_status == "authorization_revoked":
         twitch_profile.is_active = False
-        twitch_profile.is_subscription_active = False
-        twitch_profile.save(update_fields=["is_active", "is_subscription_active"])
-        return HttpResponse(status_code=status.HTTP_200_OK)
+        twitch_profile.save(update_fields=["is_active"])
+        return HttpResponse(status=status.HTTP_200_OK)
 
     elif callback_status == "user_removed":
         twitch.revoke_access_token(twitch_profile.access_token)
         twitch_profile.delete()
-        return HttpResponse(status_code=status.HTTP_200_OK)
+        return HttpResponse(status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def youtube_connect_view(request):
     try:
         # TODO Reconnect
@@ -363,7 +371,7 @@ def youtube_connect_view(request):
 
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def youtube_select_channel_view(request):
     try:
         # TODO Reconnect
