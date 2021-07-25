@@ -8,6 +8,8 @@ from rest_framework.decorators import (
     permission_classes,
 )
 
+from rest_framework_api_key.permissions import HasAPIKey
+
 from knox.auth import TokenAuthentication
 
 from notification.models import Notification, ExponentPushToken
@@ -16,7 +18,7 @@ from notification.serializers import NotificationSerializer
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def notifications_view(request, begin_index, end_index):
     if begin_index is None or end_index is None:
         return JsonResponse(
@@ -69,7 +71,7 @@ def notifications_view(request, begin_index, end_index):
 
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def push_token_create_view(request):
     # Happens when the user logs in
     token = request.data.get("token", None)

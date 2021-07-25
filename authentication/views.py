@@ -9,6 +9,8 @@ from rest_framework.decorators import (
     permission_classes,
 )
 
+from rest_framework_api_key.permissions import HasAPIKey
+
 from knox.auth import TokenAuthentication
 
 from google.oauth2 import id_token
@@ -22,6 +24,7 @@ from notification.utils import delete_push_token
 
 
 @api_view(["POST"])
+@permission_classes([HasAPIKey])
 def check_username_view(request):
     username = request.data.get("username", None)
 
@@ -39,6 +42,7 @@ def check_username_view(request):
 
 
 @api_view(["POST"])
+@permission_classes([HasAPIKey])
 def google_login_view(request):
     google_id_token = request.data.get("id_token", None)
 
@@ -78,7 +82,7 @@ def google_login_view(request):
 
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated,HasAPIKey])
 def logout_view(request):
     # Delete auth token
     request._auth.delete()
@@ -97,6 +101,7 @@ def logout_view(request):
 
 
 @api_view(["POST"])
+@permission_classes([HasAPIKey])
 def google_signup_view(request):
     google_id_token = request.data.get("id_token", None)
 
@@ -142,7 +147,7 @@ def google_signup_view(request):
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated,HasAPIKey])
 def token_valid_view(request):
     return JsonResponse(
         {
@@ -158,7 +163,7 @@ def token_valid_view(request):
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated,HasAPIKey])
 def active_view(request):
     user = request.user
     user.last_open = timezone.now()
@@ -169,7 +174,7 @@ def active_view(request):
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated,HasAPIKey])
 def inactive_view(request):
     user = request.user
     user.last_active = timezone.now()

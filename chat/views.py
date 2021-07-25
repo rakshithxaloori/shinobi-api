@@ -8,6 +8,8 @@ from rest_framework.decorators import (
     permission_classes,
 )
 
+from rest_framework_api_key.permissions import HasAPIKey
+
 from knox.auth import TokenAuthentication
 
 from chat.models import Chat, Message
@@ -16,7 +18,7 @@ from chat.serializers import ChatSerializer, MessageSerializer
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def chats_view(request, begin_index, end_index):
     if begin_index is None or end_index is None:
         return JsonResponse(
@@ -68,7 +70,7 @@ def chats_view(request, begin_index, end_index):
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def chat_messages(request, chat_id, begin_index=0, end_index=25):
     """Send chat messages."""
     if chat_id is None or begin_index is None or end_index is None:
