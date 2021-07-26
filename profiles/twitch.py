@@ -5,8 +5,7 @@ from hashlib import sha256
 from decouple import config
 
 
-# TODO generalize the url
-TWITCH_CALLBACK_URL = "https://cf3c1db1d2bc.ngrok.io/" + "profile/twitch/callback/"
+TWITCH_CALLBACK_URL = "https://{}/profile/twitch/callback/".format(config("API_HOSTNAME"))
 TWITCH_CLIENT_ID = config("TWITCH_CLIENT_ID")
 
 
