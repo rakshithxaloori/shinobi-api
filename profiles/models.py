@@ -30,6 +30,20 @@ def random_twitch_secret():
 
 
 # Create your models here.
+class Game(models.Model):
+    # {
+    #     "id": "21779",
+    #     "name": "League of Legends",
+    #     "box_art_url": "https://static-cdn.jtvnw.net/ttv-boxart/League%20of%20Legends-{width}x{height}.jpg",
+    # }
+    id = models.CharField(max_length=10, primary_key=True)
+    name = models.CharField(max_length=50, blank=False, null=False)
+    logo_url = models.URLField()
+
+    def __str__(self):
+        return self.name
+
+
 class Profile(models.Model):
     user = models.OneToOneField(User, related_name="profile", on_delete=models.PROTECT)
     following = models.ManyToManyField(User, related_name="follower", blank=True)
@@ -62,6 +76,24 @@ class TwitchProfile(models.Model):
 
     def __str__(self):
         return "t/{} || {}".format(self.login, self.profile.user.username)
+
+
+class TwitchStream(models.Model):
+    twitch_profile = models.OneToOneField(
+        TwitchProfile, related_name="twitch_stream", on_delete=models.PROTECT
+    )
+    game = models.ForeignKey(
+        Game,
+        related_name="twitch_streams",
+        on_delete=models.PROTECT,
+    )
+    stream_id = models.CharField(max_length=100, blank=False, null=False)
+    title = models.CharField(max_length=140, blank=False, null=False)
+    thumbnail_url = models.URLField(null=True, blank=True)
+    is_streaming = models.BooleanField(default=True)
+
+    def __str__(self):
+        return "t/{} || {}".format(self.twitch_profile.login, self.id)
 
 
 class YouTubeProfile(models.Model):

@@ -5,7 +5,9 @@ from hashlib import sha256
 from decouple import config
 
 
-TWITCH_CALLBACK_URL = "https://{}/profile/twitch/callback/".format(config("API_HOSTNAME"))
+TWITCH_CALLBACK_URL = "https://{}/profile/twitch/callback/".format(
+    config("API_HOSTNAME")
+)
 TWITCH_CLIENT_ID = config("TWITCH_CLIENT_ID")
 
 
@@ -192,7 +194,42 @@ def verify_signature(headers, request_body, webhook_secret):
         return 200
 
 
-def get_stream_data():
+def get_stream_data(user_id):
     # Validate access token
-    # validate_access_token(access_token=access_token)
-    pass
+    app_access_token = get_app_access_token()
+    if app_access_token is None:
+        return None
+    endpoint = "https://api.twitch.tv/helix/streams?user_id={}".format(user_id)
+    headers = {
+        "Authorization": "Bearer {}".format(app_access_token),
+        "Client-ID": TWITCH_CLIENT_ID,
+    }
+    response = requests.get(endpoint, headers=headers)
+    # print(response.json())
+    # {
+    #     "data": [
+    #         {
+    #             "id": "39715239339",
+    #             "user_id": "655414459",
+    #             "user_login": "uchiha_leo_06",
+    #             "user_name": "uchiha_leo_06",
+    #             "game_id": "509658",
+    #             "game_name": "Just Chatting",
+    #             "type": "live",
+    #             "title": "Test",
+    #             "viewer_count": 0,
+    #             "started_at": "2021-07-26T10:21:54Z",
+    #             "language": "en",
+    #             "thumbnail_url": "https://static-cdn.jtvnw.net/previews-ttv/live_user_uchiha_leo_06-{width}x{height}.jpg",
+    #             "tag_ids": ["6ea6bca4-4712-4ab9-a906-e3336a9d8039"],
+    #             "is_mature": False,
+    #         }
+    #     ],
+    #     "pagination": {},
+    # }
+    # {'data': [], 'pagination': {}}
+    stream_data = response.json()["data"]
+    if len(stream_data) == 1:
+        return stream_data[0]
+    else:
+        return None

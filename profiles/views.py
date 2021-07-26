@@ -16,7 +16,7 @@ from knox.auth import TokenAuthentication
 
 from authentication.models import User
 from chat.models import Chat
-from profiles.models import TwitchProfile, YouTubeProfile
+from profiles.models import Game, TwitchProfile, TwitchStream, YouTubeProfile
 from profiles.serializers import ProfileSerializer, UserSerializer
 from profiles import twitch
 from profiles.utils import add_profile_picture
@@ -269,47 +269,128 @@ def twitch_callback_view(request):
         ):
             # Signature doesn't match
             return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
+
+        if callback_status == "enabled":
+            if callback_data["subscription"]["type"] == "stream.online":
+                # print(callback_data)
+                # {
+                #     "subscription": {
+                #         "id": "67c6024c-dba3-45f3-ad95-fefe5b2773a1",
+                #         "status": "enabled",
+                #         "type": "stream.online",
+                #         "version": "1",
+                #         "condition": {"broadcaster_user_id": "655414459"},
+                #         "transport": {
+                #             "method": "webhook",
+                #             "callback": "https://d8985f17ea05.ngrok.io/profile/twitch/callback/",
+                #         },
+                #         "created_at": "2021-07-26T08:38:49.748425134Z",
+                #         "cost": 0,
+                #     },
+                #     "event": {
+                #         "id": "39715133707",
+                #         "broadcaster_user_id": "655414459",
+                #         "broadcaster_user_login": "uchiha_leo_06",
+                #         "broadcaster_user_name": "uchiha_leo_06",
+                #         "type": "live",
+                #         "started_at": "2021-07-26T09:35:36Z",
+                #     },
+                # }
+                stream_data = twitch.get_stream_data(user_id=twitch_profile.user_id)
+                if stream_data is not None:
+                    # Check if the game is valid
+                    try:
+                        # Only save streams whose games are in db
+                        game = Game.objects.get(id=stream_data["game_id"])
+                        try:
+                            # Rewrite the old stream
+                            twitch_stream = twitch_profile.twitch_stream
+                            twitch_stream.stream_id = stream_data["id"]
+                            twitch_stream.game = game
+                            twitch_stream.title = stream_data["title"]
+                            twitch_stream.thumbnail_url = stream_data["thumbnail_url"]
+                            twitch_stream.is_streaming = True
+                            twitch_stream.save()
+                        except TwitchStream.DoesNotExist:
+                            # Create TwitchStream instance
+                            twitch_stream = TwitchStream.objects.create(
+                                stream_id=stream_data["id"],
+                                twitch_profile=twitch_profile,
+                                game=game,
+                                title=stream_data["title"],
+                                thumbnail_url=stream_data["thumbnail_url"],
+                            )
+                            twitch_stream.save()
+                    except Game.DoesNotExist:
+                        pass
+            elif callback_data["subscription"]["type"] == "stream.offline":
+                # {
+                #     "subscription": {
+                #         "id": "593ef4b1-d6ba-46fc-a41c-d39b7d543a78",
+                #         "status": "enabled",
+                #         "type": "stream.offline",
+                #         "version": "1",
+                #         "condition": {"broadcaster_user_id": "655414459"},
+                #         "transport": {
+                #             "method": "webhook",
+                #             "callback": "https://d8985f17ea05.ngrok.io/profile/twitch/callback/",
+                #         },
+                #         "created_at": "2021-07-26T08:38:50.240681852Z",
+                #         "cost": 0,
+                #     },
+                #     "event": {
+                #         "broadcaster_user_id": "655414459",
+                #         "broadcaster_user_login": "uchiha_leo_06",
+                #         "broadcaster_user_name": "uchiha_leo_06",
+                #     },
+                # }
+                try:
+                    twitch_stream = twitch_profile.twitch_stream
+                    twitch_stream.is_streaming = False
+                    twitch_stream.save(update_fields=["is_streaming"])
+                except TwitchStream.DoesNotExist:
+                    pass
+
+            return HttpResponse(status=status.HTTP_200_OK)
+
+        elif callback_status == "webhook_callback_verification_pending":
+            if callback_data["subscription"]["type"] == "stream.online":
+                twitch_profile.stream_online_subscription_id = callback_data[
+                    "subscription"
+                ]["id"]
+            elif callback_data["subscription"]["type"] == "stream.offline":
+                twitch_profile.stream_offline_subscription_id = callback_data[
+                    "subscription"
+                ]["id"]
+            twitch_profile.save(
+                update_fields=[
+                    "stream_online_subscription_id",
+                    "stream_offline_subscription_id",
+                ]
+            )
+            return HttpResponse(callback_data["challenge"], status=status.HTTP_200_OK)
+
+        elif callback_status == "webhook_callback_verification_failed":
+            return HttpResponse(status=status.HTTP_200_OK)
+
+        elif callback_status == "notification_failures_exceeded":
+            return HttpResponse(status=status.HTTP_200_OK)
+
+        elif callback_status == "authorization_revoked":
+            twitch_profile.is_active = False
+            twitch_profile.save(update_fields=["is_active"])
+            return HttpResponse(status=status.HTTP_200_OK)
+
+        elif callback_status == "user_removed":
+            twitch.revoke_access_token(twitch_profile.access_token)
+            twitch_profile.delete()
+            return HttpResponse(status=status.HTTP_200_OK)
+
     except TwitchProfile.DoesNotExist:
         return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
-
-    if callback_status == "enabled":
-        # Stream data
-        print(callback_status)
-        # stream_data = twitch.get_stream_data()
-        return HttpResponse(status=status.HTTP_200_OK)
-
-    elif callback_status == "webhook_callback_verification_pending":
-        if callback_data["subscription"]["type"] == "stream.online":
-            twitch_profile.stream_online_subscription_id = callback_data[
-                "subscription"
-            ]["id"]
-        elif callback_data["subscription"]["type"] == "stream.offline":
-            twitch_profile.stream_offline_subscription_id = callback_data[
-                "subscription"
-            ]["id"]
-        twitch_profile.save(
-            update_fields=[
-                "stream_online_subscription_id",
-                "stream_offline_subscription_id",
-            ]
-        )
-        return HttpResponse(callback_data["challenge"], status=status.HTTP_200_OK)
-
-    elif callback_status == "webhook_callback_verification_failed":
-        return HttpResponse(status=status.HTTP_200_OK)
-
-    elif callback_status == "notification_failures_exceeded":
-        return HttpResponse(status=status.HTTP_200_OK)
-
-    elif callback_status == "authorization_revoked":
-        twitch_profile.is_active = False
-        twitch_profile.save(update_fields=["is_active"])
-        return HttpResponse(status=status.HTTP_200_OK)
-
-    elif callback_status == "user_removed":
-        twitch.revoke_access_token(twitch_profile.access_token)
-        twitch_profile.delete()
-        return HttpResponse(status=status.HTTP_200_OK)
+    except Exception as e:
+        print(e)
+        return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
