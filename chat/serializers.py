@@ -1,6 +1,6 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
-from chat.models import Chat, Message
+from chat.models import Chat, Message, ChatUser
 
 ##########################################
 class MessageSerializer(ModelSerializer):
@@ -41,3 +41,15 @@ class ChatSerializer(ModelSerializer):
             return last_message_data
         except (Message.DoesNotExist, IndexError):
             return None
+
+
+class ChatUserSerializer(ModelSerializer):
+    chat = SerializerMethodField()
+
+    class Meta:
+        model = ChatUser
+        fields = ["chat", "last_read"]
+        read_only_fields = fields
+
+    def get_chat(self, obj):
+        return ChatSerializer(obj.chat, context=self.context).data

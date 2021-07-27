@@ -13,7 +13,7 @@ from rest_framework_api_key.permissions import HasAPIKey
 from knox.auth import TokenAuthentication
 
 from chat.models import Chat, Message
-from chat.serializers import ChatSerializer, MessageSerializer
+from chat.serializers import ChatUserSerializer, MessageSerializer
 
 
 @api_view(["GET"])
@@ -29,31 +29,34 @@ def chats_view(request, begin_index, end_index):
             {"detail": "Invalid indices"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    user = request.user
+    chat_users = request.user.chat_users
+    username = request.user.username
 
     try:
-        chats_count = user.chats.count()
-        if chats_count <= begin_index:
+        chat_users_count = chat_users.count()
+        if chat_users_count <= begin_index:
             return JsonResponse(
                 {
-                    "detail": "{}'s chats".format(user.username),
-                    "payload": {"chats": []},
+                    "detail": "{}'s chats".format(username),
+                    "payload": {"chat_users": []},
                 },
                 status=status.HTTP_200_OK,
             )
 
-        if chats_count <= end_index:
-            chats = user.chats.order_by("-last_updated")[begin_index:]
+        if chat_users_count <= end_index:
+            chat_users = chat_users.order_by("-chat__last_updated")[begin_index:]
         else:
-            chats = user.chats.order_by("-last_updated")[begin_index:end_index]
+            chat_users = chat_users.order_by("-chat__last_updated")[
+                begin_index:end_index
+            ]
 
-        chats_serializer = ChatSerializer(
-            chats, many=True, context={"username": user.username}
+        chats_serializer = ChatUserSerializer(
+            chat_users, many=True, context={"username": username}
         )
         return JsonResponse(
             {
-                "detail": "{}'s chats".format(user.username),
-                "payload": {"chats": chats_serializer.data},
+                "detail": "{}'s chats".format(username),
+                "payload": {"chat_users": chats_serializer.data},
             },
             status=status.HTTP_200_OK,
         )
@@ -61,8 +64,8 @@ def chats_view(request, begin_index, end_index):
     except Chat.DoesNotExist:
         return JsonResponse(
             {
-                "detail": "{}'s chats".format(user.username),
-                "payload": {"chats": []},
+                "detail": "{}'s chats".format(username),
+                "payload": {"chat_users": []},
             },
             status=status.HTTP_200_OK,
         )

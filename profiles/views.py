@@ -1,3 +1,4 @@
+from chat.utils import create_chat
 from os import POSIX_FADV_DONTNEED
 from django.http import JsonResponse, HttpResponse
 
@@ -16,6 +17,7 @@ from knox.auth import TokenAuthentication
 
 from authentication.models import User
 from chat.models import Chat
+from chat.utils import create_chat, delete_chat
 from profiles.models import Game, TwitchProfile, TwitchStream, YouTubeProfile
 from profiles.serializers import ProfileSerializer, UserSerializer
 from profiles import twitch
@@ -95,17 +97,7 @@ def follow_user_view(request, username):
 
         follower_profile.following.add(following_user)
 
-        if (
-            following_user.profile.following.filter(pk=follower_user.pk).exists()
-            and not Chat.objects.filter(users__in=[follower_user, following_user])
-            .distinct()
-            .exists()
-        ):
-            # Create chat only if bidirectional follow
-            print("CREATING CHAT", follower_user.username, username)
-            new_chat = Chat.objects.create()
-            new_chat.save()
-            new_chat.users.add(follower_user, following_user)
+        create_chat(following_user=following_user, follower_user=follower_user)
 
         follower_profile.save()
         create_notification(Notification.FOLLOW, follower_user, following_user)
@@ -134,10 +126,7 @@ def unfollow_user_view(request, username):
         profile.following.remove(following_user)
 
         # Delete the chat
-        chat = Chat.objects.filter(users__in=[request.user, following_user]).distinct()
-        if chat.exists():
-            print("DELETING CHAT", request.user.username, following_user.username)
-            chat[0].delete()
+        delete_chat(following_user=following_user, follower_user=request.user)
 
         profile.save()
         return JsonResponse(
@@ -169,8 +158,12 @@ def remove_follower_view(request, username):
         profile = follower_user.profile
         profile.following.remove(request.user)
 
+        # Delete the chat
+        delete_chat(following_user=request.user, follower_user=follower_user)
+
         return JsonResponse(
-            {"detail": "Removed from followers"}, status=status.HTTP_200_OK
+            {"detail": "{} removed from followers".format(follower_user.username)},
+            status=status.HTTP_200_OK,
         )
 
     except User.DoesNotExist:
@@ -224,22 +217,33 @@ def twitch_connect_view(request):
                 {"detail": "Invalid access_token"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        twitch_profile = TwitchProfile.objects.create(
-            profile=request.user.profile,
-            user_id=user_info.get("id", None),
-            login=user_info.get("login", None),
-            display_name=user_info.get("display_name", None),
-            view_count=user_info.get("view_count", None),
-        )
-        twitch_profile.save()
+        try:
+            twitch_profile = TwitchProfile.objects.get(
+                user_id=user_info.get("id", None)
+            )
+            return JsonResponse(
+                {"detail": "This Twitch is already connected to other account"},
+                status=status.HTTP_208_ALREADY_REPORTED,
+            )
+        except TwitchProfile.DoesNotExist:
+            twitch_profile = TwitchProfile.objects.create(
+                profile=request.user.profile,
+                user_id=user_info.get("id", None),
+                login=user_info.get("login", None),
+                display_name=user_info.get("display_name", None),
+                view_count=user_info.get("view_count", None),
+            )
+            twitch_profile.save()
 
-        # Adds the picture if there was None or "" before
-        add_profile_picture(request.user, user_info.get("profile_image_url", None))
+            # Adds the picture if there was None or "" before
+            add_profile_picture(request.user, user_info.get("profile_image_url", None))
 
-        # Create a subscription
-        twitch.create_subscription(twitch_profile)
+            # Create a subscription
+            twitch.create_subscription(twitch_profile)
 
-        return JsonResponse({"detail": "Twitch connected!"}, status=status.HTTP_200_OK)
+            return JsonResponse(
+                {"detail": "Twitch connected!"}, status=status.HTTP_200_OK
+            )
     except Exception as e:
         print(e)
         return JsonResponse(
