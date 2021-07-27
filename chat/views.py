@@ -1,4 +1,5 @@
 from django.http import JsonResponse
+from django.utils import timezone
 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -12,7 +13,7 @@ from rest_framework_api_key.permissions import HasAPIKey
 
 from knox.auth import TokenAuthentication
 
-from chat.models import Chat, Message
+from chat.models import Chat, Message, ChatUser
 from chat.serializers import ChatUserSerializer, MessageSerializer
 
 
@@ -122,4 +123,26 @@ def chat_messages(request, chat_id, begin_index=0, end_index=25):
                 "payload": {"messages": None},
             },
             status=status.HTTP_200_OK,
+        )
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def last_read_view(request):
+    chat_id = request.data.get("chat_id", None)
+    if chat_id is None:
+        return JsonResponse(
+            {"detail": "chat_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        chat_user = ChatUser.objects.get(chat__pk=chat_id, user=request.user)
+        chat_user.last_read = timezone.now()
+        chat_user.save(update_fields=["last_read"])
+        return JsonResponse({"detail": "last_read updated"}, status=status.HTTP_200_OK)
+
+    except ChatUser.DoesNotExist:
+        return JsonResponse(
+            {"detail": "chat_id invalid"}, status=status.HTTP_400_BAD_REQUEST
         )
