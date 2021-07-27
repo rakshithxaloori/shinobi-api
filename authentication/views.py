@@ -82,7 +82,7 @@ def google_login_view(request):
 
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated,HasAPIKey])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def logout_view(request):
     # Delete auth token
     request._auth.delete()
@@ -147,7 +147,7 @@ def google_signup_view(request):
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated,HasAPIKey])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def token_valid_view(request):
     return JsonResponse(
         {
@@ -163,7 +163,7 @@ def token_valid_view(request):
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated,HasAPIKey])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def active_view(request):
     user = request.user
     user.last_open = timezone.now()
@@ -174,7 +174,7 @@ def active_view(request):
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated,HasAPIKey])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def inactive_view(request):
     user = request.user
     user.last_active = timezone.now()
