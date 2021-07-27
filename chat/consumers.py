@@ -1,5 +1,6 @@
 import json
 
+from django.contrib.auth.models import AnonymousUser
 from django.core.serializers.json import DjangoJSONEncoder
 
 from channels.db import database_sync_to_async
@@ -13,6 +14,17 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["chat_id"]
         self.room_chat_name = "chat_%s" % self.room_name
+        if self.scope["user"].is_anonymous:
+            self.close(4200)
+            return
+
+        self.user = self.scope["user"]
+
+        # TODO test this
+        chat_access = await self.check_chat_access()
+        if chat_access is False:
+            self.close(4200)
+            return
 
         await self.channel_layer.group_add(self.room_chat_name, self.channel_name)
 
@@ -33,10 +45,10 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
+        print("consumers.receive text_data_json", text_data_json)
         message = text_data_json.get("message", None)
-        username = text_data_json.get("username", None)
 
-        new_message = await self.create_message(message, username)
+        new_message = await self.create_message(message)
         if new_message is None:
             await self.close(4200)
         else:
@@ -56,19 +68,29 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
         )
 
     @database_sync_to_async
-    def create_message(self, message, username):
+    def check_chat_access(
+        self,
+    ):
+        # Check if the user has access to the chat
+        try:
+            chat = Chat.objects.get(id=self.room_name)
+            return self.user in chat.users.all()
+        except Chat.DoesNotExist:
+            return False
+
+    @database_sync_to_async
+    def create_message(self, message):
         # Create message instance
         try:
-            sent_by_user = User.objects.get(username=username)
             chat = Chat.objects.get(id=self.room_name)
 
-            if sent_by_user not in chat.users.all():
+            if self.user not in chat.users.all():
                 return None
 
             else:
                 new_message = Message.objects.create(
                     chat=chat,
-                    sent_by=sent_by_user,
+                    sent_by=self.user,
                     text=message,
                 )
 
