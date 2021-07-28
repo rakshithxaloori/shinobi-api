@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from django.utils import timezone
+from django.db.models import F
 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -146,3 +147,24 @@ def last_read_view(request):
         return JsonResponse(
             {"detail": "chat_id invalid"}, status=status.HTTP_400_BAD_REQUEST
         )
+
+
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def unread_view(request):
+    """Return True if there are unread chats, False otherwise."""
+    unread_bool = request.user.chat_users.filter(
+        last_read__lt=F("chat__last_updated")
+    ).exists()
+
+    unread_bool = False
+    for chat_user in request.user.chat_users.order_by("chat__last_updated"):
+        if chat_user.last_read < chat_user.chat.last_updated:
+            unread_bool = True
+            break
+
+    return JsonResponse(
+        {"detail": "Unread if any", "payload": {"unread": unread_bool}},
+        status=status.HTTP_200_OK,
+    )
