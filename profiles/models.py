@@ -93,7 +93,7 @@ class TwitchStream(models.Model):
     is_streaming = models.BooleanField(default=True)
 
     def __str__(self):
-        return "t/{} || {}".format(self.twitch_profile.login, self.id)
+        return "t/{} || {}".format(self.twitch_profile.login, self.stream_id)
 
 
 class YouTubeProfile(models.Model):

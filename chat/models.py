@@ -6,7 +6,7 @@ from authentication.models import User
 
 
 class Chat(models.Model):
-    # users here is redundant, but saves time
+    # users here is redundant, but saves db time
     users = models.ManyToManyField(User, related_name="chats")
     last_updated = models.DateTimeField(default=timezone.now)
     created = models.DateTimeField(auto_now_add=True)
