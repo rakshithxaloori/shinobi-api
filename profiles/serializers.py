@@ -1,7 +1,8 @@
+from profiles import twitch
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from authentication.models import User
-from profiles.models import Profile, TwitchProfile, YouTubeProfile
+from profiles.models import Game, Profile, TwitchProfile, TwitchStream, YouTubeProfile
 
 ##########################################
 class UserSerializer(ModelSerializer):
@@ -12,12 +13,44 @@ class UserSerializer(ModelSerializer):
 
 
 ##########################################
+class GameSerializer(ModelSerializer):
+    class Meta:
+        model = Game
+        fields = ["name", "logo_url"]
+        read_only_fields = fields
+
+
+class TwitchStreamSerializer(ModelSerializer):
+    game = GameSerializer()
+
+    class Meta:
+        model = TwitchStream
+        fields = ["game", "title", "thumbnail_url"]
+        read_only_fields = fields
+
+
+##########################################
+class TwitchProfileSerializer(ModelSerializer):
+    is_streaming = SerializerMethodField()
+
+    class Meta:
+        model = TwitchProfile
+        fields = ["login", "is_streaming"]
+        read_only_fields = fields
+
+    def get_is_streaming(self, obj):
+        try:
+            return obj.twitch_stream.is_streaming
+        except Exception:
+            return False
+
+
 class ProfileSerializer(ModelSerializer):
     user = UserSerializer()
     followers = SerializerMethodField()
     following = SerializerMethodField()
     me_following = SerializerMethodField()
-    twitch = SerializerMethodField()
+    twitch_profile = TwitchProfileSerializer()
     youtube = SerializerMethodField()
 
     class Meta:
@@ -28,7 +61,7 @@ class ProfileSerializer(ModelSerializer):
             "following",
             "bio",
             "me_following",
-            "twitch",
+            "twitch_profile",
             "youtube",
         ]
 
@@ -44,12 +77,6 @@ class ProfileSerializer(ModelSerializer):
             return False
         user_pk = self.context.get("user_pk")
         return me.profile.following.filter(pk=user_pk).exists()
-
-    def get_twitch(self, obj):
-        try:
-            return obj.twitch_profile.login
-        except TwitchProfile.DoesNotExist:
-            return None
 
     def get_youtube(self, obj):
         try:
