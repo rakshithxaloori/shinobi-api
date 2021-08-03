@@ -85,6 +85,22 @@ def profile_view(request, username):
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
+def search_view(request, username):
+    # TODO cache will be very useful for this view
+    users = User.objects.filter(username__startswith=username)[:10]
+    users_json = UserSerializer(users, many=True).data
+    return JsonResponse(
+        {
+            "detail": "usernamess that start with {}".format(username),
+            "payload": {"users": users_json},
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def follow_user_view(request, username):
     if username is None:
         return JsonResponse(
