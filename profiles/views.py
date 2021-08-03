@@ -1,4 +1,3 @@
-from os import POSIX_FADV_DONTNEED
 from django.http import JsonResponse
 
 from rest_framework import status
