@@ -1,5 +1,3 @@
-from chat.utils import create_chat
-from os import POSIX_FADV_DONTNEED
 from django.http import JsonResponse, HttpResponse
 
 from rest_framework import status
