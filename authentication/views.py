@@ -9,6 +9,8 @@ from rest_framework.decorators import (
     permission_classes,
 )
 
+from rest_framework_api_key.permissions import HasAPIKey
+
 from knox.auth import TokenAuthentication
 
 from google.oauth2 import id_token
@@ -18,9 +20,11 @@ from decouple import config
 
 from authentication.utils import token_response, create_user
 from authentication.models import User
+from notification.utils import delete_push_token
 
 
 @api_view(["POST"])
+@permission_classes([HasAPIKey])
 def check_username_view(request):
     username = request.data.get("username", None)
 
@@ -38,6 +42,7 @@ def check_username_view(request):
 
 
 @api_view(["POST"])
+@permission_classes([HasAPIKey])
 def google_login_view(request):
     google_id_token = request.data.get("id_token", None)
 
@@ -75,16 +80,28 @@ def google_login_view(request):
         )
 
 
-@api_view(["GET"])
+@api_view(["POST"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def logout_view(request):
-    # Logging out is simply deleting the token
+    # Delete auth token
     request._auth.delete()
+
+    # Change active status
+    user = request.user
+    user.last_active = timezone.now()
+    user.active = False
+    user.save(update_fields=["last_active", "active"])
+
+    # Delete push token
+    push_token = request.data.get("token", None)
+    if push_token is not None:
+        delete_push_token(user, push_token)
     return JsonResponse({"detail": "Logged out"}, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
+@permission_classes([HasAPIKey])
 def google_signup_view(request):
     google_id_token = request.data.get("id_token", None)
 
@@ -130,7 +147,7 @@ def google_signup_view(request):
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def token_valid_view(request):
     return JsonResponse(
         {
@@ -146,7 +163,7 @@ def token_valid_view(request):
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def active_view(request):
     user = request.user
     user.last_open = timezone.now()
@@ -157,12 +174,12 @@ def active_view(request):
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def inactive_view(request):
     user = request.user
-    user.last_inactive = timezone.now()
+    user.last_active = timezone.now()
     user.active = False
-    user.save(update_fields=["last_inactive", "active"])
+    user.save(update_fields=["last_active", "active"])
     return JsonResponse(
         {"detail": "Inactive status updated"}, status=status.HTTP_200_OK
     )

@@ -3,18 +3,17 @@ from channels.db import database_sync_to_async
 
 from django.contrib.auth.models import AnonymousUser
 
-from knox.models import AuthToken
+from knox.auth import TokenAuthentication
+
+knoxAuth = TokenAuthentication()
 
 
 @database_sync_to_async
-def get_user(headers):
+def get_user(token_key):
     try:
-        token_name, token_key = headers[b"authorization"].decode().split()
-        if token_name == "Token":
-            token = AuthToken.objects.get(token_key=token_key)
-            # TODO also check access to chat from id in message.chat_id
-            return token.user
-    except AuthToken.DoesNotExist:
+        user = knoxAuth.authenticate_credentials(token=token_key)[0]
+        return user
+    except Exception:
         return AnonymousUser()
 
 
@@ -24,8 +23,9 @@ class TokenAuthMiddleware:
 
     async def __call__(self, scope, receive, send):
         headers = dict(scope["headers"])
-        if b"authorization" in headers:
-            scope["user"] = await get_user(headers)
+        scope["user"] = AnonymousUser()
+        if b"sec-websocket-protocol" in headers:
+            scope["user"] = await get_user(headers[b"sec-websocket-protocol"])
         return await self.inner(scope, receive, send)
 
 

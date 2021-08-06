@@ -9,6 +9,8 @@ from rest_framework.decorators import (
     permission_classes,
 )
 
+from rest_framework_api_key.permissions import HasAPIKey
+
 from knox.auth import TokenAuthentication
 
 from django_cassiopeia import cassiopeia as cass
@@ -18,7 +20,7 @@ from decouple import config
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def my_lol_profile_view(request):
     summoner = cass.get_summoner(name="Kalturi", region="NA")
     return JsonResponse(
@@ -37,7 +39,7 @@ def my_lol_profile_view(request):
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def champion_masteries_view(request, username=None, beginIndex=0, endIndex=20):
     if username is None:
         return JsonResponse(
@@ -96,7 +98,7 @@ def champion_masteries_view(request, username=None, beginIndex=0, endIndex=20):
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def champion_view(request, key=None):
     if key is None:
         return JsonResponse(

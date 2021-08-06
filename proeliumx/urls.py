@@ -21,5 +21,6 @@ urlpatterns = [
     path("auth/", include("authentication.urls")),
     path("profile/", include("profiles.urls")),
     path("chat/", include("chat.urls")),
+    path("notification/", include("notification.urls")),
     path("lol/", include("league_of_legends.urls")),
 ]

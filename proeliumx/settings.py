@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "authentication",
     "profiles",
     "chat",
+    "notification",
     "league_of_legends",
 ]
 
@@ -158,12 +159,6 @@ from corsheaders.defaults import default_headers
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "x-api-key",
 ]
-
-REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework_api_key.permissions.HasAPIKey",
-    ]
-}
 
 
 ################################################################################
