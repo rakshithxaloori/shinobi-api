@@ -69,14 +69,14 @@ class ProfileSerializer(ModelSerializer):
         return obj.user.follower.count()
 
     def get_following(self, obj):
-        return obj.following.count()
+        return obj.followings.count()
 
     def get_me_following(self, obj):
         me = self.context.get("me", None)
         if me is None:
             return False
         user_pk = self.context.get("user_pk")
-        return me.profile.following.filter(pk=user_pk).exists()
+        return me.profile.followings.filter(pk=user_pk).exists()
 
     def get_youtube(self, obj):
         try:

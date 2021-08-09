@@ -105,19 +105,9 @@ def follow_user_view(request, username):
         )
     try:
         being_followed_user = User.objects.get(username=username)
-        follower_user = request.user
         follower_profile = request.user.profile
-
-        follower_profile.following.add(being_followed_user)
-
-        create_chat(
-            being_followed_user=being_followed_user, follower_user=follower_user
-        )
-        # Do stuff after someone receives a follow
-        p_utils.after_follow(being_followed_user.profile)
-
+        follower_profile.followings.add(being_followed_user)
         follower_profile.save()
-        create_notification(Notification.FOLLOW, follower_user, being_followed_user)
         return JsonResponse(
             {"detail": "Following {}".format(username)}, status=status.HTTP_200_OK
         )
@@ -139,15 +129,7 @@ def unfollow_user_view(request, username):
     try:
         being_followed_user = User.objects.get(username=username)
         profile = request.user.profile
-
-        profile.following.remove(being_followed_user)
-
-        # Delete the chat
-        delete_chat(being_followed_user=being_followed_user, follower_user=request.user)
-
-        # Do stuff after being unfollowed
-        p_utils.after_unfollow(being_followed_user.profile)
-
+        profile.followings.remove(being_followed_user)
         profile.save()
         return JsonResponse(
             {"detail": "Unfollowed {}".format(username)}, status=status.HTTP_200_OK
@@ -176,13 +158,7 @@ def remove_follower_view(request, username):
     try:
         follower_user = User.objects.get(username=username)
         profile = follower_user.profile
-        profile.following.remove(request.user)
-
-        # Delete the chat
-        delete_chat(being_followed_user=request.user, follower_user=follower_user)
-
-        # After getting unfollowed
-        p_utils.after_unfollow(request.user.profile)
+        profile.followings.remove(request.user)
 
         return JsonResponse(
             {"detail": "{} removed from followers".format(follower_user.username)},

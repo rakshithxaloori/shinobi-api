@@ -4,7 +4,7 @@ from chat.models import Chat, ChatUser
 def create_chat(being_followed_user, follower_user):
     # Create chat only if bidirectional follow
     if (
-        being_followed_user.profile.following.filter(pk=follower_user.pk).exists()
+        being_followed_user.profile.followings.filter(pk=follower_user.pk).exists()
         and not Chat.objects.filter(users__in=[follower_user, being_followed_user])
         .distinct()
         .exists()
