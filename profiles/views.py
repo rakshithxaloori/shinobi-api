@@ -18,8 +18,7 @@ from chat.models import Chat
 from chat.utils import create_chat, delete_chat
 from profiles.models import Game, TwitchProfile, TwitchStream, YouTubeProfile
 from profiles.serializers import ProfileSerializer, UserSerializer
-from profiles import twitch
-from profiles.utils import add_profile_picture
+from profiles import twitch, utils as p_utils
 from profiles import youtube
 from notification.utils import create_notification
 from notification.models import Notification
@@ -105,16 +104,20 @@ def follow_user_view(request, username):
             {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST
         )
     try:
-        following_user = User.objects.get(username=username)
+        being_followed_user = User.objects.get(username=username)
         follower_user = request.user
         follower_profile = request.user.profile
 
-        follower_profile.following.add(following_user)
+        follower_profile.following.add(being_followed_user)
 
-        create_chat(following_user=following_user, follower_user=follower_user)
+        create_chat(
+            being_followed_user=being_followed_user, follower_user=follower_user
+        )
+        # Do stuff after someone receives a follow
+        p_utils.after_follow(being_followed_user.profile)
 
         follower_profile.save()
-        create_notification(Notification.FOLLOW, follower_user, following_user)
+        create_notification(Notification.FOLLOW, follower_user, being_followed_user)
         return JsonResponse(
             {"detail": "Following {}".format(username)}, status=status.HTTP_200_OK
         )
@@ -134,13 +137,16 @@ def unfollow_user_view(request, username):
             {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST
         )
     try:
-        following_user = User.objects.get(username=username)
+        being_followed_user = User.objects.get(username=username)
         profile = request.user.profile
 
-        profile.following.remove(following_user)
+        profile.following.remove(being_followed_user)
 
         # Delete the chat
-        delete_chat(following_user=following_user, follower_user=request.user)
+        delete_chat(being_followed_user=being_followed_user, follower_user=request.user)
+
+        # Do stuff after being unfollowed
+        p_utils.after_unfollow(being_followed_user.profile)
 
         profile.save()
         return JsonResponse(
@@ -173,7 +179,10 @@ def remove_follower_view(request, username):
         profile.following.remove(request.user)
 
         # Delete the chat
-        delete_chat(following_user=request.user, follower_user=follower_user)
+        delete_chat(being_followed_user=request.user, follower_user=follower_user)
+
+        # After getting unfollowed
+        p_utils.after_unfollow(request.user.profile)
 
         return JsonResponse(
             {"detail": "{} removed from followers".format(follower_user.username)},
@@ -250,7 +259,9 @@ def twitch_connect_view(request):
             twitch_profile.save()
 
             # Adds the picture if there was None or "" before
-            add_profile_picture(request.user, user_info.get("profile_image_url", None))
+            p_utils.add_profile_picture(
+                request.user, user_info.get("profile_image_url", None)
+            )
 
             # Create a subscription
             twitch.create_subscription(twitch_profile)

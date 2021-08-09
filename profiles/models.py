@@ -48,6 +48,7 @@ class Profile(models.Model):
     user = models.OneToOneField(User, related_name="profile", on_delete=models.PROTECT)
     following = models.ManyToManyField(User, related_name="follower", blank=True)
     bio = models.TextField(max_length=150, default=random_bio)
+    trend_score = models.IntegerField(default=0)
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
 
