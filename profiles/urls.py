@@ -3,7 +3,7 @@ from django.urls import path
 from profiles import views
 
 urlpatterns = [
-    path("all/", views.all_profiles_view, name="all profiles"),
+    path("trending/", views.trending_profiles_view, name="trending profiles"),
     path("my/", views.my_profile_view, name="my profile"),
     path("update/", views.update_profile_view, name="update profile"),
     path("u/<str:username>/", views.profile_view, name="profile"),

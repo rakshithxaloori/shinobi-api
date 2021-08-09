@@ -24,9 +24,12 @@ from profiles import youtube
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
-def all_profiles_view(request):
+def trending_profiles_view(request):
+    trending_users = User.objects.filter(is_staff=False).order_by(
+        "profile__trend_score"
+    )[:10]
     user_serializer = UserSerializer(
-        User.objects.filter(is_staff=False).exclude(username=request.user.username),
+        trending_users,
         many=True,
     )
     return JsonResponse(
