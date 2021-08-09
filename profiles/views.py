@@ -15,13 +15,10 @@ from knox.auth import TokenAuthentication
 
 from authentication.models import User
 from chat.models import Chat
-from chat.utils import create_chat, delete_chat
 from profiles.models import Game, TwitchProfile, TwitchStream, YouTubeProfile
 from profiles.serializers import ProfileSerializer, UserSerializer
 from profiles import twitch, utils as p_utils
 from profiles import youtube
-from notification.utils import create_notification
-from notification.models import Notification
 
 
 @api_view(["GET"])

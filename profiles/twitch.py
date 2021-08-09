@@ -1,4 +1,3 @@
-from os import access
 import requests
 import hmac
 from hashlib import sha256

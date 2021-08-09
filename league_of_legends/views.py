@@ -1,4 +1,3 @@
-from django.contrib import auth
 from django.http import JsonResponse
 
 from rest_framework import status
@@ -14,8 +13,6 @@ from rest_framework_api_key.permissions import HasAPIKey
 from knox.auth import TokenAuthentication
 
 from django_cassiopeia import cassiopeia as cass
-
-from decouple import config
 
 
 @api_view(["GET"])

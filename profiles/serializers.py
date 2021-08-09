@@ -1,4 +1,3 @@
-from profiles import twitch
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from authentication.models import User
