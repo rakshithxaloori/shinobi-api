@@ -15,8 +15,11 @@ from knox.auth import TokenAuthentication
 
 from authentication.models import User
 from chat.models import Chat
-from profiles.models import Game, TwitchProfile, TwitchStream, YouTubeProfile
-from profiles.serializers import ProfileSerializer, UserSerializer
+from profiles.models import Game, Profile, TwitchProfile, TwitchStream, YouTubeProfile
+from profiles.serializers import (
+    FullProfileSerializer,
+    MiniProfileSerializer,
+)
 from profiles import twitch, utils as p_utils
 from profiles import youtube
 
@@ -25,15 +28,17 @@ from profiles import youtube
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def trending_profiles_view(request):
-    trending_users = User.objects.filter(is_staff=False).order_by(
-        "profile__trend_score"
+    trending_profiles = Profile.objects.order_by("trend_score").filter(
+        user__is_staff=False
     )[:10]
-    user_serializer = UserSerializer(
-        trending_users,
-        many=True,
-    )
+
+    profiles_data = MiniProfileSerializer(trending_profiles, many=True).data
+
     return JsonResponse(
-        {"detail": "All user profiles", "payload": {"users": user_serializer.data}},
+        {
+            "detail": "All user profiles",
+            "payload": {"profiles": profiles_data},
+        },
         status=status.HTTP_200_OK,
     )
 
@@ -42,11 +47,11 @@ def trending_profiles_view(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def my_profile_view(request):
-    profile_serializer = ProfileSerializer(request.user.profile)
+    profile_data = FullProfileSerializer(request.user.profile).data
     return JsonResponse(
         {
             "detail": "My profile data",
-            "payload": {"profile": profile_serializer.data},
+            "payload": {"profile": profile_data},
         },
         status=status.HTTP_200_OK,
     )
@@ -62,13 +67,13 @@ def profile_view(request, username):
         )
     try:
         user = User.objects.get(username=username)
-        profile_serializer = ProfileSerializer(
+        profile_data = FullProfileSerializer(
             user.profile, context={"me": request.user, "user_pk": user.pk}
-        )
+        ).data
         return JsonResponse(
             {
                 "detail": "{}'s profile data".format(username),
-                "payload": {"profile": profile_serializer.data},
+                "payload": {"profile": profile_data},
             },
             status=status.HTTP_200_OK,
         )
@@ -84,12 +89,13 @@ def profile_view(request, username):
 @permission_classes([IsAuthenticated, HasAPIKey])
 def search_view(request, username):
     # TODO cache will be very useful for this view
-    users = User.objects.filter(username__startswith=username)[:10]
-    users_json = UserSerializer(users, many=True).data
+    profiles = Profile.objects.filter(user__username__startswith=username)[:10]
+    profiles_data = MiniProfileSerializer(profiles, many=True).data
+
     return JsonResponse(
         {
             "detail": "usernamess that start with {}".format(username),
-            "payload": {"users": users_json},
+            "payload": {"users": profiles_data},
         },
         status=status.HTTP_200_OK,
     )

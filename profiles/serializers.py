@@ -44,7 +44,7 @@ class TwitchProfileSerializer(ModelSerializer):
             return False
 
 
-class ProfileSerializer(ModelSerializer):
+class FullProfileSerializer(ModelSerializer):
     user = UserSerializer()
     followers = SerializerMethodField()
     following = SerializerMethodField()
@@ -81,4 +81,22 @@ class ProfileSerializer(ModelSerializer):
         try:
             return obj.youtube_profile.channel_id
         except YouTubeProfile.DoesNotExist:
+            return None
+
+
+##########################################
+class MiniProfileSerializer(ModelSerializer):
+    user = UserSerializer()
+    game_alias = SerializerMethodField()
+
+    class Meta:
+        model = Profile
+        fields = ["user", "game_alias"]
+
+    def get_game_alias(self, obj):
+        """Return the game that user plays the most."""
+        try:
+            # TODO {game_alias, game_logo_url}
+            return {"alias": "Kalturi", "logo": ""}
+        except Exception:
             return None
