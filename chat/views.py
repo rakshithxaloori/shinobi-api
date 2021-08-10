@@ -52,13 +52,13 @@ def chats_view(request, begin_index, end_index):
                 begin_index:end_index
             ]
 
-        chats_serializer = ChatUserSerializer(
+        chats_data = ChatUserSerializer(
             chat_users, many=True, context={"username": username}
-        )
+        ).data
         return JsonResponse(
             {
                 "detail": "{}'s chats".format(username),
-                "payload": {"chat_users": chats_serializer.data},
+                "payload": {"chat_users": chats_data},
             },
             status=status.HTTP_200_OK,
         )
@@ -104,11 +104,11 @@ def chat_messages(request, chat_id, begin_index=0, end_index=25):
         else:
             messages = chat.messages.order_by("-sent_at")[begin_index:end_index]
 
-        messages_serializer = MessageSerializer(messages, many=True)
+        messages_data = MessageSerializer(messages, many=True).data
         return JsonResponse(
             {
                 "detail": "{}'s chat".format(request.user.username),
-                "payload": {"messages": messages_serializer.data},
+                "payload": {"messages": messages_data},
             },
             status=status.HTTP_200_OK,
         )
