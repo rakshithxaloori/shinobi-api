@@ -28,7 +28,7 @@ from profiles import youtube
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def trending_profiles_view(request):
-    trending_profiles = Profile.objects.order_by("trend_score").filter(
+    trending_profiles = Profile.objects.order_by("-trend_score").filter(
         user__is_staff=False
     )[:10]
 
