@@ -46,8 +46,11 @@ class Game(models.Model):
 
 class Profile(models.Model):
     user = models.OneToOneField(User, related_name="profile", on_delete=models.PROTECT)
-    following = models.ManyToManyField(User, related_name="follower", blank=True)
+    followings = models.ManyToManyField(
+        User, related_name="follower", blank=True, through="Following"
+    )
     bio = models.TextField(max_length=150, default=random_bio)
+    trend_score = models.IntegerField(default=0)
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
 
@@ -56,6 +59,15 @@ class Profile(models.Model):
 
     class Meta:
         ordering = ["-created"]
+
+
+class Following(models.Model):
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
+    profile = models.ForeignKey(Profile, on_delete=models.PROTECT)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return "{} follows {}".format(self.profile.user.username, self.user.username)
 
 
 class TwitchProfile(models.Model):

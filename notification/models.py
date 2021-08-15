@@ -10,7 +10,7 @@ class Notification(models.Model):
     NOTIFICATION_CHOICES = [(FOLLOW, "follow")]
 
     sender = models.ForeignKey(
-        User, on_delete=models.PROTECT
+        User, on_delete=models.CASCADE
     )  # Never access notifications with sender
     receiver = models.ForeignKey(
         User, related_name="notifications", on_delete=models.PROTECT
@@ -25,7 +25,9 @@ class Notification(models.Model):
     sent_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return "{} | {} | {}".format(self.type, self.receiver.username, self.sent_at)
+        return "{} | {} | {} | {}".format(
+            self.type, self.sender.username, self.receiver.username, self.sent_at
+        )
 
 
 class ExponentPushToken(models.Model):

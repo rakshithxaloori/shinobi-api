@@ -1,4 +1,3 @@
-from profiles import twitch
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from authentication.models import User
@@ -45,7 +44,7 @@ class TwitchProfileSerializer(ModelSerializer):
             return False
 
 
-class ProfileSerializer(ModelSerializer):
+class FullProfileSerializer(ModelSerializer):
     user = UserSerializer()
     followers = SerializerMethodField()
     following = SerializerMethodField()
@@ -69,17 +68,35 @@ class ProfileSerializer(ModelSerializer):
         return obj.user.follower.count()
 
     def get_following(self, obj):
-        return obj.following.count()
+        return obj.followings.count()
 
     def get_me_following(self, obj):
         me = self.context.get("me", None)
         if me is None:
             return False
         user_pk = self.context.get("user_pk")
-        return me.profile.following.filter(pk=user_pk).exists()
+        return me.profile.followings.filter(pk=user_pk).exists()
 
     def get_youtube(self, obj):
         try:
             return obj.youtube_profile.channel_id
         except YouTubeProfile.DoesNotExist:
+            return None
+
+
+##########################################
+class MiniProfileSerializer(ModelSerializer):
+    user = UserSerializer()
+    game_alias = SerializerMethodField()
+
+    class Meta:
+        model = Profile
+        fields = ["user", "game_alias"]
+
+    def get_game_alias(self, obj):
+        """Return the game that user plays the most."""
+        try:
+            # TODO {game_alias, game_logo_url}
+            return {"alias": "Kalturi", "logo": ""}
+        except Exception:
             return None

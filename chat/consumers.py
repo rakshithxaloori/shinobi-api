@@ -1,6 +1,5 @@
 import json
 
-from django.contrib.auth.models import AnonymousUser
 from django.core.serializers.json import DjangoJSONEncoder
 
 from channels.db import database_sync_to_async

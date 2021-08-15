@@ -49,12 +49,12 @@ def notifications_view(request, begin_index, end_index):
                 begin_index:end_index
             ]
 
-        notifications_serializer = NotificationSerializer(notifications, many=True)
+        notifications_data = NotificationSerializer(notifications, many=True).data
 
         return JsonResponse(
             {
                 "detail": "{}'s notifications".format(user.username),
-                "payload": {"notifications": notifications_serializer.data},
+                "payload": {"notifications": notifications_data},
             },
             status=status.HTTP_200_OK,
         )

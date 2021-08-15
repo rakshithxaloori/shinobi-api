@@ -15,26 +15,30 @@ from knox.auth import TokenAuthentication
 
 from authentication.models import User
 from chat.models import Chat
-from chat.utils import create_chat, delete_chat
-from profiles.models import Game, TwitchProfile, TwitchStream, YouTubeProfile
-from profiles.serializers import ProfileSerializer, UserSerializer
-from profiles import twitch
-from profiles.utils import add_profile_picture
+from profiles.models import Game, Profile, TwitchProfile, TwitchStream, YouTubeProfile
+from profiles.serializers import (
+    FullProfileSerializer,
+    MiniProfileSerializer,
+)
+from profiles import twitch, utils as p_utils
 from profiles import youtube
-from notification.utils import create_notification
-from notification.models import Notification
 
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
-def all_profiles_view(request):
-    user_serializer = UserSerializer(
-        User.objects.filter(is_staff=False).exclude(username=request.user.username),
-        many=True,
-    )
+def trending_profiles_view(request):
+    trending_profiles = Profile.objects.order_by("-trend_score").filter(
+        user__is_staff=False
+    )[:10]
+
+    profiles_data = MiniProfileSerializer(trending_profiles, many=True).data
+
     return JsonResponse(
-        {"detail": "All user profiles", "payload": {"users": user_serializer.data}},
+        {
+            "detail": "All user profiles",
+            "payload": {"profiles": profiles_data},
+        },
         status=status.HTTP_200_OK,
     )
 
@@ -43,11 +47,11 @@ def all_profiles_view(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def my_profile_view(request):
-    profile_serializer = ProfileSerializer(request.user.profile)
+    profile_data = FullProfileSerializer(request.user.profile).data
     return JsonResponse(
         {
             "detail": "My profile data",
-            "payload": {"profile": profile_serializer.data},
+            "payload": {"profile": profile_data},
         },
         status=status.HTTP_200_OK,
     )
@@ -63,13 +67,13 @@ def profile_view(request, username):
         )
     try:
         user = User.objects.get(username=username)
-        profile_serializer = ProfileSerializer(
+        profile_data = FullProfileSerializer(
             user.profile, context={"me": request.user, "user_pk": user.pk}
-        )
+        ).data
         return JsonResponse(
             {
                 "detail": "{}'s profile data".format(username),
-                "payload": {"profile": profile_serializer.data},
+                "payload": {"profile": profile_data},
             },
             status=status.HTTP_200_OK,
         )
@@ -85,12 +89,13 @@ def profile_view(request, username):
 @permission_classes([IsAuthenticated, HasAPIKey])
 def search_view(request, username):
     # TODO cache will be very useful for this view
-    users = User.objects.filter(username__startswith=username)[:10]
-    users_json = UserSerializer(users, many=True).data
+    profiles = Profile.objects.filter(user__username__startswith=username)[:10]
+    profiles_data = MiniProfileSerializer(profiles, many=True).data
+
     return JsonResponse(
         {
             "detail": "usernamess that start with {}".format(username),
-            "payload": {"users": users_json},
+            "payload": {"users": profiles_data},
         },
         status=status.HTTP_200_OK,
     )
@@ -105,16 +110,10 @@ def follow_user_view(request, username):
             {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST
         )
     try:
-        following_user = User.objects.get(username=username)
-        follower_user = request.user
+        being_followed_user = User.objects.get(username=username)
         follower_profile = request.user.profile
-
-        follower_profile.following.add(following_user)
-
-        create_chat(following_user=following_user, follower_user=follower_user)
-
+        follower_profile.followings.add(being_followed_user)
         follower_profile.save()
-        create_notification(Notification.FOLLOW, follower_user, following_user)
         return JsonResponse(
             {"detail": "Following {}".format(username)}, status=status.HTTP_200_OK
         )
@@ -134,14 +133,9 @@ def unfollow_user_view(request, username):
             {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST
         )
     try:
-        following_user = User.objects.get(username=username)
+        being_followed_user = User.objects.get(username=username)
         profile = request.user.profile
-
-        profile.following.remove(following_user)
-
-        # Delete the chat
-        delete_chat(following_user=following_user, follower_user=request.user)
-
+        profile.followings.remove(being_followed_user)
         profile.save()
         return JsonResponse(
             {"detail": "Unfollowed {}".format(username)}, status=status.HTTP_200_OK
@@ -170,10 +164,7 @@ def remove_follower_view(request, username):
     try:
         follower_user = User.objects.get(username=username)
         profile = follower_user.profile
-        profile.following.remove(request.user)
-
-        # Delete the chat
-        delete_chat(following_user=request.user, follower_user=follower_user)
+        profile.followings.remove(request.user)
 
         return JsonResponse(
             {"detail": "{} removed from followers".format(follower_user.username)},
@@ -250,7 +241,9 @@ def twitch_connect_view(request):
             twitch_profile.save()
 
             # Adds the picture if there was None or "" before
-            add_profile_picture(request.user, user_info.get("profile_image_url", None))
+            p_utils.add_profile_picture(
+                request.user, user_info.get("profile_image_url", None)
+            )
 
             # Create a subscription
             twitch.create_subscription(twitch_profile)

@@ -1,5 +1,5 @@
 from authentication.models import User
-from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from rest_framework.serializers import ModelSerializer
 
 from notification.models import Notification
 
