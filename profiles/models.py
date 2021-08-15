@@ -66,6 +66,9 @@ class Following(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.PROTECT)
     created = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self) -> str:
+        return "{} follows {}".format(self.profile.user.username, self.user.username)
+
 
 class TwitchProfile(models.Model):
     profile = models.OneToOneField(

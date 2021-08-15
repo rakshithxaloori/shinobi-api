@@ -1,4 +1,3 @@
-from datetime import time
 from django.db import models
 from django.utils import timezone
 
@@ -11,7 +10,11 @@ class Chat(models.Model):
     last_updated = models.DateTimeField(default=timezone.now)
     created = models.DateTimeField(auto_now_add=True)
 
-    # TODO limit users.count() to 2
+    # class Meta:
+    #     constraints = [
+    #         models.CheckConstraint(check=models.Q(), name="chat_users_count")
+    #     ]
+
     def __str__(self):
         chat_users = self.users.all()
         return "{} || {} || {}".format(
