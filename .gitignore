@@ -7,4 +7,5 @@
 
 db.sqlite3
 
-# Apps
+# Custom
+**/custom.py
