@@ -1,3 +1,5 @@
+from celery import shared_task
+
 from django.core.exceptions import ValidationError
 
 from exponent_server_sdk import (

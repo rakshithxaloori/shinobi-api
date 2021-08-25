@@ -1,6 +1,9 @@
+from celery import shared_task
+
 from chat.models import Chat, ChatUser
 
 
+@shared_task
 def create_chat(being_followed_user, follower_user):
     # Create chat only if bidirectional follow
     if (
@@ -21,6 +24,7 @@ def create_chat(being_followed_user, follower_user):
         new_chat_user_2.save()
 
 
+@shared_task
 def delete_chat(being_followed_user, follower_user):
     chat = Chat.objects.filter(
         users__in=[being_followed_user, follower_user]
