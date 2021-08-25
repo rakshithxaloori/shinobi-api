@@ -96,7 +96,7 @@ def logout_view(request):
     # Delete push token
     push_token = request.data.get("token", None)
     if push_token is not None:
-        delete_push_token.delay(user, push_token)
+        delete_push_token.delay(user.pk, push_token)
     return JsonResponse({"detail": "Logged out"}, status=status.HTTP_200_OK)
 
 

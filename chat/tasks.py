@@ -1,10 +1,16 @@
 from celery import shared_task
 
+from authentication.models import User
 from chat.models import Chat, ChatUser
 
 
 @shared_task
-def create_chat(being_followed_user, follower_user):
+def create_chat(being_followed_user_pk, follower_user_pk):
+    try:
+        being_followed_user = User.objects.get(pk=being_followed_user_pk)
+        follower_user = User.objects.get(pk=follower_user_pk)
+    except User.DoesNotExist:
+        return
     # Create chat only if bidirectional follow
     if (
         being_followed_user.profile.followings.filter(pk=follower_user.pk).exists()
@@ -25,7 +31,12 @@ def create_chat(being_followed_user, follower_user):
 
 
 @shared_task
-def delete_chat(being_followed_user, follower_user):
+def delete_chat(being_followed_user_pk, follower_user_pk):
+    try:
+        being_followed_user = User.objects.get(pk=being_followed_user_pk)
+        follower_user = User.objects.get(pk=follower_user_pk)
+    except User.DoesNotExist:
+        return
     chat = Chat.objects.filter(
         users__in=[being_followed_user, follower_user]
     ).distinct()

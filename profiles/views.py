@@ -242,7 +242,7 @@ def twitch_connect_view(request):
 
             # Adds the picture if there was None or "" before
             p_tasks.add_profile_picture.delay(
-                request.user, user_info.get("profile_image_url", None)
+                request.user.pk, user_info.get("profile_image_url", None)
             )
 
             # Create a subscription

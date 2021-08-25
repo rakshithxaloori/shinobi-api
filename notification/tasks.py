@@ -11,6 +11,7 @@ from exponent_server_sdk import (
 )
 from requests.exceptions import ConnectionError, HTTPError
 
+from authentication.models import User
 from notification.models import Notification, ExponentPushToken
 
 
@@ -71,8 +72,11 @@ def send_push_message(token, title, message, extra=None):
 
 
 # TODO override Notification's create method?
-def create_notification(type, sender, receiver):
+@shared_task
+def create_notification(type, sender_pk, receiver_pk):
     try:
+        sender = User.objects.get(pk=sender_pk)
+        receiver = User.objects.get(pk=receiver_pk)
         new_notification = Notification.objects.create(
             type=type, sender=sender, receiver=receiver
         )
@@ -85,12 +89,21 @@ def create_notification(type, sender, receiver):
         for expo_token in expo_tokens:
             # Send a push notification
             send_push_message(expo_token.token, title, message)
+
     except ValidationError:
         # TODO report the error
         return
 
+    except User.DoesNotExist:
+        return
 
-def delete_push_token(user, token):
+
+@shared_task
+def delete_push_token(user_pk, token):
+    try:
+        user = User.objects.get(pk=user_pk)
+    except User.DoesNotExist:
+        return
     if token is None or user is None:
         return
     try:
