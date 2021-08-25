@@ -47,7 +47,6 @@ INSTALLED_APPS = [
     "knox",
     "django_cassiopeia",
     "channels",
-    "fieldsignals",
     "authentication",
     "profiles",
     "chat",
