@@ -53,14 +53,20 @@ class ParticipantStats(models.Model):
     assists = models.PositiveSmallIntegerField(null=False, blank=False)
     deaths = models.PositiveSmallIntegerField(null=False, blank=False)
     kills = models.PositiveSmallIntegerField(null=False, blank=False)
-    # items is JSON string of [{"name", "full"}]
-    # eg [{"name": "Sorcerer's Shoes", "full": "3020.png'"}, ...]
+    # items is JSON string of [{"name", "image"}]
+    # eg [{"name": "Sorcerer's Shoes", "image": "3020.png'"}, ...]
     items = models.JSONField(null=False, blank=False)
 
     def __str__(self):
-        return "{} || {}/{}/{}".format(
-            self.participant.summoner.name, self.assists, self.deaths, self.kills
-        )
+        try:
+            return "{} || {}/{}/{}".format(
+                self.participant.summoner.name, self.assists, self.deaths, self.kills
+            )
+        except Exception:
+            # Happens in admin panel
+            # after deleting a participant
+            # then trying to delete participantstats
+            return "<participant> DELETED"
 
 
 class Participant(models.Model):
@@ -75,7 +81,7 @@ class Participant(models.Model):
         ParticipantStats, related_name="participant", on_delete=models.PROTECT
     )
     # https://ddragon.leagueoflegends.com/cdn/11.16.1/img/champion/{}.png
-    champion_key = models.CharField(max_length=15, null=False, blank=False)
+    champion_key = models.PositiveSmallIntegerField(null=False, blank=False)
     role = models.CharField(max_length=15, null=False, blank=False)
 
     def __str__(self):
@@ -94,7 +100,7 @@ class Match(models.Model):
         Team, related_name="r_match", on_delete=models.PROTECT
     )
     mode = models.CharField(max_length=30, blank=False, null=False)
-    region = models.CharField(max_length=3, blank=False, null=False)
+    region = models.CharField(max_length=5, blank=False, null=False)
 
     def __str__(self):
         return "{} || {}".format(self.creation, self.id)

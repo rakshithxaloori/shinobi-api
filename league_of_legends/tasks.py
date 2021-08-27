@@ -1,7 +1,10 @@
+import re
+from datetime import datetime
+
 from celery import shared_task
 
-from django_cassiopeia import cassiopeia as cass
 
+from league_of_legends.wrapper import get_match, get_summoner, get_matchlist
 from league_of_legends.models import (
     LoLProfile,
     Team,
@@ -12,89 +15,92 @@ from league_of_legends.models import (
 
 
 @shared_task
-def add_match_to_db(match):
+def add_match_to_db(match_id):
     try:
-        Match.objects.get(id=match.id)
-        print("SKIPPING MATCH", match.id)
+        match_dict = get_match(match_id=match_id)
+        if match_dict is None or match_dict["gameType"] != "MATCHED_GAME":
+            return
 
-    except Match.DoesNotExist:
-        # Add the match to DB
-        print("ADDING MATCH", match.id)
-        blue_team = Team.objects.create(
-            creation=match.creation.datetime,
-            color=Team.Color.blue,
-            win=match.blue_team.win,
-        )
-        blue_team.save()
-        red_team = Team.objects.create(
-            creation=match.creation.datetime,
-            color=Team.Color.red,
-            win=match.red_team.win,
-        )
-        red_team.save()
-
-        for p in match.blue_team.participants + match.red_team.participants:
-            # if p.is_bot:
-            #     continue
-            try:
-                summoner = LoLProfile.objects.get(puuid=p.summoner.puuid)
-            except LoLProfile.DoesNotExist:
-                summoner_remote = p.summoner
-                summoner = LoLProfile.objects.create(
-                    puuid=summoner_remote.puuid,
-                    profile=None,
-                    name=summoner_remote.name,
-                    account_id=summoner_remote.account_id,
-                    summoner_id=summoner_remote.id,
+        for team in match_dict["teams"]:
+            if team["teamId"] == 100:
+                # BLUE TEAM
+                blue_team = Team.objects.create(
+                    creation=datetime.fromtimestamp(match_dict["gameCreation"] / 1000),
+                    color=Team.Color.blue,
+                    win=team["win"] == "Win",
                 )
-                summoner.save()
+                blue_team.save()
+            elif team["teamId"] == 200:
+                # RED TEAM
+                red_team = Team.objects.create(
+                    creation=datetime.fromtimestamp(match_dict["gameCreation"] / 1000),
+                    color=Team.Color.red,
+                    win=team["win"] == "Win",
+                )
+                red_team.save()
+
+        for p in match_dict["participants"]:
+            summoner = get_summoner(account_id=p["player"]["accountId"])
+            if summoner is None:
+                continue
+            try:
+                lol_profile = LoLProfile.objects.get(puuid=summoner["puuid"])
+
+            except LoLProfile.DoesNotExist:
+                lol_profile = LoLProfile.objects.create(
+                    puuid=summoner["puuid"],
+                    name=summoner["name"],
+                    account_id=summoner["accountId"],
+                    summoner_id=summoner["id"],
+                )
+                lol_profile.save()
+
+            stats = p["stats"]
+            item_regex = re.compile("^item")  # ^ -> starts with
+            item_keys = list(filter(item_regex.match, stats.keys()))
 
             items = []
-            for item in p.stats.items:
-                if item is not None:
-                    items.append({"name": item.name, "image": item.image.full})
+
+            for item_key in item_keys:
+                item = stats[item_key]
+                if item != 0:
+                    items.append(item)
 
             new_p_stats = ParticipantStats.objects.create(
-                assists=p.stats.assists,
-                deaths=p.stats.deaths,
-                kills=p.stats.kills,
+                assists=stats["assists"],
+                deaths=stats["deaths"],
+                kills=stats["kills"],
                 items=items,
             )
             new_p_stats.save()
 
-            if p.team.side.value == 100:
-                # BLUE TEAM
-                new_p = Participant.objects.create(
-                    summoner=summoner,
-                    team=blue_team,
-                    stats=new_p_stats,
-                    champion_key=p.champion.key,
-                    role=p.role.value,
-                )
-            elif p.team.side.value == 200:
-                # RED TEAM
-                new_p = Participant.objects.create(
-                    summoner=summoner,
-                    team=red_team,
-                    stats=new_p_stats,
-                    champion_key=p.champion.key,
-                    role=p.role.value,
-                )
+            team = None
+            if p["teamId"] == 100:
+                team = blue_team
+            elif p["teamId"] == 200:
+                team = red_team
+
+            new_p = Participant.objects.create(
+                summoner=lol_profile,
+                team=team,
+                stats=new_p_stats,
+                champion_key=p["championId"],
+                role=p["timeline"]["role"],
+            )
             new_p.save()
 
         new_match = Match.objects.create(
-            id=match.id,
-            creation=match.creation.datetime,
+            id=match_dict["gameId"],
+            creation=datetime.fromtimestamp(match_dict["gameCreation"] / 1000),
             blue_team=blue_team,
             red_team=red_team,
-            mode=match.mode.value,
-            region=match.region.value,
+            mode=match_dict["gameMode"],
+            region=match_dict["platformId"],
         )
         new_match.save()
 
     except Exception as e:
-        # TODO REPORT
-        print(e)
+        print("EXCEPTION def add_match_to_db:", e)
 
 
 @shared_task
@@ -109,35 +115,27 @@ def update_match_history(lol_profile_pk):
 
     fetch_all = False
     try:
-        latest_match_local = (
-            lol_profile.participations.order_by("team__creation").first().team.match
-        )
-    except (Participant.DoesNotExist, AttributeError):
-        # AttributeError is caused when Team instance doesn't exist
-        fetch_all = True
-    except Exception as e:
-        print(e)
+        team = lol_profile.participations.order_by("-team__creation").first().team
+        if team.color == "B":
+            latest_match_local = team.b_match
+        else:
+            latest_match_local = team.r_match
+    except Exception:
         fetch_all = True
 
-    match_history = cass.get_summoner(account_id=lol_profile.account_id).match_history
-    match = None
+    matchlist = get_matchlist(
+        account_id=lol_profile.account_id, begin_index=0, end_index=20
+    )["matches"]
 
-    # Atmost fetch only 20 matches
-    # cause not needed more
-    for i in range(5):
-        print("FETCHING MATCH", match_history[i].id)
-        try:
-            match = match_history[i]
-            if not fetch_all and match.id == latest_match_local.id:
-                break
-            add_match_to_db(match)
-        except IndexError:
-            # IndexError - when total matches < 20
+    if matchlist is None:
+        return
+
+    for match in matchlist:
+        if not fetch_all and match["gameId"] == latest_match_local.id:
             break
-        except Exception as e:
-            # SAFE GUARD, MOSTLY NOT NEEDED
-            print(e)
-            break
+        add_match_to_db.delay(match_id=match["gameId"])
+        # add_match_to_db(match_id=match["gameId"])
+
     if not lol_profile.active:
         lol_profile.active = True
         lol_profile.save(update_fields=["active"])
@@ -153,26 +151,29 @@ def check_new_matches(lol_profile_pk):
     except LoLProfile.DoesNotExist:
         return
 
-    summoner = cass.get_summoner(account_id=lol_profile.account_id)
-    lol_profile.name = summoner.name
+    summoner = get_summoner(puuid=lol_profile.puuid)
+    if summoner is None:
+        return
+
+    lol_profile.name = summoner["name"]
     lol_profile.save(update_fields=["name"])
 
     try:
 
         latest_match_remote = summoner.match_history[0]
 
-        latest_match_local = (
-            lol_profile.participations.order_by("team__creation").first().team.match
-        )
-
-    except Participant.DoesNotExist:
-        return
+        team = lol_profile.participations.order_by("-team__creation").first().team
+        if team.color == "B":
+            latest_match_local = team.b_match
+        else:
+            latest_match_local = team.r_match
 
     except Exception as e:
-        print(e)
+        print("EXCEPTION def create_new_matches:", e)
         return
 
     if latest_match_remote.id != latest_match_local.id:
         lol_profile.updating = True
-        lol_profile.save(fields=["updating"])
-        update_match_history(lol_profile=lol_profile)
+        lol_profile.save(update_fields=["updating"])
+        update_match_history.delay(lol_profile_pk)
+        # update_match_history(lol_profile_pk)

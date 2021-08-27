@@ -26,7 +26,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config("DEBUG", cast=bool)
+CI_CD_STAGE = config("CI_CD_STAGE")
+
+if CI_CD_STAGE == "prod":
+    DEBUG = False
+elif CI_CD_STAGE == "test" or CI_CD_STAGE == "dev":
+    DEBUG = True
 
 ALLOWED_HOSTS = [config("API_HOSTNAME")]
 
@@ -51,6 +56,7 @@ INSTALLED_APPS = [
     "profiles",
     "chat",
     "notification",
+    "analytics",
     "league_of_legends",
 ]
 
@@ -89,7 +95,6 @@ WSGI_APPLICATION = "proeliumx.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-CI_CD_STAGE = config("CI_CD_STAGE")
 
 if CI_CD_STAGE == "prod":
     DATABASES = {

@@ -10,3 +10,4 @@ from league_of_legends.models import LoLProfile
 def post_save_create_lolprofile(sender, instance, created, **kwargs):
     if created and instance.profile is not None:
         update_match_history.delay(instance.pk)
+        # update_match_history(instance.pk)

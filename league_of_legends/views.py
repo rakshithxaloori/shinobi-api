@@ -15,6 +15,24 @@ from knox.auth import TokenAuthentication
 
 from django_cassiopeia import cassiopeia as cass
 
+from authentication.models import User
+from league_of_legends.models import LoLProfile
+from league_of_legends.tasks import check_new_matches
+from league_of_legends.serializers import ParticipantSerializer
+
+
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def oauth_view(request):
+    # TODO
+    # Check if the leagueoflegends profile already exists
+    # Create only if doesn't
+    # TODO get all of match history - SUPER IMPORTANT, use signals
+
+    # return "detail": "Fetching data, come back in a while"
+    pass
+
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
@@ -27,7 +45,7 @@ def my_lol_profile_view(request):
             "payload": {
                 "name": summoner.name,
                 "level": summoner.level,
-                "plaform": summoner.region.value,
+                "region": summoner.region.value,
                 "profile_icon": summoner.profile_icon.url,
             },
         },
@@ -36,169 +54,69 @@ def my_lol_profile_view(request):
 
 
 @api_view(["GET"])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated, HasAPIKey])
-def match_history_view(request, username=None, match_index=0):
+# @authentication_classes([TokenAuthentication])
+# @permission_classes([IsAuthenticated, HasAPIKey])
+def match_history_view(request, username=None, begin_index=0, end_index=10):
     if username is None:
         return JsonResponse(
             {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    # try:
-    #     summoner_name = User.objects.get(
-    #         username=username
-    #     ).league_of_legends_profile_name
-    # except (User.DoesNotExist, LeagueOfLegendsProfile.DoesNotExist):
-    #     return JsonResponse({"detail": ""}, status=status.HTTP_404_NOT_FOUND)
+    if begin_index < 0 or begin_index >= end_index:
+        return JsonResponse(
+            {"detail": "Bad indices"}, status=status.HTTP_400_BAD_REQUEST
+        )
 
-    summoner = cass.get_summoner(name="bigfatlp")
     try:
-        match = summoner.match_history[match_index]
-        match_dict = {}
-        match_dict["id"] = match.id
-        match_dict["creation"] = match.creation.for_json()
-        team = None
-        participant = None
+        lol_profile = User.objects.get(username=username).profile.lol_profile
+    except (User.DoesNotExist, LoLProfile.DoesNotExist):
+        return JsonResponse(
+            {"detail": "League of Legends profile doesn't exist"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
 
-        for p in match.blue_team.participants:
-            if summoner == p.summoner:
-                team = match.blue_team
-                participant = p
-                break
+    if not lol_profile.active:
+        return JsonResponse(
+            {"detail": "Fetching data from LoL servers"},
+            status=status.HTTP_412_PRECONDITION_FAILED,
+        )
 
-        if team is None:
-            for p in match.red_team.participants:
-                if summoner == p.summoner:
-                    team = match.red_team
-                    participant = p
-                    break
+    check_new_matches.delay(lol_profile.pk)
 
-        match_dict["team"] = {"side": team.side.name, "win": team.win}
-
-        match_dict["participant"] = {
-            "role": participant.role.value,
-            "champion": {
-                "name": participant.champion.name,
-                "image": participant.champion.image.url,
-                "key": participant.champion.key,
-            },
-            "stats": {
-                "assists": participant.stats.assists,
-                "deaths": participant.stats.deaths,
-                "kills": participant.stats.kills,
-            },
-        }
-        items = []
-
-        for item in participant.stats.items:
-            if item is not None:
-                items.append(
-                    {
-                        "name": item.name,
-                        "image": "http://ddragon.leagueoflegends.com/cdn/11.16.1/img/item/{}".format(
-                            item.image.full
-                        ),
-                    }
-                )
-
-        match_dict["participant"]["stats"]["items"] = items
-
+    total_count = lol_profile.participations.count()
+    if begin_index >= total_count or end_index > 20:
         return JsonResponse(
             {
-                "detail": "{}'s match history".format(summoner.name),
-                "match": match_dict,
+                "detail": "{}'s match history".format(lol_profile.name),
+                "payload": {
+                    "new": False,
+                    " ": [],
+                },
             },
             status=status.HTTP_200_OK,
         )
 
-    except Exception as e:
-        print(e)
-        return JsonResponse(
-            {"detail": "Match doesn't exist"}, status=status.HTTP_404_NOT_FOUND
-        )
+    if end_index >= total_count:
+        participations_history = lol_profile.participations.order_by("-team__creation")[
+            begin_index:
+        ]
+    else:
+        participations_history = lol_profile.participations.order_by("-team__creation")[
+            begin_index:end_index
+        ]
 
+    p_history_data = ParticipantSerializer(participations_history, many=True).data
 
-# @api_view(["GET"])
-# @authentication_classes([TokenAuthentication])
-# @permission_classes([IsAuthenticated, HasAPIKey])
-# def match_history_view(request, username=None, begin_index=0, end_index=10):
-#     if username is None:
-#         return JsonResponse(
-#             {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST
-#         )
-
-#     # try:
-#     #     summoner_name = User.objects.get(
-#     #         username=username
-#     #     ).league_of_legends_profile_name
-#     # except (User.DoesNotExist, LeagueOfLegendsProfile.DoesNotExist):
-#     #     return JsonResponse({"detail": ""}, status=status.HTTP_404_NOT_FOUND)
-
-#     if begin_index > end_index:
-#         return JsonResponse(
-#             {"detail": "Bad indices"}, status=status.HTTP_400_BAD_REQUEST
-#         )
-
-#     summoner = cass.get_summoner(name="bigfatlp")
-#     match_history = []
-#     for match in summoner.match_history[begin_index:end_index]:
-#         match_dict = {}
-#         match_dict["creation"] = match.creation.for_json()
-#         team = None
-#         participant = None
-
-#         for p in match.blue_team.participants:
-#             if summoner == p.summoner:
-#                 team = match.blue_team
-#                 participant = p
-#                 break
-
-#         if team is None:
-#             for p in match.red_team.participants:
-#                 if summoner == p.summoner:
-#                     team = match.red_team
-#                     participant = p
-#                     break
-
-#         match_dict["team"] = {"side": team.side.name, "win": team.win}
-
-#         match_dict["participant"] = {
-#             "role": participant.role.value,
-#             "champion": {
-#                 "name": participant.champion.name,
-#                 "image": participant.champion.image.url,
-#                 "key": participant.champion.key,
-#             },
-#             "stats": {
-#                 "assists": participant.stats.assists,
-#                 "deaths": participant.stats.deaths,
-#                 "kills": participant.stats.kills,
-#             },
-#         }
-#         items = []
-
-#         for item in participant.stats.items:
-#             if item is not None:
-#                 items.append(
-#                     {
-#                         "name": item.name,
-#                         "image": "http://ddragon.leagueoflegends.com/cdn/11.16.1/img/item/{}".format(
-#                             item.image.full
-#                         ),
-#                     }
-#                 )
-
-#         match_dict["participant"]["stats"]["items"] = items
-
-#         match_history.append(match_dict)
-
-#     return JsonResponse(
-#         {
-#             "detail": "{}'s match history".format(summoner.name),
-#             "match_history": match_history,
-#         },
-#         status=status.HTTP_200_OK,
-#     )
+    return JsonResponse(
+        {
+            "detail": "{}'s match history".format(lol_profile.name),
+            "payload": {
+                "new": lol_profile.updating,
+                "match_history": p_history_data,
+            },
+        },
+        status=status.HTTP_200_OK,
+    )
 
 
 @api_view(["GET"])
@@ -214,7 +132,7 @@ def champion_masteries_view(request, username=None, begin_index=0, end_index=20)
     #     summoner_name = User.objects.get(
     #         username=username
     #     ).league_of_legends_profile_name
-    # except (User.DoesNotExist, LeagueOfLegendsProfile.DoesNotExist):
+    # except (User.DoesNotExist, LoLProfile.DoesNotExist):
     #     return JsonResponse({"detail": ""}, status=status.HTTP_404_NOT_FOUND)
 
     if begin_index > end_index:
