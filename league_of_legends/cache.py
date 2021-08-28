@@ -27,6 +27,7 @@ def get_champion_full(champion_id):
         champion_nick = champions_data["keys"][str(champion_id)]
         champion = champions_data["data"][champion_nick]
         return {
+            "id": champion["id"],
             "name": champion["name"],
             "image": "https://ddragon.leagueoflegends.com/cdn/11.16.1/img/champion/{}".format(
                 champion["image"]["full"]
@@ -46,6 +47,7 @@ def get_champion_mini(champion_id=None):
         champion_nick = champions_data["keys"][str(champion_id)]
         champion = champions_data["data"][champion_nick]
         return {
+            "id": champion["id"],
             "name": champion["name"],
             "image": "https://ddragon.leagueoflegends.com/cdn/11.16.1/img/champion/{}".format(
                 champion["image"]["full"]
