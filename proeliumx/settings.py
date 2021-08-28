@@ -50,7 +50,6 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework_api_key",
     "knox",
-    "django_cassiopeia",
     "channels",
     "authentication",
     "profiles",
@@ -189,17 +188,6 @@ from datetime import timedelta
 REST_KNOX = {
     "TOKEN_TTL": timedelta(days=30),
     "AUTO_REFRESH": True,
-}
-
-
-################################################################################
-# Cassiopeia
-CASSIOPEIA_RIOT_API_KEY = config("RIOT_API_KEY")  # api key in env var
-CASSIOPEIA_DEFAULT_REGION = "NA"  # default region
-CASSIOPEIA_PIPELINE = {  # small pipeine to get started
-    "Omnistone": {},
-    "DDragon": {},
-    "RiotAPI": {},
 }
 
 

@@ -1,5 +1,4 @@
 from league_of_legends.cache import get_champion_full
-from cassiopeia.core import summoner
 from django.http import JsonResponse
 
 from rest_framework import status
