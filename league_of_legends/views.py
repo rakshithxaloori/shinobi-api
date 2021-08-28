@@ -1,3 +1,4 @@
+from league_of_legends.cache import get_champion_full
 from cassiopeia.core import summoner
 from django.http import JsonResponse
 
@@ -15,10 +16,11 @@ from knox.auth import TokenAuthentication
 
 from django_cassiopeia import cassiopeia as cass
 
-from authentication.models import User
-from league_of_legends.models import LoLProfile
 from league_of_legends.tasks import check_new_matches
 from league_of_legends.serializers import ParticipantSerializer
+from league_of_legends.wrapper import get_summoner
+from league_of_legends.utils import get_lol_profile
+from league_of_legends.cache import get_champion_full
 
 
 @api_view(["GET"])
@@ -37,16 +39,22 @@ def oauth_view(request):
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
-def my_lol_profile_view(request):
-    summoner = cass.get_summoner(name="bigfatlp", region="NA")
+def lol_profile_view(request, username):
+    lol_profile = get_lol_profile(username=username)
+    if lol_profile is None:
+        return JsonResponse(
+            {"detail": "LoL profile doesn't exist"}, status=status.HTTP_404_NOT_FOUND
+        )
+    summoner = get_summoner(puuid=lol_profile.puuid)
     return JsonResponse(
         {
             "detail": "{}'s lol profile".format(request.user.username),
             "payload": {
-                "name": summoner.name,
-                "level": summoner.level,
-                "region": summoner.region.value,
-                "profile_icon": summoner.profile_icon.url,
+                "name": summoner["name"],
+                "level": summoner["summonerLevel"],
+                "profile_icon": "http://ddragon.leagueoflegends.com/cdn/11.16.1/img/profileicon/{}.png".format(
+                    summoner["profileIconId"]
+                ),
             },
         },
         status=status.HTTP_200_OK,
@@ -57,22 +65,15 @@ def my_lol_profile_view(request):
 # @authentication_classes([TokenAuthentication])
 # @permission_classes([IsAuthenticated, HasAPIKey])
 def match_history_view(request, username=None, begin_index=0, end_index=10):
-    if username is None:
-        return JsonResponse(
-            {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST
-        )
-
     if begin_index < 0 or begin_index >= end_index:
         return JsonResponse(
             {"detail": "Bad indices"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    try:
-        lol_profile = User.objects.get(username=username).profile.lol_profile
-    except (User.DoesNotExist, LoLProfile.DoesNotExist):
+    lol_profile = get_lol_profile(username=username)
+    if lol_profile is None:
         return JsonResponse(
-            {"detail": "League of Legends profile doesn't exist"},
-            status=status.HTTP_404_NOT_FOUND,
+            {"detail": "LoL profile doesn't exist"}, status=status.HTTP_404_NOT_FOUND
         )
 
     if not lol_profile.active:
@@ -123,26 +124,19 @@ def match_history_view(request, username=None, begin_index=0, end_index=10):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def champion_masteries_view(request, username=None, begin_index=0, end_index=20):
-    if username is None:
+    lol_profile = get_lol_profile(username=username)
+    if lol_profile is None:
         return JsonResponse(
-            {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST
+            {"detail": "LoL profile doesn't exist"}, status=status.HTTP_404_NOT_FOUND
         )
-
-    # try:
-    #     summoner_name = User.objects.get(
-    #         username=username
-    #     ).league_of_legends_profile_name
-    # except (User.DoesNotExist, LoLProfile.DoesNotExist):
-    #     return JsonResponse({"detail": ""}, status=status.HTTP_404_NOT_FOUND)
 
     if begin_index > end_index:
         return JsonResponse(
             {"detail": "Bad indices"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    summoner = cass.get_summoner(name="bigfatlp", region="NA")
+    summoner = cass.get_summoner(account_id=lol_profile.account_id)
     champion_masteries = summoner.champion_masteries[begin_index:end_index]
-    # champion_masteries = summoner.champion_masteries
     champion_mastery_by_level = dict()
 
     for champion_mastery in champion_masteries:
@@ -152,7 +146,7 @@ def champion_masteries_view(request, username=None, begin_index=0, end_index=20)
         champion_mastery_dict["champion"] = {
             "name": champion_mastery.champion.name,
             "image": champion_mastery.champion.image.url,
-            "key": champion_mastery.champion.key,
+            "id": champion_mastery.champion.id,
         }
         champion_mastery_dict["level"] = champion_mastery.level
         champion_mastery_by_level[str(champion_mastery.level)].append(
@@ -186,24 +180,19 @@ def champion_masteries_view(request, username=None, begin_index=0, end_index=20)
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
-def champion_view(request, key=None):
-    if key is None:
+def champion_view(request, champion_id=None):
+    if champion_id is None:
         return JsonResponse(
             {"detail": "champion.key is required"},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    champion = cass.get_champion(key=key)
-    champion_dict = dict()
-    champion_dict["blurb"] = champion.blurb
-    champion_dict["ally_tips"] = champion.ally_tips
-    champion_dict["enemy_tips"] = champion.enemy_tips
-    champion_dict["info"] = champion.info.to_dict()
+    champion = get_champion_full(champion_id)
 
     return JsonResponse(
         {
-            "detail": "{}'s data".format(champion.name),
-            "payload": {"champion": champion_dict},
+            "detail": "{}'s data".format(champion["name"]),
+            "payload": {"champion": champion},
         },
         status=status.HTTP_200_OK,
     )

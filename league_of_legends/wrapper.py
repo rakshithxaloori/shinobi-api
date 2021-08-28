@@ -4,7 +4,6 @@ from decouple import config
 from league_of_legends.utils import retry_with_backoff_decorator
 
 RIOT_API_KEY = config("RIOT_API_KEY")
-headers = {"X-Riot-Token": RIOT_API_KEY}
 
 # FOR RIOT ACCOUNT
 # AMERICAS 	americas.api.riotgames.com
@@ -33,6 +32,20 @@ profile_icon = "http://ddragon.leagueoflegends.com/cdn/11.16.1/img/profileicon/{
 
 
 @retry_with_backoff_decorator()
+def lol_wrapper(endpoint):
+    headers = {"X-Riot-Token": RIOT_API_KEY}
+    response = requests.get(endpoint, headers=headers)
+
+    if response.ok:
+        return response.json()
+
+    else:
+        if response.status_code == 429:
+            raise Exception("RETRY WITH BACKOFF")
+        else:
+            return None
+
+
 def get_summoner(
     puuid: str = None, account_id: str = None, summoner_id: str = None, name: str = None
 ):
@@ -50,30 +63,12 @@ def get_summoner(
         raise ValueError("puuid, account_id, summoner_id, name; all can't be 'None'")
 
     endpoint = "{}{}".format(BASE_API_URL, endpoint)
-    print(endpoint)
 
-    response = requests.get(endpoint, headers=headers)
+    json_response = lol_wrapper(endpoint=endpoint)
 
-    if response.ok:
-        # {
-        #     "id": "mOWADJ1Livlubh4tmUrHQJBMB4v9-fGjgpFdHxYW8tmO8ns",
-        #     "accountId": "IOTFzu-xgLdwoFXIYTI_DE1yEIP2qb8DPkOrTsmoZLkW_Q",
-        #     "puuid": "4raxaQvkFqK6lYuzi_aWBwI3LQZqewrhXbmuZOciMjBnjZwHTrpYbSJi-JdL4oE8rY3vQogOlHbTAw",
-        #     "name": "Antonio Vivaldi",
-        #     "profileIconId": 29,
-        #     "revisionDate": 1629316463000,
-        #     "summonerLevel": 304,
-        # }
-        return response.json()
-    else:
-        if response.status_code == 429:
-            raise Exception("EXCEPTION get_summoner: Retry with exponential backoff")
-        else:
-            print("get_summoner", response.status_code)
-            return None
+    return json_response
 
 
-@retry_with_backoff_decorator()
 def get_matchlist(
     account_id: str = None, begin_index: int = None, end_index: int = None
 ):
@@ -92,25 +87,18 @@ def get_matchlist(
         )
     )
 
-    response = requests.get(endpoint, headers=headers)
-    if response.ok:
-        return response.json()
-    else:
-        print("get_matchlist", response.status_code)
-        return None
+    return lol_wrapper(endpoint=endpoint)
 
 
-@retry_with_backoff_decorator()
 def get_match(match_id=None):
     if match_id is None:
         raise ValueError("match_id can't be 'None'")
 
     endpoint = "{}/lol/match/v4/matches/{}".format(BASE_API_URL, match_id)
 
-    response = requests.get(endpoint, headers=headers)
-    if response.ok:
+    match = lol_wrapper(endpoint=endpoint)
+    if match is not None:
         # Combine participants, participantIdentities
-        match = response.json()
         for p in match["participants"]:
             for pi in match["participantIdentities"]:
                 if p["participantId"] == pi["participantId"]:
@@ -118,7 +106,4 @@ def get_match(match_id=None):
                     break
 
         match.pop("participantIdentities")
-        return match
-    else:
-        print("get_match", response.status_code)
-        return None
+    return match
