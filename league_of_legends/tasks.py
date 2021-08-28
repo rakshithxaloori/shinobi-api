@@ -84,7 +84,7 @@ def add_match_to_db(match_id):
                 summoner=lol_profile,
                 team=team,
                 stats=new_p_stats,
-                champion_key=p["championId"],
+                champion_id=p["championId"],
                 role=p["timeline"]["role"],
             )
             new_p.save()
@@ -160,7 +160,9 @@ def check_new_matches(lol_profile_pk):
 
     try:
 
-        latest_match_remote = summoner.match_history[0]
+        latest_remote_match_id = get_matchlist(
+            account_id=lol_profile.account_id, begin_index=0, end_index=1
+        )["matches"][0]["gameId"]
 
         team = lol_profile.participations.order_by("-team__creation").first().team
         if team.color == "B":
@@ -172,7 +174,7 @@ def check_new_matches(lol_profile_pk):
         print("EXCEPTION def create_new_matches:", e)
         return
 
-    if latest_match_remote.id != latest_match_local.id:
+    if latest_remote_match_id != latest_match_local.id:
         lol_profile.updating = True
         lol_profile.save(update_fields=["updating"])
         update_match_history.delay(lol_profile_pk)

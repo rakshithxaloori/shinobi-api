@@ -3,7 +3,7 @@ from django.core.cache import cache
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from league_of_legends.models import Participant, ParticipantStats
-from league_of_legends.utils import get_champion_mini
+from league_of_legends.cache import get_champion_mini
 
 
 class ParticipantStatsSerializer(ModelSerializer):
@@ -52,7 +52,7 @@ class ParticipantSerializer(ModelSerializer):
         return obj.team.creation
 
     def get_champion(self, obj):
-        return get_champion_mini(champion_key=obj.champion_key)
+        return get_champion_mini(champion_id=obj.champion_id)
 
     def get_team(self, obj):
         return {"side": obj.team.color, "win": obj.team.win}
