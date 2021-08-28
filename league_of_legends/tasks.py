@@ -17,7 +17,12 @@ from league_of_legends.models import (
 @shared_task
 def add_match_to_db(match_id):
     try:
+        Match.objects.get(pk=match_id)
+        return
+
+    except Match.DoesNotExist:
         match_dict = get_match(match_id=match_id)
+
         if match_dict is None or match_dict["gameType"] != "MATCHED_GAME":
             return
 
