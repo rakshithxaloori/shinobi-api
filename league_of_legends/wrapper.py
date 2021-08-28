@@ -107,3 +107,14 @@ def get_match(match_id=None):
 
         match.pop("participantIdentities")
     return match
+
+
+def get_champion_masteries(summoner_id: str = None):
+    if summoner_id is None:
+        raise ValueError("account_id can't be 'None'")
+
+    endpoint = "{}/lol/champion-mastery/v4/champion-masteries/by-summoner/{}".format(
+        BASE_API_URL, summoner_id
+    )
+
+    return lol_wrapper(endpoint=endpoint)

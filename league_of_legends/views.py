@@ -14,26 +14,25 @@ from rest_framework_api_key.permissions import HasAPIKey
 
 from knox.auth import TokenAuthentication
 
-from django_cassiopeia import cassiopeia as cass
 
 from league_of_legends.tasks import check_new_matches
 from league_of_legends.serializers import ParticipantSerializer
-from league_of_legends.wrapper import get_summoner
-from league_of_legends.utils import get_lol_profile
+from league_of_legends.wrapper import get_summoner, get_champion_masteries
+from league_of_legends.utils import get_lol_profile, clean_champion_mastery
 from league_of_legends.cache import get_champion_full
 
 
-@api_view(["GET"])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated, HasAPIKey])
-def oauth_view(request):
-    # TODO
-    # Check if the leagueoflegends profile already exists
-    # Create only if doesn't
-    # TODO get all of match history - SUPER IMPORTANT, use signals
+# @api_view(["GET"])
+# @authentication_classes([TokenAuthentication])
+# @permission_classes([IsAuthenticated, HasAPIKey])
+# def oauth_view(request):
+#     # TODO
+#     # Check if the leagueoflegends profile already exists
+#     # Create only if doesn't
+#     # TODO get all of match history - SUPER IMPORTANT, use signals
 
-    # return "detail": "Fetching data, come back in a while"
-    pass
+#     # return "detail": "Fetching data, come back in a while"
+#     pass
 
 
 @api_view(["GET"])
@@ -46,6 +45,7 @@ def lol_profile_view(request, username):
             {"detail": "LoL profile doesn't exist"}, status=status.HTTP_404_NOT_FOUND
         )
     summoner = get_summoner(puuid=lol_profile.puuid)
+    print(summoner)
     return JsonResponse(
         {
             "detail": "{}'s lol profile".format(request.user.username),
@@ -61,9 +61,10 @@ def lol_profile_view(request, username):
     )
 
 
-@api_view(["GET"])
-# @authentication_classes([TokenAuthentication])
-# @permission_classes([IsAuthenticated, HasAPIKey])
+# TODO why isn't the decorator working?
+# @api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def match_history_view(request, username=None, begin_index=0, end_index=10):
     if begin_index < 0 or begin_index >= end_index:
         return JsonResponse(
@@ -135,41 +136,23 @@ def champion_masteries_view(request, username=None, begin_index=0, end_index=20)
             {"detail": "Bad indices"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    summoner = cass.get_summoner(account_id=lol_profile.account_id)
-    champion_masteries = summoner.champion_masteries[begin_index:end_index]
-    champion_mastery_by_level = dict()
+    champion_masteries = get_champion_masteries(lol_profile.summoner_id)
 
-    for champion_mastery in champion_masteries:
-        if str(champion_mastery.level) not in champion_mastery_by_level.keys():
-            champion_mastery_by_level[str(champion_mastery.level)] = []
-        champion_mastery_dict = dict()
-        champion_mastery_dict["champion"] = {
-            "name": champion_mastery.champion.name,
-            "image": champion_mastery.champion.image.url,
-            "id": champion_mastery.champion.id,
-        }
-        champion_mastery_dict["level"] = champion_mastery.level
-        champion_mastery_by_level[str(champion_mastery.level)].append(
-            champion_mastery_dict
-        )
+    if begin_index > len(champion_masteries):
+        pass
 
-    champion_masteries_list = list()
-    for key, value in champion_mastery_by_level.items():
-        champion_masteries_list.append({"level": key, "champion_masteries": value})
+    if end_index < len(champion_masteries):
+        champion_masteries = champion_masteries[begin_index:end_index]
+    else:
+        champion_masteries = champion_masteries[begin_index:]
 
-    def levelFunc(obj):
-        return obj["level"]
-
-    champion_masteries_list.sort(
-        reverse=True,
-        key=levelFunc,
-    )
+    champion_masteries = list(map(clean_champion_mastery, champion_masteries))
 
     return JsonResponse(
         {
-            "detail": "{}'s champion masteries".format(summoner.name),
+            "detail": "{}'s champion masteries".format(lol_profile.name),
             "payload": {
-                "champion_masteries": champion_masteries_list,
+                "champion_masteries": champion_masteries,
                 "count": len(champion_masteries),
             },
         },

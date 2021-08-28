@@ -4,6 +4,7 @@ import random, time
 from authentication.models import User
 from profiles.models import Profile
 from league_of_legends.models import LoLProfile
+from league_of_legends.cache import get_champion_mini
 
 
 def get_lol_profile(username):
@@ -14,6 +15,12 @@ def get_lol_profile(username):
         return lol_profile
     except (User.DoesNotExist, Profile.DoesNotExist, LoLProfile.DoesNotExist):
         return None
+
+
+def clean_champion_mastery(champion_mastery):
+    cm = get_champion_mini(champion_id=champion_mastery["championId"])
+    cm["level"] = champion_mastery["championLevel"]
+    return cm
 
 
 def retry_with_backoff_decorator(retries=100, backoff_in_seconds=1):
