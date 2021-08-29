@@ -162,14 +162,20 @@ def champion_masteries_view(request, username=None, begin_index=0, end_index=20)
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
-def champion_view(request, champion_id=None):
-    if champion_id is None:
+def champion_view(request, champion_key=None):
+    if champion_key is None:
         return JsonResponse(
-            {"detail": "champion.key is required"},
+            {"detail": "champion_key is required"},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    champion = get_champion_full(champion_id)
+    champion = get_champion_full(champion_key)
+
+    if champion is None:
+        return JsonResponse(
+            {"detail": "champion_key invalid"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     return JsonResponse(
         {

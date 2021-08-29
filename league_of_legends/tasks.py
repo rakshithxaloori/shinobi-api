@@ -89,7 +89,7 @@ def add_match_to_db(match_id):
                 summoner=lol_profile,
                 team=team,
                 stats=new_p_stats,
-                champion_id=p["championId"],
+                champion_key=p["championId"],  # int
                 role=p["timeline"]["role"],
             )
             new_p.save()

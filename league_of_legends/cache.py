@@ -21,13 +21,14 @@ def get_champions_data_cache():
         return champions_data
 
 
-def get_champion_full(champion_id):
+def get_champion_full(champion_key):
     champions_data = get_champions_data_cache()
     try:
-        champion_nick = champions_data["keys"][str(champion_id)]
+        champion_nick = champions_data["keys"][str(champion_key)]
         champion = champions_data["data"][champion_nick]
+        print(champion["key"])
         return {
-            "id": champion["id"],
+            "key": champion["key"],  # int
             "name": champion["name"],
             "image": "https://ddragon.leagueoflegends.com/cdn/11.16.1/img/champion/{}".format(
                 champion["image"]["full"]
@@ -37,17 +38,18 @@ def get_champion_full(champion_id):
             "enemyTips": champion["enemytips"],
             "info": champion["info"],
         }
+
     except Exception:
         return None
 
 
-def get_champion_mini(champion_id=None):
+def get_champion_mini(champion_key=None):
     champions_data = get_champions_data_cache()
     try:
-        champion_nick = champions_data["keys"][str(champion_id)]
+        champion_nick = champions_data["keys"][str(champion_key)]
         champion = champions_data["data"][champion_nick]
         return {
-            "id": champion["id"],
+            "key": champion["key"],
             "name": champion["name"],
             "image": "https://ddragon.leagueoflegends.com/cdn/11.16.1/img/champion/{}".format(
                 champion["image"]["full"]

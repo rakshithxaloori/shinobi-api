@@ -52,7 +52,7 @@ class ParticipantSerializer(ModelSerializer):
         return obj.team.creation
 
     def get_champion(self, obj):
-        return get_champion_mini(champion_id=obj.champion_id)
+        return get_champion_mini(champion_key=obj.champion_key)
 
     def get_team(self, obj):
         return {"side": obj.team.color, "win": obj.team.win}

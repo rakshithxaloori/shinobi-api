@@ -14,5 +14,5 @@ urlpatterns = [
         views.champion_masteries_view,
         name="champion masteries",
     ),
-    path("champion/<str:champion_id>/", views.champion_view, name="champion"),
+    path("champion/<str:champion_key>/", views.champion_view, name="champion"),
 ]

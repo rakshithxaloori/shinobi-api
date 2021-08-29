@@ -18,7 +18,7 @@ def get_lol_profile(username):
 
 
 def clean_champion_mastery(champion_mastery):
-    cm = get_champion_mini(champion_id=champion_mastery["championId"])
+    cm = get_champion_mini(champion_key=champion_mastery["championId"])
     cm["level"] = champion_mastery["championLevel"]
     return cm
 

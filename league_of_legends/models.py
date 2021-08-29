@@ -81,12 +81,12 @@ class Participant(models.Model):
         ParticipantStats, related_name="participant", on_delete=models.PROTECT
     )
     # https://ddragon.leagueoflegends.com/cdn/11.16.1/img/champion/{}.png
-    champion_id = models.PositiveSmallIntegerField(null=False, blank=False)
+    champion_key = models.PositiveSmallIntegerField(null=False, blank=False)
     role = models.CharField(max_length=15, null=False, blank=False)
 
     def __str__(self):
         return "{} || {} || {}".format(
-            self.summoner.name, self.team.color, self.champion_id
+            self.summoner.name, self.team.color, self.champion_key
         )
 
 
