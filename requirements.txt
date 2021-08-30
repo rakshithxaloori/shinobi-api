@@ -10,3 +10,4 @@ channels==3.0.3
 exponent-server-sdk==2.0.0
 redis==3.5.3
 celery==5.1.2
+pymemcache-3.5.0
