@@ -116,6 +116,13 @@ elif CI_CD_STAGE == "dev" or CI_CD_STAGE == "test":
         }
     }
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.memcached.PyMemcacheCache",
+        "LOCATION": "localhost:11211",
+    }
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
