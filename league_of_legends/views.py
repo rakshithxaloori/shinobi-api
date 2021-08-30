@@ -44,7 +44,6 @@ def lol_profile_view(request, username):
             {"detail": "LoL profile doesn't exist"}, status=status.HTTP_404_NOT_FOUND
         )
     summoner = get_summoner(puuid=lol_profile.puuid)
-    print(summoner)
     return JsonResponse(
         {
             "detail": "{}'s lol profile".format(request.user.username),
