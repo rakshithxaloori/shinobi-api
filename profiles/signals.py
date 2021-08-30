@@ -1,18 +1,12 @@
 from django.dispatch import receiver
-from django.db.models.signals import post_save, m2m_changed
+from django.db.models.signals import m2m_changed
 
 from authentication.models import User
-from profiles.models import Profile, Following
+from profiles.models import Following
 from profiles import tasks as p_tasks
 from chat import tasks as c_tasks
 from notification import tasks as n_tasks
 from notification.models import Notification
-
-
-@receiver(post_save, sender=User)
-def post_save_create_profile(sender, instance, created, **kwargs):
-    if created:
-        Profile.objects.create(user=instance)
 
 
 @receiver(m2m_changed, sender=Following)
