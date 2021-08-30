@@ -38,12 +38,12 @@ class TwitchProfileSerializer(ModelSerializer):
 
 
 class SocialsSerializer(ModelSerializer):
-    twitch = TwitchProfileSerializer()
+    twitch_profile = TwitchProfileSerializer()
     youtube = SerializerMethodField()
 
     class Meta:
         model = Profile
-        fields = ["twitch", "youtube"]
+        fields = ["twitch_profile", "youtube"]
 
     def get_youtube(self, obj):
         try:
