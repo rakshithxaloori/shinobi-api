@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "channels",
     "authentication",
     "profiles",
+    "socials",
     "chat",
     "notification",
     "analytics",
