@@ -118,8 +118,11 @@ elif CI_CD_STAGE == "dev" or CI_CD_STAGE == "test":
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.memcached.PyMemcacheCache",
-        "LOCATION": "localhost:11211",
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "{}/1".format(config("REDIS_CACHE_URL")),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
     }
 }
 
@@ -213,8 +216,7 @@ CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
 
 ################################################################################
 
-CELERY_BROKER_URL = config("CELERY_BROKER_URL")
-CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND")
+CELERY_BROKER_URL = config("REDIS_CACHE_URL")
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
