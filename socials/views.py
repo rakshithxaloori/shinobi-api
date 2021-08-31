@@ -1,4 +1,5 @@
 from django.http import JsonResponse, HttpResponse
+from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -25,9 +26,10 @@ from socials import youtube
 @permission_classes([IsAuthenticated, HasAPIKey])
 def socials_status_view(request):
     profile = request.user.profile
+
     payload = {
-        "twitch": profile.twitch_profile is not None,
-        "youtube": profile.youtube_profile is not None,
+        "twitch": hasattr(profile, "twitch_profile"),
+        "youtube": hasattr(profile, "youtube_profile"),
     }
     return JsonResponse(
         {"detail": "{}'s socials".format(request.user.username), "payload": payload},
@@ -40,7 +42,6 @@ def socials_status_view(request):
 @permission_classes([IsAuthenticated, HasAPIKey])
 def twitch_connect_view(request):
     try:
-        # TODO Reconnect
         TwitchProfile.objects.get(profile=request.user.profile)
         return JsonResponse(
             {"detail": "Twitch profile already connected"},
@@ -173,6 +174,27 @@ def twitch_callback_view(request):
         return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def twitch_disconnect_view(request):
+    twitch_profile = request.user.profile.twitch_profile
+    if twitch_profile is None:
+        return JsonResponse(
+            {"detail": "Twitch profile doesn't exist"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    else:
+        twitch_tasks.delete_subscription.delay(
+            twitch_profile.stream_online_subscription_id,
+            twitch_profile.stream_offline_subscription_id,
+        )
+        twitch_profile.delete()
+        return JsonResponse(
+            {"detail": "Twitch profile deleted"}, status=status.HTTP_200_OK
+        )
+
+
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
@@ -286,6 +308,24 @@ def youtube_select_channel_view(request):
             return JsonResponse(
                 {"detail": "Invalid channel_id"}, status=status.HTTP_400_BAD_REQUEST
             )
+
+
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def youtube_disconnect_view(request):
+    youtube_profile = request.user.profile.youtube_profile
+    if youtube_profile is None:
+        return JsonResponse(
+            {"detail": "YouTube profile doesn't exist"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    else:
+        youtube_profile.delete()
+        return JsonResponse(
+            {"detail": "YouTube profile deleted"}, status=status.HTTP_200_OK
+        )
 
 
 # if callback_data["subscription"]["type"] == "stream.online":

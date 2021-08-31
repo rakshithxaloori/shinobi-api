@@ -10,9 +10,6 @@ from socials.models import TwitchProfile, TwitchStream
 from profiles.models import Game
 
 
-TWITCH_CALLBACK_URL = "https://{}/socials/twitch/callback/".format(
-    config("API_HOSTNAME")
-)
 TWITCH_CLIENT_ID = config("TWITCH_CLIENT_ID")
 
 
@@ -91,6 +88,9 @@ def create_subscription(twitch_profile_pk=None):
         "Authorization": "Bearer {}".format(app_access_token),
         "Content-Type": "application/json",
     }
+    TWITCH_CALLBACK_URL = "https://{}/socials/twitch/callback/".format(
+        config("API_HOSTNAME")
+    )
     payload = [
         {
             "type": "stream.online",
@@ -122,15 +122,9 @@ def create_subscription(twitch_profile_pk=None):
 
 
 @shared_task
-def delete_subscription(twitch_profile_pk=None):
-    if twitch_profile_pk is None:
-        return
-
-    try:
-        twitch_profile = TwitchProfile.objects.get(pk=twitch_profile_pk)
-    except TwitchProfile.DoesNotExist:
-        return
-
+def delete_subscription(
+    stream_online_subscription_id=None, stream_offline_subscription_id=None
+):
     app_access_token = get_app_access_token()
     if app_access_token is None:
         return
@@ -142,23 +136,12 @@ def delete_subscription(twitch_profile_pk=None):
     response_1 = requests.delete(
         endpoint,
         headers=headers,
-        data={"id": twitch_profile.stream_online_subscription_id},
+        data={"id": stream_online_subscription_id},
     )
     response_2 = requests.delete(
         endpoint,
         headers=headers,
-        data={"id": twitch_profile.stream_offline_subscription_id},
-    )
-
-    if response_1.ok:
-        twitch_profile.stream_online_subscription_id = None
-    if response_2.ok:
-        twitch_profile.stream_offline_subscription_id = None
-    twitch_profile.save(
-        update_fields=[
-            "stream_online_subscription_id",
-            "stream_offline_subscription_id",
-        ]
+        data={"id": stream_offline_subscription_id},
     )
 
 
