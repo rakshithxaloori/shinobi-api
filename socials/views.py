@@ -178,13 +178,15 @@ def twitch_callback_view(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def twitch_disconnect_view(request):
-    twitch_profile = request.user.profile.twitch_profile
-    if twitch_profile is None:
+    profile = request.user.profile
+
+    if not hasattr(profile, "twitch_profile"):
         return JsonResponse(
             {"detail": "Twitch profile doesn't exist"}, status=status.HTTP_404_NOT_FOUND
         )
 
     else:
+        twitch_profile = profile.twitch_profile
         twitch_tasks.delete_subscription.delay(
             twitch_profile.stream_online_subscription_id,
             twitch_profile.stream_offline_subscription_id,
@@ -200,7 +202,6 @@ def twitch_disconnect_view(request):
 @permission_classes([IsAuthenticated, HasAPIKey])
 def youtube_connect_view(request):
     try:
-        # TODO Reconnect
         YouTubeProfile.objects.get(profile=request.user.profile)
         return JsonResponse(
             {"detail": "YouTube already connected"},
@@ -260,7 +261,6 @@ def youtube_connect_view(request):
 @permission_classes([IsAuthenticated, HasAPIKey])
 def youtube_select_channel_view(request):
     try:
-        # TODO Reconnect
         YouTubeProfile.objects.get(profile=request.user.profile)
         return JsonResponse(
             {"detail": "YouTube already connected"},
@@ -314,15 +314,16 @@ def youtube_select_channel_view(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def youtube_disconnect_view(request):
-    youtube_profile = request.user.profile.youtube_profile
-    if youtube_profile is None:
+    profile = request.user.profile
+
+    if not hasattr(profile, "youtube_profile"):
         return JsonResponse(
             {"detail": "YouTube profile doesn't exist"},
             status=status.HTTP_404_NOT_FOUND,
         )
 
     else:
-        youtube_profile.delete()
+        profile.youtube_profile.delete()
         return JsonResponse(
             {"detail": "YouTube profile deleted"}, status=status.HTTP_200_OK
         )
