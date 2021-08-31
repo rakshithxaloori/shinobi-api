@@ -1,7 +1,7 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from profiles.models import Game, Profile
-from socials.models import TwitchProfile, TwitchStream, YouTubeProfile
+from socials.models import InstagramProfile, TwitchProfile, TwitchStream, YouTubeProfile
 
 
 ##########################################
@@ -38,12 +38,19 @@ class TwitchProfileSerializer(ModelSerializer):
 
 
 class SocialsSerializer(ModelSerializer):
+    instagram = SerializerMethodField()
     twitch_profile = TwitchProfileSerializer()
     youtube = SerializerMethodField()
 
     class Meta:
         model = Profile
-        fields = ["twitch_profile", "youtube"]
+        fields = ["instagram", "twitch_profile", "youtube"]
+
+    def get_instagram(self, obj):
+        try:
+            return {"username": obj.instagram_profile.username}
+        except InstagramProfile.DoesNotExist:
+            return None
 
     def get_youtube(self, obj):
         try:

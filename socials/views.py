@@ -1,3 +1,4 @@
+from django.contrib import auth
 from django.http import JsonResponse, HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -14,11 +15,10 @@ from rest_framework_api_key.permissions import HasAPIKey
 from knox.auth import TokenAuthentication
 
 
-from socials.models import TwitchProfile, TwitchStream, YouTubeProfile
+from socials.models import InstagramProfile, TwitchProfile, TwitchStream, YouTubeProfile
 
 from profiles import tasks as p_tasks
-from socials import twitch_tasks
-from socials import youtube
+from socials import twitch_tasks, youtube, instagram
 
 
 @api_view(["GET"])
@@ -28,6 +28,7 @@ def socials_status_view(request):
     profile = request.user.profile
 
     payload = {
+        "instagram": hasattr(profile, "instagram_profile"),
         "twitch": hasattr(profile, "twitch_profile"),
         "youtube": hasattr(profile, "youtube_profile"),
     }
@@ -38,6 +39,59 @@ def socials_status_view(request):
 
 
 @api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def instagram_connect_view(request):
+    try:
+        InstagramProfile.objects.get(profile=request.user.profile)
+        return JsonResponse(
+            {"detail": "Instagram profile already connected"},
+            status=status.HTTP_208_ALREADY_REPORTED,
+        )
+    except InstagramProfile.DoesNotExist:
+        authorization_code = request.data.get("authorization_code", None)
+        if authorization_code is None:
+            return JsonResponse(
+                {"detail": "access_token required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        user_info = instagram.get_user_info(authorization_code=authorization_code)
+
+        new_instagram_profile = InstagramProfile.objects.create(
+            profile=request.user.profile,
+            account_type=user_info["account_type"][0].lower(),
+            username=user_info["username"],
+        )
+        new_instagram_profile.save()
+        return JsonResponse(
+            {"detail": "Instagram connected!"}, status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        print(e)
+        return JsonResponse(
+            {"detail": "Invalid code"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def instagram_disconnect_view(request):
+    profile = request.user.profile
+
+    if not hasattr(profile, "instagram_profile"):
+        return JsonResponse(
+            {"detail": "Instagram profile doesn't exist"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    else:
+        instagram_profile = profile.instagram_profile
+        instagram_profile.delete()
+        return JsonResponse(
+            {"detail": "Instagram profile deleted"}, status=status.HTTP_200_OK
+        )
+
+
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def twitch_connect_view(request):

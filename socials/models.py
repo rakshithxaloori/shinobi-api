@@ -8,6 +8,33 @@ def random_twitch_secret():
     return get_random_string(length=10)
 
 
+class InstagramProfile(models.Model):
+    BUSINESS = "b"
+    MEDIA_CREATOR = "m"
+    PERSONAL = "p"
+
+    ACCOUNT_TYPE_CHOICES = [
+        (BUSINESS, "business"),
+        (MEDIA_CREATOR, "media_creator"),
+        (PERSONAL, "personal"),
+    ]
+
+    profile = models.OneToOneField(
+        Profile, related_name="instagram_profile", on_delete=models.PROTECT
+    )
+    account_type = models.CharField(
+        max_length=1,
+        choices=ACCOUNT_TYPE_CHOICES,
+        default=PERSONAL,
+        blank=False,
+        null=False,
+    )
+    username = models.CharField(max_length=30, blank=False, null=False)
+
+    def __str__(self):
+        return "{} || {}".format(self.username, self.account_type)
+
+
 class TwitchProfile(models.Model):
     profile = models.OneToOneField(
         Profile, related_name="twitch_profile", on_delete=models.PROTECT
