@@ -20,6 +20,21 @@ from socials import twitch_tasks
 from socials import youtube
 
 
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def socials_status_view(request):
+    profile = request.user.profile
+    payload = {
+        "twitch": profile.twitch_profile is not None,
+        "youtube": profile.youtube_profile is not None,
+    }
+    return JsonResponse(
+        {"detail": "{}'s socials".format(request.user.username), "payload": payload},
+        status=status.HTTP_200_OK,
+    )
+
+
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
