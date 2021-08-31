@@ -30,7 +30,7 @@ class TwitchProfile(models.Model):
 
 class TwitchStream(models.Model):
     twitch_profile = models.OneToOneField(
-        TwitchProfile, related_name="twitch_stream", on_delete=models.PROTECT
+        TwitchProfile, related_name="twitch_stream", on_delete=models.CASCADE
     )
     game = models.ForeignKey(
         Game,
