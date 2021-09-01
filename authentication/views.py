@@ -21,6 +21,7 @@ from decouple import config
 from authentication.utils import token_response, create_user
 from authentication.models import User
 from notification.tasks import delete_push_token
+from authentication.tasks import user_offline, user_online
 
 
 @api_view(["POST"])
@@ -65,6 +66,7 @@ def google_login_view(request):
                 {"detail": "Account disabled"}, status=status.HTTP_406_NOT_ACCEPTABLE
             )
 
+        user_online.delay(user.pk)
         return token_response(user)
 
     except ValueError:
@@ -88,15 +90,13 @@ def logout_view(request):
     request._auth.delete()
 
     # Change active status
-    user = request.user
-    user.last_active = timezone.now()
-    user.active = False
-    user.save(update_fields=["last_active", "active"])
+    user_pk = request.user.pk
+    user_offline.delay(user_pk)
 
     # Delete push token
     push_token = request.data.get("token", None)
     if push_token is not None:
-        delete_push_token.delay(user.pk, push_token)
+        delete_push_token.delay(user_pk, push_token)
     return JsonResponse({"detail": "Logged out"}, status=status.HTTP_200_OK)
 
 
@@ -148,13 +148,16 @@ def google_signup_view(request):
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
-def token_valid_view(request):
+def online_view(request):
+    user = request.user
+    user_online.delay(user.pk)
+
     return JsonResponse(
         {
-            "detail": "Valid token",
+            "detail": "Active status updated",
             "payload": {
-                "username": request.user.username,
-                "picture": request.user.picture,
+                "username": user.username,
+                "picture": user.picture,
             },
         },
         status=status.HTTP_200_OK,
@@ -164,22 +167,8 @@ def token_valid_view(request):
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
-def active_view(request):
-    user = request.user
-    user.last_open = timezone.now()
-    user.active = True
-    user.save(update_fields=["last_open", "active"])
-    return JsonResponse({"detail": "Active status updated"}, status=status.HTTP_200_OK)
-
-
-@api_view(["GET"])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated, HasAPIKey])
-def inactive_view(request):
-    user = request.user
-    user.last_active = timezone.now()
-    user.active = False
-    user.save(update_fields=["last_active", "active"])
+def offline_view(request):
+    user_offline.delay(request.user.pk)
     return JsonResponse(
         {"detail": "Inactive status updated"}, status=status.HTTP_200_OK
     )
