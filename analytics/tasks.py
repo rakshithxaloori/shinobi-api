@@ -4,6 +4,7 @@ from celery.schedules import crontab
 
 from proeliumx.celery import app as celery_app
 
+from authentication.models import User
 from analytics.models import DailyAnalytics, WeeklyAnalytics, MonthlyAnalytics
 
 
@@ -56,7 +57,10 @@ def setup_periodic_tasks(sender, **kwargs):
 @celery_app.task
 def daily_analytics():
     """Creates a DailyAnalytics object."""
-    # TODO update old_analytics.total with Users.objects.all().count()
+    old_analytics = DailyAnalytics.objects.order_by("-date").first()
+    old_analytics.total_users = User.objects.count()
+    old_analytics.save(update_fields=["total_users"])
+
     new_analytics = DailyAnalytics.objects.create(date=date.today())
     new_analytics.save()
 
@@ -64,7 +68,10 @@ def daily_analytics():
 @celery_app.task
 def weekly_analytics():
     """Creates a WeeklyAnalytics object."""
-    # TODO update old_analytics.total with Users.objects.all().count()
+    old_analytics = WeeklyAnalytics.objects.order_by("-date").first()
+    old_analytics.total_users = User.objects.count()
+    old_analytics.save(update_fields=["total_users"])
+
     new_analytics = WeeklyAnalytics.objects.create(date=date.today())
     new_analytics.save()
 
@@ -72,6 +79,9 @@ def weekly_analytics():
 @celery_app.task
 def monthly_analytics():
     """Creates a MonthlyAnalytics object."""
-    # TODO update old_analytics.total with Users.objects.all().count()
+    old_analytics = MonthlyAnalytics.objects.order_by("-date").first()
+    old_analytics.total_users = User.objects.count()
+    old_analytics.save(update_fields=["total_users"])
+
     new_analytics = MonthlyAnalytics.objects.create(date=date.today())
     new_analytics.save()
