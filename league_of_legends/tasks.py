@@ -34,7 +34,7 @@ def add_match_to_db(match_id):
                     color=Team.Color.blue,
                     win=team["win"] == "Win",
                 )
-                blue_team.save()
+
             elif team["teamId"] == 200:
                 # RED TEAM
                 red_team = Team.objects.create(
@@ -42,7 +42,6 @@ def add_match_to_db(match_id):
                     color=Team.Color.red,
                     win=team["win"] == "Win",
                 )
-                red_team.save()
 
         for p in match_dict["participants"]:
             summoner = get_summoner(account_id=p["player"]["accountId"])
@@ -102,6 +101,8 @@ def add_match_to_db(match_id):
             mode=match_dict["gameMode"],
             region=match_dict["platformId"],
         )
+        blue_team.save()
+        red_team.save()
         new_match.save()
 
     except Exception as e:
