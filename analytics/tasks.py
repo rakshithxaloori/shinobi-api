@@ -9,6 +9,24 @@ from analytics.models import DailyAnalytics, WeeklyAnalytics, MonthlyAnalytics
 
 
 @shared_task
+def new_user_analytics():
+    old_analytics = DailyAnalytics.objects.order_by("-date").first()
+    old_analytics.active_users += 1
+    old_analytics.new_users += 1
+    old_analytics.save(update_fields=["active_users", "new_users"])
+
+    old_analytics = WeeklyAnalytics.objects.order_by("-date").first()
+    old_analytics.active_users += 1
+    old_analytics.new_users += 1
+    old_analytics.save(update_fields=["active_users", "new_users"])
+
+    old_analytics = MonthlyAnalytics.objects.order_by("-date").first()
+    old_analytics.active_users += 1
+    old_analytics.new_users += 1
+    old_analytics.save(update_fields=["active_users", "new_users"])
+
+
+@shared_task
 def update_active_user(last_open_str):
     last_open_date = date.fromisoformat(last_open_str)
     da_instance = DailyAnalytics.objects.order_by("-date").first()
