@@ -47,7 +47,7 @@ class MiniProfileSerializer(ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ["user", "game_alias"]
+        fields = ["user", "game_alias", "follower_count"]
 
     def get_game_alias(self, obj):
         """Return the game that user plays the most."""

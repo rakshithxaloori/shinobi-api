@@ -20,7 +20,7 @@ def post_change_follow_status(sender, instance, action, model, pk_set, **kwargs)
             # Create chat
             c_tasks.create_chat.delay(being_followed_user_pk, follower_user_pk)
 
-            # Increase the trend count
+            # Increase stuff
             p_tasks.after_follow.delay(being_followed_user.profile.pk)
 
             # Send a notification
@@ -32,7 +32,7 @@ def post_change_follow_status(sender, instance, action, model, pk_set, **kwargs)
             # Delete chat
             c_tasks.delete_chat.delay(being_followed_user_pk, follower_user_pk)
 
-            # Decrease trend count
+            # Decrease stuff
             p_tasks.after_unfollow.delay(being_followed_user.profile.pk)
 
     except Exception as e:
