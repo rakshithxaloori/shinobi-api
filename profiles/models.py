@@ -45,7 +45,7 @@ class Profile(models.Model):
         User, related_name="follower", blank=True, through="Following"
     )
     bio = models.TextField(max_length=150, default=random_bio)
-    trend_score = models.IntegerField(default=0)
+    follower_count = models.IntegerField(default=0)
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
 
