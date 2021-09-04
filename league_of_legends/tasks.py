@@ -43,7 +43,7 @@ def add_match_to_db(match_id):
                     win=team["win"] == "Win",
                 )
 
-        participants_list = []
+        # participants_list = []
         participants_stats_list = []
         lol_profiles_list = []
         for p in match_dict["participants"]:
@@ -79,7 +79,6 @@ def add_match_to_db(match_id):
                 kills=stats["kills"],
                 items=items,
             )
-            participants_stats_list.append(new_p_stats)
 
             team = None
             if p["teamId"] == 100:
@@ -94,7 +93,9 @@ def add_match_to_db(match_id):
                 champion_key=p["championId"],  # int
                 role=p["timeline"]["role"],
             )
-            participants_list.append(new_p)
+
+            participants_stats_list.append((new_p_stats, new_p))
+            # participants_list.append(new_p)
 
         new_match = Match.objects.create(
             id=match_dict["gameId"],
@@ -109,9 +110,15 @@ def add_match_to_db(match_id):
         # successfully, so we don't save any half baked data
         blue_team.save()
         red_team.save()
-        LoLProfile.objects.bulk_create(lol_profiles_list)
-        ParticipantStats.objects.bulk_create(participants_stats_list)
-        Participant.objects.bulk_create(participants_list)
+
+        for lol_profile in lol_profiles_list:
+            lol_profile.save()
+
+        for stats, participant in participants_stats_list:
+            stats.save()
+            participant.stats = stats
+            participant.save()
+
         new_match.save()
 
     except Exception as e:
@@ -130,7 +137,8 @@ def update_match_history(lol_profile_pk):
 
     fetch_all = False
     try:
-        team = lol_profile.participations.order_by("-team__creation").first().team
+        team = lol_profile.participations.order_by("-team__creation").first()
+        team = team.team
         if team.color == "B":
             latest_match_local = team.b_match
         else:
@@ -140,10 +148,12 @@ def update_match_history(lol_profile_pk):
 
     matchlist = get_matchlist(
         account_id=lol_profile.account_id, begin_index=0, end_index=20
-    )["matches"]
+    )
 
     if matchlist is None:
         return
+
+    matchlist = matchlist["matches"]
 
     for match in matchlist:
         if not fetch_all and match["gameId"] == latest_match_local.id:
