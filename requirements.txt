@@ -10,4 +10,4 @@ channels==3.0.3
 exponent-server-sdk==2.0.0
 django-redis==5.0.0
 celery==5.1.2
-django-pymemcache==1.0.0
+ratelimit==2.2.1

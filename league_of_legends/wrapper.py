@@ -1,7 +1,8 @@
 import requests
+from os import cpu_count
 from decouple import config
+from ratelimit import limits, sleep_and_retry
 
-from league_of_legends.utils import retry_with_backoff_decorator
 
 RIOT_API_KEY = config("RIOT_API_KEY")
 
@@ -24,14 +25,23 @@ RIOT_API_KEY = config("RIOT_API_KEY")
 # RU 	ru.api.riotgames.com
 
 # TODO nearest region route
-NEAREST_REGION_ROUTE = "na1.api.riotgames.com"
-BASE_API_URL = "https://{}".format(NEAREST_REGION_ROUTE)
+NEAREST_PLATFORM_ROUTE = "na1.api.riotgames.com"
+PLATFORM_API_URL = "https://{}".format(NEAREST_PLATFORM_ROUTE)
+
+NEAREST_REGION_ROUTE = "americas.api.riotgames.com"
+REGION_API_URL = "https://{}".format(NEAREST_REGION_ROUTE)
 
 # URLs, maybe use these in serializers?
 profile_icon = "http://ddragon.leagueoflegends.com/cdn/11.16.1/img/profileicon/{}.png"  # profileIconId
 
 
-@retry_with_backoff_decorator()
+# TODO is there a better way to pipe requests
+# instead of limitting #requests in each cpu,
+# so max won't exceed total limit
+@sleep_and_retry
+@limits(calls=int(15 / cpu_count()), period=1)
+@sleep_and_retry
+@limits(calls=int(80 / cpu_count()), period=120)
 def lol_wrapper(endpoint):
     headers = {"X-Riot-Token": RIOT_API_KEY}
     response = requests.get(endpoint, headers=headers)
@@ -41,8 +51,13 @@ def lol_wrapper(endpoint):
 
     else:
         if response.status_code == 429:
-            raise Exception("RETRY WITH BACKOFF")
+            print(response.headers)
+            raise Exception("RETRY WITH BACKOFF {}".format(response.status_code))
+        elif response.status_code >= 500:
+            raise Exception("RIOT SERVER ERROR {}".format(response.status_code))
         else:
+            print("RIOT RESPONSE ERROR {}".format(response.status_code))
+            # TODO sent this to someone
             return None
 
 
@@ -62,7 +77,7 @@ def get_summoner(
     if endpoint is None:
         raise ValueError("puuid, account_id, summoner_id, name; all can't be 'None'")
 
-    endpoint = "{}{}".format(BASE_API_URL, endpoint)
+    endpoint = "{}{}".format(PLATFORM_API_URL, endpoint)
 
     json_response = lol_wrapper(endpoint=endpoint)
 
@@ -83,7 +98,7 @@ def get_matchlist(
 
     endpoint = (
         "{}/lol/match/v4/matchlists/by-account/{}?beginIndex={}&endIndex={}".format(
-            BASE_API_URL, account_id, begin_index, end_index
+            PLATFORM_API_URL, account_id, begin_index, end_index
         )
     )
 
@@ -94,7 +109,7 @@ def get_match(match_id=None):
     if match_id is None:
         raise ValueError("match_id can't be 'None'")
 
-    endpoint = "{}/lol/match/v4/matches/{}".format(BASE_API_URL, match_id)
+    endpoint = "{}/lol/match/v4/matches/{}".format(PLATFORM_API_URL, match_id)
 
     match = lol_wrapper(endpoint=endpoint)
     if match is not None:
@@ -109,12 +124,33 @@ def get_match(match_id=None):
     return match
 
 
+def get_matchlist_v5(puuid: str = None, start_index: int = None, count: int = None):
+    if puuid is None:
+        raise ValueError("puuid can't be 'None'")
+
+    if start_index == None:
+        raise ValueError("start_index required")
+
+    if start_index < 0 or count < 0 or count > 100:
+        raise ValueError("Bad indices")
+
+    endpoint = "{}/lol/match/v5/matches/by-puuid/{}/ids?start={}&count={}".format(
+        REGION_API_URL, puuid, start_index, count
+    )
+
+    return lol_wrapper(endpoint=endpoint)
+
+
+def get_match_v5(match_id=None):
+    pass
+
+
 def get_champion_masteries(summoner_id: str = None):
     if summoner_id is None:
         raise ValueError("account_id can't be 'None'")
 
     endpoint = "{}/lol/champion-mastery/v4/champion-masteries/by-summoner/{}".format(
-        BASE_API_URL, summoner_id
+        PLATFORM_API_URL, summoner_id
     )
 
     return lol_wrapper(endpoint=endpoint)
