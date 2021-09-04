@@ -17,7 +17,7 @@ from league_of_legends.models import (
 @shared_task
 def add_match_to_db(match_id):
     try:
-        Match.objects.get(pk=match_id)
+        Match.objects.get(id=match_id)
         return
 
     except Match.DoesNotExist:
@@ -43,6 +43,9 @@ def add_match_to_db(match_id):
                     win=team["win"] == "Win",
                 )
 
+        participants_list = []
+        participants_stats_list = []
+        lol_profiles_list = []
         for p in match_dict["participants"]:
             summoner = get_summoner(account_id=p["player"]["accountId"])
             if summoner is None:
@@ -51,13 +54,13 @@ def add_match_to_db(match_id):
                 lol_profile = LoLProfile.objects.get(puuid=summoner["puuid"])
 
             except LoLProfile.DoesNotExist:
-                lol_profile = LoLProfile.objects.create(
+                lol_profile = LoLProfile(
                     puuid=summoner["puuid"],
                     name=summoner["name"],
                     account_id=summoner["accountId"],
                     summoner_id=summoner["id"],
                 )
-                lol_profile.save()
+                lol_profiles_list.append(lol_profile)
 
             stats = p["stats"]
             item_regex = re.compile("^item")  # ^ -> starts with
@@ -70,13 +73,13 @@ def add_match_to_db(match_id):
                 if item != 0:
                     items.append(item)
 
-            new_p_stats = ParticipantStats.objects.create(
+            new_p_stats = ParticipantStats(
                 assists=stats["assists"],
                 deaths=stats["deaths"],
                 kills=stats["kills"],
                 items=items,
             )
-            new_p_stats.save()
+            participants_stats_list.append(new_p_stats)
 
             team = None
             if p["teamId"] == 100:
@@ -84,14 +87,14 @@ def add_match_to_db(match_id):
             elif p["teamId"] == 200:
                 team = red_team
 
-            new_p = Participant.objects.create(
+            new_p = Participant(
                 summoner=lol_profile,
                 team=team,
                 stats=new_p_stats,
                 champion_key=p["championId"],  # int
                 role=p["timeline"]["role"],
             )
-            new_p.save()
+            participants_list.append(new_p)
 
         new_match = Match.objects.create(
             id=match_dict["gameId"],
@@ -101,8 +104,14 @@ def add_match_to_db(match_id):
             mode=match_dict["gameMode"],
             region=match_dict["platformId"],
         )
+
+        # This is executed when all code above runs
+        # successfully, so we don't save any half baked data
         blue_team.save()
         red_team.save()
+        LoLProfile.objects.bulk_create(lol_profiles_list)
+        ParticipantStats.objects.bulk_create(participants_stats_list)
+        Participant.objects.bulk_create(participants_list)
         new_match.save()
 
     except Exception as e:
