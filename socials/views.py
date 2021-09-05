@@ -92,6 +92,7 @@ def instagram_disconnect_view(request):
         )
 
 
+@api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def twitch_connect_view(request):
