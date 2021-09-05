@@ -81,7 +81,8 @@ def match_history_view(request, username=None, begin_index=0, end_index=10):
             status=status.HTTP_412_PRECONDITION_FAILED,
         )
 
-    check_new_matches.delay(lol_profile.pk)
+    if not lol_profile.updating:
+        check_new_matches.delay(lol_profile.pk)
 
     total_count = lol_profile.participations.count()
     if begin_index >= total_count or end_index > 20:
