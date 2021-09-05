@@ -187,7 +187,12 @@ def check_new_matches(lol_profile_pk):
 
         latest_remote_match_id = get_matchlist(
             account_id=lol_profile.account_id, begin_index=0, end_index=1
-        )["matches"][0]["gameId"]
+        )
+
+        if latest_remote_match_id is None:
+            return
+
+        latest_remote_match_id = latest_remote_match_id["matches"][0]["gameId"]
 
         team = lol_profile.participations.order_by("-team__creation").first().team
         if team.color == "B":
