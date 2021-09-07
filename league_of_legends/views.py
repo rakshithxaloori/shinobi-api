@@ -1,4 +1,4 @@
-from league_of_legends.models import LolProfile
+from league_of_legends.models import LolProfile, Match
 from league_of_legends.cache import get_champion_full
 from django.http import JsonResponse
 
@@ -16,7 +16,11 @@ from knox.auth import TokenAuthentication
 
 
 from league_of_legends.tasks import check_new_matches
-from league_of_legends.serializers import LolProfileSerializer, ParticipantSerializer
+from league_of_legends.serializers import (
+    LolProfileSerializer,
+    MatchSerializer,
+    ParticipantSerializer,
+)
 from league_of_legends.wrapper import get_champion_masteries
 from league_of_legends.utils import get_lol_profile, clean_champion_mastery
 from league_of_legends.cache import get_champion_full
@@ -196,3 +200,32 @@ def champion_view(request, champion_key=None):
         },
         status=status.HTTP_200_OK,
     )
+
+
+# TODO why isn't the decorator working?
+# @api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def match_view(request, match_id=None):
+    if match_id is None:
+        return JsonResponse(
+            {"detail": "champion_key is required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        match = Match.objects.get(id=match_id)
+        match_data = MatchSerializer(match).data
+
+        return JsonResponse(
+            {
+                "detail": "{} match data".format(match_id),
+                "payload": {"match": match_data},
+            },
+            status=status.HTTP_200_OK,
+        )
+    except Match.DoesNotExist:
+        return JsonResponse(
+            {"detail": "match_id invalid"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
