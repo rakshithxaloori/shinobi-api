@@ -1,14 +1,14 @@
 from django.contrib import admin
 
 from league_of_legends.models import (
-    LoLProfile,
+    LolProfile,
     Participant,
     ParticipantStats,
     Team,
     Match,
 )
 
-admin.site.register(LoLProfile)
+admin.site.register(LolProfile)
 admin.site.register(Participant)
 admin.site.register(ParticipantStats)
 admin.site.register(Team)

@@ -3,13 +3,13 @@ from django.db import models
 from profiles.models import Profile
 
 # Create your models here.
-class LoLProfile(models.Model):
+class LolProfile(models.Model):
     # Max lengths are noted from the link below
     # https://developer.riotgames.com/apis#summoner-v4/GET_getByPUUID
 
     # TODO check if Riot OAuth returns accounts from all regions
     # That way you'd know if the accounts are preserved or deleted
-    # when players switch regions and their account_id, summoner_id changes
+    # when players switch regions and their summoner_id changes
 
     puuid = models.CharField(max_length=78, primary_key=True)
     # profile is
@@ -23,7 +23,8 @@ class LoLProfile(models.Model):
         blank=True,
     )
     name = models.CharField(max_length=16, null=False, blank=False)
-    account_id = models.CharField(max_length=56, null=False, blank=False)
+    profile_icon = models.PositiveSmallIntegerField(default=0)
+    level = models.PositiveSmallIntegerField(default=0)
     summoner_id = models.CharField(max_length=63)
     active = models.BooleanField(default=False)
     updating = models.BooleanField(default=False)
@@ -72,7 +73,7 @@ class ParticipantStats(models.Model):
 class Participant(models.Model):
     # If lolprofile doesn't exist, create but don't attach it a profile yet
     summoner = models.ForeignKey(
-        LoLProfile, related_name="participations", on_delete=models.PROTECT
+        LolProfile, related_name="participations", on_delete=models.PROTECT
     )
     team = models.ForeignKey(
         Team, related_name="participants", on_delete=models.PROTECT
@@ -80,7 +81,7 @@ class Participant(models.Model):
     stats = models.OneToOneField(
         ParticipantStats, related_name="participant", on_delete=models.PROTECT
     )
-    # https://ddragon.leagueoflegends.com/cdn/11.16.1/img/champion/{}.png
+    # https://ddragon.leagueoflegends.com/cdn/11.17.1/img/champion/{}.png
     champion_key = models.PositiveSmallIntegerField(null=False, blank=False)
     role = models.CharField(max_length=15, null=False, blank=False)
 
@@ -91,7 +92,7 @@ class Participant(models.Model):
 
 
 class Match(models.Model):
-    id = models.PositiveBigIntegerField(primary_key=True)
+    id = models.CharField(primary_key=True, max_length=15)
     creation = models.DateTimeField(blank=False, null=False)
     blue_team = models.OneToOneField(
         Team, related_name="b_match", on_delete=models.PROTECT

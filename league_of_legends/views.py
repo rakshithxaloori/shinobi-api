@@ -1,3 +1,4 @@
+from league_of_legends.models import LolProfile
 from league_of_legends.cache import get_champion_full
 from django.http import JsonResponse
 
@@ -15,16 +16,17 @@ from knox.auth import TokenAuthentication
 
 
 from league_of_legends.tasks import check_new_matches
-from league_of_legends.serializers import ParticipantSerializer
-from league_of_legends.wrapper import get_summoner, get_champion_masteries
+from league_of_legends.serializers import LolProfileSerializer, ParticipantSerializer
+from league_of_legends.wrapper import get_champion_masteries
 from league_of_legends.utils import get_lol_profile, clean_champion_mastery
 from league_of_legends.cache import get_champion_full
 
 
-# @api_view(["GET"])
+# @api_view(["POST"])
 # @authentication_classes([TokenAuthentication])
 # @permission_classes([IsAuthenticated, HasAPIKey])
-# def oauth_view(request):
+# def connect_view(request):
+#     # OAuth View
 #     # TODO
 #     # Check if the leagueoflegends profile already exists
 #     # Create only if doesn't
@@ -37,23 +39,33 @@ from league_of_legends.cache import get_champion_full
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
+def disconnect_view(request):
+    try:
+        lol_profile = request.user.profile.lol_profile
+        lol_profile.profile = None
+        lol_profile.save(update_fields=["profile"])
+        return JsonResponse(
+            {"detail": "LolProfile disconnected"}, status=status.HTTP_200_OK
+        )
+    except LolProfile.DoesNotExist:
+        return JsonResponse(
+            {"detail": "LolProfile doesn't exist"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def lol_profile_view(request, username):
     lol_profile = get_lol_profile(username=username)
     if lol_profile is None:
         return JsonResponse(
             {"detail": "LoL profile doesn't exist"}, status=status.HTTP_404_NOT_FOUND
         )
-    summoner = get_summoner(puuid=lol_profile.puuid)
     return JsonResponse(
         {
             "detail": "{}'s lol profile".format(request.user.username),
-            "payload": {
-                "name": summoner["name"],
-                "level": summoner["summonerLevel"],
-                "profile_icon": "http://ddragon.leagueoflegends.com/cdn/11.16.1/img/profileicon/{}.png".format(
-                    summoner["profileIconId"]
-                ),
-            },
+            "payload": LolProfileSerializer(lol_profile).data,
         },
         status=status.HTTP_200_OK,
     )

@@ -53,6 +53,6 @@ class MiniProfileSerializer(ModelSerializer):
         """Return the game that user plays the most."""
         try:
             # TODO {game_alias, game_logo_url}
-            return {"alias": "Kalturi", "logo": ""}
+            return {"alias": obj.lol_profile.name, "logo": ""}
         except Exception:
-            return None
+            return {"alias": "", "logo": ""}

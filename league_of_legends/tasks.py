@@ -4,9 +4,9 @@ from datetime import datetime
 from celery import shared_task
 
 
-from league_of_legends.wrapper import get_match, get_summoner, get_matchlist
+from league_of_legends.wrapper import get_match_v5, get_summoner, get_matchlist_v5
 from league_of_legends.models import (
-    LoLProfile,
+    LolProfile,
     Team,
     Match,
     Participant,
@@ -21,62 +21,66 @@ def add_match_to_db(match_id):
         return
 
     except Match.DoesNotExist:
-        match_dict = get_match(match_id=match_id)
+        match_info = get_match_v5(match_id=match_id)
 
-        if match_dict is None or match_dict["gameType"] != "MATCHED_GAME":
+        if match_info is None or match_info["info"]["gameType"] != "MATCHED_GAME":
             return
 
-        for team in match_dict["teams"]:
+        match_info = match_info["info"]
+
+        for team in match_info["teams"]:
             if team["teamId"] == 100:
                 # BLUE TEAM
                 blue_team = Team.objects.create(
-                    creation=datetime.fromtimestamp(match_dict["gameCreation"] / 1000),
+                    creation=datetime.fromtimestamp(match_info["gameCreation"] / 1000),
                     color=Team.Color.blue,
-                    win=team["win"] == "Win",
+                    win=team["win"],
                 )
 
             elif team["teamId"] == 200:
                 # RED TEAM
                 red_team = Team.objects.create(
-                    creation=datetime.fromtimestamp(match_dict["gameCreation"] / 1000),
+                    creation=datetime.fromtimestamp(match_info["gameCreation"] / 1000),
                     color=Team.Color.red,
-                    win=team["win"] == "Win",
+                    win=team["win"],
                 )
 
         # participants_list = []
         participants_stats_list = []
         lol_profiles_list = []
-        for p in match_dict["participants"]:
-            summoner = get_summoner(account_id=p["player"]["accountId"])
-            if summoner is None:
-                continue
+        for p in match_info["participants"]:
             try:
-                lol_profile = LoLProfile.objects.get(puuid=summoner["puuid"])
+                lol_profile = LolProfile.objects.get(puuid=p["puuid"])
+                lol_profile.name = p["summonerName"]
+                lol_profile.profile_icon = p["profileIcon"]
+                lol_profile.level = p["summonerLevel"]
+                lol_profile.summoner_id = p["summonerId"]
+                lol_profile.save(update_fields=["name", "profile_icon", "level"])
 
-            except LoLProfile.DoesNotExist:
-                lol_profile = LoLProfile(
-                    puuid=summoner["puuid"],
-                    name=summoner["name"],
-                    account_id=summoner["accountId"],
-                    summoner_id=summoner["id"],
+            except LolProfile.DoesNotExist:
+                lol_profile = LolProfile(
+                    puuid=p["puuid"],
+                    name=p["summonerName"],
+                    profile_icon=p["profileIcon"],
+                    level=p["summonerLevel"],
+                    summoner_id=p["summonerId"],
                 )
                 lol_profiles_list.append(lol_profile)
 
-            stats = p["stats"]
-            item_regex = re.compile("^item")  # ^ -> starts with
-            item_keys = list(filter(item_regex.match, stats.keys()))
+            item_regex = re.compile("^item\d")  # ^ -> starts with
+            item_keys = list(filter(item_regex.match, p.keys()))
 
             items = []
 
             for item_key in item_keys:
-                item = stats[item_key]
+                item = p[item_key]
                 if item != 0:
                     items.append(item)
 
             new_p_stats = ParticipantStats(
-                assists=stats["assists"],
-                deaths=stats["deaths"],
-                kills=stats["kills"],
+                assists=p["assists"],
+                deaths=p["deaths"],
+                kills=p["kills"],
                 items=items,
             )
 
@@ -91,19 +95,19 @@ def add_match_to_db(match_id):
                 team=team,
                 stats=new_p_stats,
                 champion_key=p["championId"],  # int
-                role=p["timeline"]["role"],
+                role=p["role"],
             )
 
             participants_stats_list.append((new_p_stats, new_p))
             # participants_list.append(new_p)
 
         new_match = Match.objects.create(
-            id=match_dict["gameId"],
-            creation=datetime.fromtimestamp(match_dict["gameCreation"] / 1000),
+            id=match_id,
+            creation=datetime.fromtimestamp(match_info["gameCreation"] / 1000),
             blue_team=blue_team,
             red_team=red_team,
-            mode=match_dict["gameMode"],
-            region=match_dict["platformId"],
+            mode=match_info["gameMode"],
+            region=match_info["platformId"],
         )
 
         # This is executed when all code above runs
@@ -127,12 +131,15 @@ def add_match_to_db(match_id):
 
 @shared_task
 def update_match_history(lol_profile_pk):
+    print("UPDATE MATCH HISTORY")
     try:
-        lol_profile = LoLProfile.objects.get(pk=lol_profile_pk)
-    except LoLProfile.DoesNotExist:
+        lol_profile = LolProfile.objects.get(pk=lol_profile_pk)
+    except LolProfile.DoesNotExist:
+        print("LOL PROFILE NOT FOUND")
         return
     if lol_profile.profile is None:
         # Only fetch match history if profile is attached
+        print("PROFILE NOT ATTACHED")
         return
 
     fetch_all = False
@@ -144,22 +151,20 @@ def update_match_history(lol_profile_pk):
         else:
             latest_match_local = team.r_match
     except Exception:
+        print("FETCH ALL")
         fetch_all = True
 
-    matchlist = get_matchlist(
-        account_id=lol_profile.account_id, begin_index=0, end_index=20
-    )
+    matchlist = get_matchlist_v5(puuid=lol_profile.puuid, start_index=0, count=5)
 
     if matchlist is None:
         return
 
-    matchlist = matchlist["matches"]
-
-    for match in matchlist:
-        if not fetch_all and match["gameId"] == latest_match_local.id:
+    for match_id in matchlist:
+        if not fetch_all and match_id == latest_match_local.id:
             break
-        add_match_to_db.delay(match_id=match["gameId"])
-        # add_match_to_db(match_id=match["gameId"])
+        print("ADD TO DB")
+        add_match_to_db.delay(match_id=match_id)
+        # add_match_to_db(match_id=match_id)
 
     if not lol_profile.active:
         lol_profile.active = True
@@ -172,27 +177,31 @@ def update_match_history(lol_profile_pk):
 @shared_task
 def check_new_matches(lol_profile_pk):
     try:
-        lol_profile = LoLProfile.objects.get(pk=lol_profile_pk)
-    except LoLProfile.DoesNotExist:
+        lol_profile = LolProfile.objects.get(pk=lol_profile_pk)
+    except LolProfile.DoesNotExist:
         return
 
     summoner = get_summoner(puuid=lol_profile.puuid)
     if summoner is None:
         return
 
+    lol_profile = LolProfile.objects.get(puuid=summoner["puuid"])
     lol_profile.name = summoner["name"]
-    lol_profile.save(update_fields=["name"])
+    lol_profile.profile_icon = summoner["profileIconId"]
+    lol_profile.level = summoner["summonerLevel"]
+    lol_profile.summoner_id = summoner["id"]
+    lol_profile.save(update_fields=["name", "profile_icon", "level", "summoner_id"])
 
     try:
 
-        latest_remote_match_id = get_matchlist(
-            account_id=lol_profile.account_id, begin_index=0, end_index=1
+        latest_remote_match_id = get_matchlist_v5(
+            puuid=lol_profile.puuid, start_index=0, count=1
         )
 
         if latest_remote_match_id is None:
             return
 
-        latest_remote_match_id = latest_remote_match_id["matches"][0]["gameId"]
+        latest_remote_match_id = latest_remote_match_id[0]
 
         team = lol_profile.participations.order_by("-team__creation").first().team
         if team.color == "B":

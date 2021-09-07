@@ -32,7 +32,7 @@ NEAREST_REGION_ROUTE = "americas.api.riotgames.com"
 REGION_API_URL = "https://{}".format(NEAREST_REGION_ROUTE)
 
 # URLs, maybe use these in serializers?
-profile_icon = "http://ddragon.leagueoflegends.com/cdn/11.16.1/img/profileicon/{}.png"  # profileIconId
+profile_icon = "http://ddragon.leagueoflegends.com/cdn/11.17.1/img/profileicon/{}.png"  # profileIconId
 
 
 # TODO is there a better way to pipe requests
@@ -61,67 +61,23 @@ def lol_wrapper(endpoint):
             return None
 
 
-def get_summoner(
-    puuid: str = None, account_id: str = None, summoner_id: str = None, name: str = None
-):
+def get_summoner(puuid: str = None, summoner_id: str = None, name: str = None):
     endpoint = None
     if puuid is not None:
         endpoint = "/lol/summoner/v4/summoners/by-puuid/{}".format(puuid)
-    elif account_id is not None:
-        endpoint = "/lol/summoner/v4/summoners/by-account/{}".format(account_id)
     elif summoner_id is not None:
         endpoint = "/lol/summoner/v4/summoners/{}".format(summoner_id)
     elif name is not None:
         endpoint = "/lol/summoner/v4/summoners/by-name/{}".format(name)
 
     if endpoint is None:
-        raise ValueError("puuid, account_id, summoner_id, name; all can't be 'None'")
+        raise ValueError("puuid, summoner_id, name; all can't be 'None'")
 
     endpoint = "{}{}".format(PLATFORM_API_URL, endpoint)
 
     json_response = lol_wrapper(endpoint=endpoint)
 
     return json_response
-
-
-def get_matchlist(
-    account_id: str = None, begin_index: int = None, end_index: int = None
-):
-    if account_id is None:
-        raise ValueError("account_id can't be 'None'")
-
-    if begin_index == None or end_index == None:
-        raise ValueError("begin_index, end_index required")
-
-    if begin_index < 0 or begin_index > end_index or end_index - begin_index > 100:
-        raise ValueError("Bad indices")
-
-    endpoint = (
-        "{}/lol/match/v4/matchlists/by-account/{}?beginIndex={}&endIndex={}".format(
-            PLATFORM_API_URL, account_id, begin_index, end_index
-        )
-    )
-
-    return lol_wrapper(endpoint=endpoint)
-
-
-def get_match(match_id=None):
-    if match_id is None:
-        raise ValueError("match_id can't be 'None'")
-
-    endpoint = "{}/lol/match/v4/matches/{}".format(PLATFORM_API_URL, match_id)
-
-    match = lol_wrapper(endpoint=endpoint)
-    if match is not None:
-        # Combine participants, participantIdentities
-        for p in match["participants"]:
-            for pi in match["participantIdentities"]:
-                if p["participantId"] == pi["participantId"]:
-                    p["player"] = pi["player"]
-                    break
-
-        match.pop("participantIdentities")
-    return match
 
 
 def get_matchlist_v5(puuid: str = None, start_index: int = None, count: int = None):
@@ -142,12 +98,16 @@ def get_matchlist_v5(puuid: str = None, start_index: int = None, count: int = No
 
 
 def get_match_v5(match_id=None):
-    pass
+    if match_id is None:
+        raise ValueError("match_id can't be None")
+
+    endpoint = "{}/lol/match/v5/matches/{}".format(REGION_API_URL, match_id)
+    return lol_wrapper(endpoint=endpoint)
 
 
 def get_champion_masteries(summoner_id: str = None):
     if summoner_id is None:
-        raise ValueError("account_id can't be 'None'")
+        raise ValueError("summoner_id can't be 'None'")
 
     endpoint = "{}/lol/champion-mastery/v4/champion-masteries/by-summoner/{}".format(
         PLATFORM_API_URL, summoner_id
