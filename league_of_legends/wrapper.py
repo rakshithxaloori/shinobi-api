@@ -11,7 +11,7 @@ RIOT_API_KEY = config("RIOT_API_KEY")
 # ASIA 	asia.api.riotgames.com
 # EUROPE 	europe.api.riotgames.com
 
-# FOR LOL
+# FOR LOL DATA
 # BR1 	br1.api.riotgames.com
 # EUN1 	eun1.api.riotgames.com
 # EUW1 	euw1.api.riotgames.com
@@ -24,15 +24,44 @@ RIOT_API_KEY = config("RIOT_API_KEY")
 # TR1 	tr1.api.riotgames.com
 # RU 	ru.api.riotgames.com
 
-# TODO nearest region route
-NEAREST_PLATFORM_ROUTE = "na1.api.riotgames.com"
-PLATFORM_API_URL = "https://{}".format(NEAREST_PLATFORM_ROUTE)
 
-NEAREST_REGION_ROUTE = "americas.api.riotgames.com"
-REGION_API_URL = "https://{}".format(NEAREST_REGION_ROUTE)
+def platform_url(platform: str = None):
+    if platform is None:
+        raise ValueError("'platform' can't be None")
+    platform = platform.lower()
+    if platform not in [
+        "br1",
+        "eun1",
+        "euw1",
+        "jp1",
+        "kr",
+        "la1",
+        "la2",
+        "na1",
+        "oc1",
+        "tr1",
+        "ru",
+    ]:
+        raise ValueError("invalid platform")
+    return "https://{}.api.riotgames.com".format(platform)
 
-# URLs, maybe use these in serializers?
-profile_icon = "http://ddragon.leagueoflegends.com/cdn/11.17.1/img/profileicon/{}.png"  # profileIconId
+
+def region_url(platform: str = None):
+    platform = platform.lower()
+    region = None
+    if platform in ["na1", "br1", "la1", "la2", "oc1"]:
+        # NA, BR, LAN, LAS, and OCE
+        region = "americas"
+    elif platform in ["kr", "jp"]:
+        # KR and JP
+        region = "asia"
+    elif platform in ["eun1", "euw1", "tr1", "ru"]:
+        # EUNE, EUW, TR, and RU
+        region = "europe"
+
+    if region is None:
+        raise ValueError("invalid platform")
+    return "https://{}.api.riotgames.com".format(region)
 
 
 # TODO is there a better way to pipe requests
@@ -61,7 +90,9 @@ def lol_wrapper(endpoint):
             return None
 
 
-def get_summoner(puuid: str = None, summoner_id: str = None, name: str = None):
+def get_summoner(
+    puuid: str = None, summoner_id: str = None, name: str = None, platform: str = None
+):
     endpoint = None
     if puuid is not None:
         endpoint = "/lol/summoner/v4/summoners/by-puuid/{}".format(puuid)
@@ -71,46 +102,50 @@ def get_summoner(puuid: str = None, summoner_id: str = None, name: str = None):
         endpoint = "/lol/summoner/v4/summoners/by-name/{}".format(name)
 
     if endpoint is None:
-        raise ValueError("puuid, summoner_id, name; all can't be 'None'")
+        raise ValueError("'puuid', 'summoner_id', 'name'; all can't be 'None'")
 
-    endpoint = "{}{}".format(PLATFORM_API_URL, endpoint)
+    endpoint = "{}{}".format(platform_url(platform=platform), endpoint)
 
     json_response = lol_wrapper(endpoint=endpoint)
 
     return json_response
 
 
-def get_matchlist_v5(puuid: str = None, start_index: int = None, count: int = None):
+def get_matchlist_v5(
+    puuid: str = None, start_index: int = None, count: int = None, platform: str = None
+):
     if puuid is None:
-        raise ValueError("puuid can't be 'None'")
+        raise ValueError("'puuid' can't be 'None'")
 
     if start_index == None:
-        raise ValueError("start_index required")
+        raise ValueError("'start_index' required")
 
     if start_index < 0 or count < 0 or count > 100:
         raise ValueError("Bad indices")
 
     endpoint = "{}/lol/match/v5/matches/by-puuid/{}/ids?start={}&count={}".format(
-        REGION_API_URL, puuid, start_index, count
+        region_url(platform=platform), puuid, start_index, count
     )
 
     return lol_wrapper(endpoint=endpoint)
 
 
-def get_match_v5(match_id=None):
+def get_match_v5(match_id=None, platform: str = None):
     if match_id is None:
-        raise ValueError("match_id can't be None")
+        raise ValueError("'match_id' can't be None")
 
-    endpoint = "{}/lol/match/v5/matches/{}".format(REGION_API_URL, match_id)
+    endpoint = "{}/lol/match/v5/matches/{}".format(
+        region_url(platform=platform), match_id
+    )
     return lol_wrapper(endpoint=endpoint)
 
 
-def get_champion_masteries(summoner_id: str = None):
+def get_champion_masteries(summoner_id: str = None, platform: str = None):
     if summoner_id is None:
-        raise ValueError("summoner_id can't be 'None'")
+        raise ValueError("'summoner_id' can't be 'None'")
 
     endpoint = "{}/lol/champion-mastery/v4/champion-masteries/by-summoner/{}".format(
-        PLATFORM_API_URL, summoner_id
+        platform_url(platform=platform), summoner_id
     )
 
     return lol_wrapper(endpoint=endpoint)

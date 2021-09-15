@@ -15,13 +15,13 @@ from league_of_legends.models import (
 
 
 @shared_task
-def add_match_to_db(match_id):
+def add_match_to_db(match_id, platform):
     try:
         Match.objects.get(id=match_id)
         return
 
     except Match.DoesNotExist:
-        match_info = get_match_v5(match_id=match_id)
+        match_info = get_match_v5(match_id=match_id, platform=platform)
 
         if match_info is None or match_info["info"]["gameType"] != "MATCHED_GAME":
             return
@@ -107,7 +107,7 @@ def add_match_to_db(match_id):
             blue_team=blue_team,
             red_team=red_team,
             mode=match_info["gameMode"],
-            region=match_info["platformId"],
+            platform=match_info["platformId"],
         )
 
         # This is executed when all code above runs
@@ -154,7 +154,9 @@ def update_match_history(lol_profile_pk):
         print("FETCH ALL")
         fetch_all = True
 
-    matchlist = get_matchlist_v5(puuid=lol_profile.puuid, start_index=0, count=5)
+    matchlist = get_matchlist_v5(
+        puuid=lol_profile.puuid, start_index=0, count=5, platform=lol_profile.platform
+    )
 
     if matchlist is None:
         return
@@ -163,7 +165,7 @@ def update_match_history(lol_profile_pk):
         if not fetch_all and match_id == latest_match_local.id:
             break
         print("ADD TO DB")
-        add_match_to_db.delay(match_id=match_id)
+        add_match_to_db.delay(match_id=match_id, platform=lol_profile.platform)
         # add_match_to_db(match_id=match_id)
 
     if not lol_profile.active:
@@ -181,7 +183,7 @@ def check_new_matches(lol_profile_pk):
     except LolProfile.DoesNotExist:
         return
 
-    summoner = get_summoner(puuid=lol_profile.puuid)
+    summoner = get_summoner(puuid=lol_profile.puuid, platform=lol_profile.platform)
     if summoner is None:
         return
 
@@ -195,7 +197,10 @@ def check_new_matches(lol_profile_pk):
     try:
 
         latest_remote_match_id = get_matchlist_v5(
-            puuid=lol_profile.puuid, start_index=0, count=1
+            puuid=lol_profile.puuid,
+            start_index=0,
+            count=1,
+            platform=lol_profile.platform,
         )
 
         if latest_remote_match_id is None:
