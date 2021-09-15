@@ -20,10 +20,12 @@ from league_of_legends.serializers import (
     LolProfileSerializer,
     MatchSerializer,
     ParticipantSerializer,
+    VerifyLolProfileSerializer,
 )
-from league_of_legends.wrapper import get_champion_masteries
+from league_of_legends.wrapper import get_champion_masteries, get_summoner
 from league_of_legends.utils import get_lol_profile, clean_champion_mastery
-from league_of_legends.cache import get_champion_full
+from league_of_legends.cache import get_champion_full, get_random_profile_icon
+from league_of_legends.models import VerifyLolProfile
 
 
 # @api_view(["POST"])
@@ -38,6 +40,126 @@ from league_of_legends.cache import get_champion_full
 
 #     # return "detail": "Fetching data, come back in a while"
 #     pass
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def connect_view(request):
+    summoner_name = request.data.get("summoner_name", None)
+    platform: str = request.data.get("platform", None)
+
+    if summoner_name is None:
+        return JsonResponse(
+            {"detail": "summoner_name required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if platform is None:
+        return JsonResponse(
+            {"detail": "platform required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if platform.lower() not in [
+        "br1",
+        "eun1",
+        "euw1",
+        "jp1",
+        "kr",
+        "la1",
+        "la2",
+        "na1",
+        "oc1",
+        "tr1",
+        "ru",
+    ]:
+        return JsonResponse(
+            {"detail": "platform invalid"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    summoner = get_summoner(name=summoner_name, platform=platform)
+
+    if summoner is None:
+        return JsonResponse(
+            {"detail": "Invalid summoner_name"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    try:
+        LolProfile.objects.get(puuid=summoner["puuid"])
+        return JsonResponse(
+            {
+                "detail": "League Of Legends profile with {} summoner name already exists".format(
+                    summoner["name"]
+                )
+            }
+        )
+    except LolProfile.DoesNotExist:
+        try:
+            verify_profile = VerifyLolProfile.objects.get(user=request.user)
+        except VerifyLolProfile.DoesNotExist:
+            verify_profile = VerifyLolProfile.objects.create(user=request.user)
+
+        verify_profile.summoner_name = summoner["name"]
+        verify_profile.old_profile_icon = summoner["profileIconId"]
+        verify_profile.new_profile_icon = get_random_profile_icon(
+            str(summoner["profileIconId"])
+        )
+        verify_profile.platform = platform.upper()
+        verify_profile.save()
+
+        return JsonResponse(
+            {
+                "detail": "Verify by changing profile_icon",
+                "payload": VerifyLolProfileSerializer(verify_profile).data,
+            }
+        )
+
+
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def verify_view(request):
+    try:
+        verify_profile = VerifyLolProfile.objects.get(user=request.user)
+    except VerifyLolProfile.DoesNotExist:
+        return JsonResponse(
+            {"detail": "No verification instance"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    summoner = get_summoner(
+        name=verify_profile.summoner_name, platform=verify_profile.platform
+    )
+    if summoner is None:
+        return JsonResponse(
+            {"detail": "Invalid summoner_name"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    if summoner["profileIconId"] == verify_profile.new_profile_icon:
+        # Create LolProfile
+        try:
+            lol_profile = LolProfile.objects.get(puuid=summoner["puuid"])
+            lol_profile.profile = request.user.profile
+            lol_profile.save(update_fields=["profile"])
+        except LolProfile.DoesNotExist:
+            lol_profile = LolProfile.objects.create(
+                puuid=summoner["puuid"],
+                profile=request.user.profile,
+                name=summoner["name"],
+                profile_icon=summoner["profileIconId"],
+                level=summoner["summonerLevel"],
+                summoner_id=summoner["id"],
+            )
+            lol_profile.save()
+
+        verify_profile.delete()
+
+        return JsonResponse(
+            {"detail": "Verification complete"}, status=status.HTTP_200_OK
+        )
+
+    else:
+        return JsonResponse(
+            {"detail": "Verification FAILED"}, status=status.HTTP_409_CONFLICT
+        )
 
 
 @api_view(["GET"])
