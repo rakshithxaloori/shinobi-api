@@ -1,3 +1,4 @@
+from django.db import models
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from league_of_legends.models import (
@@ -6,8 +7,31 @@ from league_of_legends.models import (
     Participant,
     ParticipantStats,
     Team,
+    VerifyLolProfile,
 )
 from league_of_legends.cache import get_champion_mini
+
+
+class VerifyLolProfileSerializer(ModelSerializer):
+    old_profile_icon = SerializerMethodField()
+    new_profile_icon = SerializerMethodField()
+
+    class Meta:
+        model = VerifyLolProfile
+        fields = ["summoner_name", "platform", "old_profile_icon", "new_profile_icon"]
+
+    def get_old_profile_icon(self, obj):
+        return "http://ddragon.leagueoflegends.com/cdn/11.18.1/img/profileicon/{}.png".format(
+            obj.old_profile_icon
+        )
+
+    def get_new_profile_icon(self, obj):
+        return "http://ddragon.leagueoflegends.com/cdn/11.18.1/img/profileicon/{}.png".format(
+            obj.new_profile_icon
+        )
+
+
+###################################################
 
 
 class LolProfileSerializer(ModelSerializer):
@@ -22,7 +46,7 @@ class LolProfileSerializer(ModelSerializer):
         return obj.profile is not None
 
     def get_profile_icon(self, obj):
-        return "http://ddragon.leagueoflegends.com/cdn/11.17.1/img/profileicon/{}.png".format(
+        return "http://ddragon.leagueoflegends.com/cdn/11.18.1/img/profileicon/{}.png".format(
             obj.profile_icon
         )
 
@@ -39,7 +63,7 @@ class ParticipantStatsSerializer(ModelSerializer):
 
     def get_items(self, obj):
         return [
-            "https://ddragon.leagueoflegends.com/cdn/11.17.1/img/item/{}.png".format(
+            "https://ddragon.leagueoflegends.com/cdn/11.18.1/img/item/{}.png".format(
                 item
             )
             for item in obj.items
@@ -113,7 +137,7 @@ class MatchSerializer(ModelSerializer):
 
     class Meta:
         model = Match
-        fields = ["id", "creation", "blue_team", "red_team", "mode", "region"]
+        fields = ["id", "creation", "blue_team", "red_team", "mode", "platform"]
 
 
 # from league_of_legends.models import Match

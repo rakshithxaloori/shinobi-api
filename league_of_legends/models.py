@@ -1,15 +1,61 @@
 from django.db import models
 
 from profiles.models import Profile
+from authentication.models import User
+
+
+class VerifyLolProfile(models.Model):
+    PLATFORM_CHOICES = [
+        ("BR1", "BR1"),
+        ("EUN1", "EUN1"),
+        ("EUW1", "EUW1"),
+        ("JP1", "JP1"),
+        ("KR", "KR"),
+        ("LA1", "LA1"),
+        ("LA2", "LA2"),
+        ("NA1", "NA1"),
+        ("OC1", "OC1"),
+        ("TR1", "TR1"),
+        ("RU", "RU"),
+    ]
+
+    user = models.OneToOneField(
+        User,
+        related_name="verify_lol_profile",
+        on_delete=models.PROTECT,
+        null=False,
+        blank=False,
+    )
+    summoner_name = models.CharField(max_length=16)
+    platform = models.CharField(
+        max_length=5, null=False, blank=False, choices=PLATFORM_CHOICES
+    )
+    old_profile_icon = models.PositiveSmallIntegerField(default=0)
+    new_profile_icon = models.PositiveSmallIntegerField(default=0)
+
 
 # Create your models here.
 class LolProfile(models.Model):
     # Max lengths are noted from the link below
     # https://developer.riotgames.com/apis#summoner-v4/GET_getByPUUID
 
-    # TODO check if Riot OAuth returns accounts from all regions
+    # TODO check if Riot OAuth returns accounts from all platforms
     # That way you'd know if the accounts are preserved or deleted
-    # when players switch regions and their summoner_id changes
+    # when players switch platforms and their summoner_id changes
+
+    PLATFORM_CHOICES = [
+        ("BR1", "BR1"),
+        ("EUN1", "EUN1"),
+        ("EUW1", "EUW1"),
+        ("JP1", "JP1"),
+        ("KR", "KR"),
+        ("LA1", "LA1"),
+        ("LA2", "LA2"),
+        ("NA1", "NA1"),
+        ("OC1", "OC1"),
+        ("TR1", "TR1"),
+        ("RU", "RU"),
+    ]
 
     puuid = models.CharField(max_length=78, primary_key=True)
     # profile is
@@ -25,6 +71,9 @@ class LolProfile(models.Model):
     name = models.CharField(max_length=16, null=False, blank=False)
     profile_icon = models.PositiveSmallIntegerField(default=0)
     level = models.PositiveSmallIntegerField(default=0)
+    platform = models.CharField(
+        max_length=5, null=False, blank=False, choices=PLATFORM_CHOICES
+    )
     summoner_id = models.CharField(max_length=63)
     active = models.BooleanField(default=False)
     updating = models.BooleanField(default=False)
@@ -81,7 +130,7 @@ class Participant(models.Model):
     stats = models.OneToOneField(
         ParticipantStats, related_name="participant", on_delete=models.PROTECT
     )
-    # https://ddragon.leagueoflegends.com/cdn/11.17.1/img/champion/{}.png
+    # https://ddragon.leagueoflegends.com/cdn/11.18.1/img/champion/{}.png
     champion_key = models.PositiveSmallIntegerField(null=False, blank=False)
     role = models.CharField(max_length=15, null=False, blank=False)
 
@@ -101,7 +150,7 @@ class Match(models.Model):
         Team, related_name="r_match", on_delete=models.PROTECT
     )
     mode = models.CharField(max_length=30, blank=False, null=False)
-    region = models.CharField(max_length=5, blank=False, null=False)
+    platform = models.CharField(max_length=5, blank=False, null=False)
 
     def __str__(self):
         return "{} || {}".format(self.creation, self.id)

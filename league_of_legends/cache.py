@@ -1,12 +1,13 @@
 import json
 import urllib.request
+import random
 
 from django.core.cache import cache
 
 
 def save_champions_data_cache():
     with urllib.request.urlopen(
-        "https://ddragon.leagueoflegends.com/cdn/11.17.1/data/en_US/championFull.json"
+        "https://ddragon.leagueoflegends.com/cdn/11.18.1/data/en_US/championFull.json"
     ) as url:
         champions_data = json.loads(url.read().decode())
         cache.set("lol_champions", champions_data, timeout=86400)
@@ -21,7 +22,10 @@ def get_champions_data_cache():
         return champions_data
 
 
-def get_champion_full(champion_key):
+def get_champion_full(champion_key=None):
+    if champion_key is None:
+        raise ValueError("champion_key can't be None")
+
     champions_data = get_champions_data_cache()
     try:
         champion_nick = champions_data["keys"][str(champion_key)]
@@ -30,7 +34,7 @@ def get_champion_full(champion_key):
         return {
             "key": champion["key"],  # int
             "name": champion["name"],
-            "image": "https://ddragon.leagueoflegends.com/cdn/11.17.1/img/champion/{}".format(
+            "image": "https://ddragon.leagueoflegends.com/cdn/11.18.1/img/champion/{}".format(
                 champion["image"]["full"]
             ),
             "blurb": champion["blurb"],
@@ -44,6 +48,9 @@ def get_champion_full(champion_key):
 
 
 def get_champion_mini(champion_key=None):
+    if champion_key is None:
+        raise ValueError("champion_key can't be None")
+
     champions_data = get_champions_data_cache()
     try:
         champion_nick = champions_data["keys"][str(champion_key)]
@@ -51,12 +58,45 @@ def get_champion_mini(champion_key=None):
         return {
             "key": champion["key"],
             "name": champion["name"],
-            "image": "https://ddragon.leagueoflegends.com/cdn/11.17.1/img/champion/{}".format(
+            "image": "https://ddragon.leagueoflegends.com/cdn/11.18.1/img/champion/{}".format(
                 champion["image"]["full"]
             ),
         }
     except Exception:
         return None
+
+
+####################################################
+
+
+def save_profile_icons_list_cache() -> list:
+    with urllib.request.urlopen(
+        "https://ddragon.leagueoflegends.com/cdn/11.18.1/data/en_US/profileicon.json"
+    ) as url:
+        profile_icons_list = list(json.loads(url.read().decode())["data"].keys())
+        cache.set("lol_profile_icons", profile_icons_list, timeout=86400)
+        return profile_icons_list
+
+
+def get_profile_icons_list_cache() -> list:
+    profile_icons_list = cache.get("lol_profile_icons")
+    if profile_icons_list is None:
+        return save_profile_icons_list_cache()
+    else:
+        return profile_icons_list
+
+
+def get_random_profile_icon(profile_icon: str = None):
+    if profile_icon is None:
+        raise ValueError("profile_icon can't be None")
+
+    profile_icons_list = get_profile_icons_list_cache()
+    try:
+        profile_icons_list.remove(profile_icon)
+    except ValueError:
+        # profile_icon not in list
+        pass
+    return random.choice(profile_icons_list)
 
 
 # champion in get_champion_full
