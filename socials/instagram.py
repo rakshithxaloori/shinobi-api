@@ -1,4 +1,3 @@
-from sys import api_version
 import requests
 from decouple import config
 
