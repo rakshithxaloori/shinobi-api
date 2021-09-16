@@ -4,6 +4,7 @@ from league_of_legends import views
 
 urlpatterns = [
     path("connect/", views.connect_view, name="lol connect"),
+    path("verify/", views.verify_view, name="lol verify"),
     path("disconnect/", views.disconnect_view, name="lol disconnect"),
     path("profile/<str:username>/", views.lol_profile_view, name="my lol profile"),
     path(

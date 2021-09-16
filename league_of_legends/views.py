@@ -23,8 +23,12 @@ from league_of_legends.serializers import (
     VerifyLolProfileSerializer,
 )
 from league_of_legends.wrapper import get_champion_masteries, get_summoner
-from league_of_legends.utils import get_lol_profile, clean_champion_mastery
-from league_of_legends.cache import get_champion_full, get_random_profile_icon
+from league_of_legends.utils import (
+    get_lol_profile,
+    clean_champion_mastery,
+    get_random_profile_icon,
+)
+from league_of_legends.cache import get_champion_full
 from league_of_legends.models import VerifyLolProfile
 
 
@@ -80,7 +84,10 @@ def connect_view(request):
 
     if summoner is None:
         return JsonResponse(
-            {"detail": "Invalid summoner_name"}, status=status.HTTP_404_NOT_FOUND
+            {
+                "detail": "Summoner not found. Make sure both summoner name and server are yours."
+            },
+            status=status.HTTP_404_NOT_FOUND,
         )
 
     try:
@@ -130,7 +137,10 @@ def verify_view(request):
     )
     if summoner is None:
         return JsonResponse(
-            {"detail": "Invalid summoner_name"}, status=status.HTTP_404_NOT_FOUND
+            {
+                "detail": "Summoner not found. Make sure both summoner name and server are yours."
+            },
+            status=status.HTTP_404_NOT_FOUND,
         )
 
     if summoner["profileIconId"] == verify_profile.new_profile_icon:
@@ -138,7 +148,9 @@ def verify_view(request):
         try:
             lol_profile = LolProfile.objects.get(puuid=summoner["puuid"])
             lol_profile.profile = request.user.profile
-            lol_profile.save(update_fields=["profile"])
+            lol_profile.profile_icon = summoner["profileIconId"]
+            lol_profile.level = summoner["summonerLevel"]
+            lol_profile.save(update_fields=["profile", "profile_icon", "level"])
         except LolProfile.DoesNotExist:
             lol_profile = LolProfile.objects.create(
                 puuid=summoner["puuid"],
@@ -146,6 +158,7 @@ def verify_view(request):
                 name=summoner["name"],
                 profile_icon=summoner["profileIconId"],
                 level=summoner["summonerLevel"],
+                platform=verify_profile.platform,
                 summoner_id=summoner["id"],
             )
             lol_profile.save()
@@ -158,7 +171,8 @@ def verify_view(request):
 
     else:
         return JsonResponse(
-            {"detail": "Verification FAILED"}, status=status.HTTP_409_CONFLICT
+            {"detail": "Profile Icon didn't match. Verification FAILED"},
+            status=status.HTTP_409_CONFLICT,
         )
 
 
@@ -186,7 +200,8 @@ def lol_profile_view(request, username):
     lol_profile = get_lol_profile(username=username)
     if lol_profile is None:
         return JsonResponse(
-            {"detail": "LoL profile doesn't exist"}, status=status.HTTP_404_NOT_FOUND
+            {"detail": "League of Legends profile not connected yet!"},
+            status=status.HTTP_404_NOT_FOUND,
         )
     return JsonResponse(
         {
@@ -273,7 +288,9 @@ def champion_masteries_view(request, username=None, begin_index=0, end_index=20)
             {"detail": "Bad indices"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    champion_masteries = get_champion_masteries(lol_profile.summoner_id)
+    champion_masteries = get_champion_masteries(
+        summoner_id=lol_profile.summoner_id, platform=lol_profile.platform
+    )
 
     if begin_index > len(champion_masteries):
         pass

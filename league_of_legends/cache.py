@@ -1,6 +1,5 @@
 import json
 import urllib.request
-import random
 
 from django.core.cache import cache
 
@@ -67,36 +66,6 @@ def get_champion_mini(champion_key=None):
 
 
 ####################################################
-
-
-def save_profile_icons_list_cache() -> list:
-    with urllib.request.urlopen(
-        "https://ddragon.leagueoflegends.com/cdn/11.18.1/data/en_US/profileicon.json"
-    ) as url:
-        profile_icons_list = list(json.loads(url.read().decode())["data"].keys())
-        cache.set("lol_profile_icons", profile_icons_list, timeout=86400)
-        return profile_icons_list
-
-
-def get_profile_icons_list_cache() -> list:
-    profile_icons_list = cache.get("lol_profile_icons")
-    if profile_icons_list is None:
-        return save_profile_icons_list_cache()
-    else:
-        return profile_icons_list
-
-
-def get_random_profile_icon(profile_icon: str = None):
-    if profile_icon is None:
-        raise ValueError("profile_icon can't be None")
-
-    profile_icons_list = get_profile_icons_list_cache()
-    try:
-        profile_icons_list.remove(profile_icon)
-    except ValueError:
-        # profile_icon not in list
-        pass
-    return random.choice(profile_icons_list)
 
 
 # champion in get_champion_full
