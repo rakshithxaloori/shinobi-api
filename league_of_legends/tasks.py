@@ -23,10 +23,17 @@ def add_match_to_db(match_id, platform):
     except Match.DoesNotExist:
         match_info = get_match_v5(match_id=match_id, platform=platform)
 
-        if match_info is None or match_info["info"]["gameType"] != "MATCHED_GAME":
+        if (
+            match_info is None
+            or match_info["info"]["gameType"] != "MATCHED_GAME"
+            or len(re.findall(r"\bTUTORIAL", match_info["info"]["gameMode"])) > 0
+        ):
+            # Skip if not Match Game or if Tutorial
             return
 
         match_info = match_info["info"]
+        blue_team = None
+        red_team = None
 
         for team in match_info["teams"]:
             if team["teamId"] == 100:
