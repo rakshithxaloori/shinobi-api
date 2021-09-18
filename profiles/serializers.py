@@ -53,6 +53,10 @@ class MiniProfileSerializer(ModelSerializer):
         """Return the game that user plays the most."""
         try:
             # TODO {game_alias, game_logo_url}
-            return {"alias": obj.lol_profile.name, "logo": ""}
+            # The currently supported formats are png, jpg, jpeg, bmp, gif, webp, psd (iOS only) - RN Image Component
+            return {
+                "alias": obj.lol_profile.name,
+                "logo": "https://ubuntuhandbook.org/wp-content/uploads/2018/09/lol-icon.png",
+            }
         except Exception:
             return {"alias": "", "logo": ""}
