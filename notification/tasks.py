@@ -1,3 +1,4 @@
+import rollbar
 from celery import shared_task
 
 from django.core.exceptions import ValidationError
@@ -22,27 +23,31 @@ def send_push_message(token, title, message, extra=None):
         )
     except PushServerError as exc:
         # Encountered some likely formatting/validation error.
-        # TODO
-        # rollbar.report_exc_info(
-        #     extra_data={
-        #         "token": token,
-        #         "title": title,
-        #         "message": message,
-        #         "extra": extra,
-        #         "errors": exc.errors,
-        #         "response_data": exc.response_data,
-        #     }
-        # )
-        raise
+        rollbar.report_exc_info(
+            extra_data={
+                "type": "expo_notification",
+                "detail": "Encountered some likely formatting/validation error.",
+                "token": token,
+                "title": title,
+                "message": message,
+                "extra": extra,
+                "errors": exc.errors,
+                "response_data": exc.response_data,
+            }
+        )
     except (ConnectionError, HTTPError) as exc:
         # Encountered some Connection or HTTP error - retry a few times in
         # case it is transient.
-        # TODO
-        # rollbar.report_exc_info(
-        #     extra_data={"token": token, "message": message, "extra": extra}
-        # )
-        # raise self.retry(exc=exc)
-        pass
+        rollbar.report_exc_info(
+            extra_data={
+                "type": "expo_notification",
+                "detail": "Encountered some Connection or HTTP error - retry a few times in case it is transient.",
+                "token": token,
+                "message": message,
+                "extra": extra,
+            }
+        )
+        # TODO raise self.retry(exc=exc)
 
     try:
         # We got a response back, but we don't know whether it's an error yet.
@@ -52,23 +57,20 @@ def send_push_message(token, title, message, extra=None):
     except DeviceNotRegisteredError:
         # Mark the push token as inactive
         expo_token = ExponentPushToken.objects.get(token=token)
-        # TODO delete?
-        expo_token.is_active = False
-        expo_token.save()
+        expo_token.delete()
     except PushTicketError as exc:
         # Encountered some other per-notification error.
-        # TODO
-        # rollbar.report_exc_info(
-        #     extra_data={
-        #         "token": token,
-        #         "message": message,
-        #         "extra": extra,
-        #         "push_response": exc.push_response._asdict(),
-        #     }
-        # )
-        # raise self.retry(exc=exc)
-        print(exc.push_response._asdict())
-        pass
+        rollbar.report_exc_info(
+            extra_data={
+                "type": "expo_notification",
+                "detail": "Encountered some other per-notification error.",
+                "token": token,
+                "message": message,
+                "extra": extra,
+                "push_response": exc.push_response._asdict(),
+            }
+        )
+        # TODO raise self.retry(exc=exc)
 
 
 # TODO override Notification's create method?
@@ -91,7 +93,16 @@ def create_notification(type, sender_pk, receiver_pk):
             send_push_message(expo_token.token, title, message)
 
     except ValidationError:
-        # TODO report the error
+        # Report the error
+        rollbar.report_exc_info(
+            extra_data={
+                "type": "expo_notification",
+                "detail": "Encountered model instance validation error.",
+                "sender": sender.username,
+                "receiver": receiver.username,
+                "notification_type": type,
+            }
+        )
         return
 
     except User.DoesNotExist:
@@ -100,6 +111,7 @@ def create_notification(type, sender_pk, receiver_pk):
 
 @shared_task
 def delete_push_token(user_pk, token):
+    # Used in logout
     try:
         user = User.objects.get(pk=user_pk)
     except User.DoesNotExist:

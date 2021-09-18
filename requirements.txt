@@ -11,3 +11,4 @@ exponent-server-sdk==2.0.0
 django-redis==5.0.0
 celery==5.1.2
 ratelimit==2.2.1
+rollbar==0.16.1

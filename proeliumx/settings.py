@@ -28,9 +28,9 @@ SECRET_KEY = config("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 CI_CD_STAGE = config("CI_CD_STAGE")
 
-if CI_CD_STAGE == "prod":
+if CI_CD_STAGE == "production":
     DEBUG = False
-elif CI_CD_STAGE == "test" or CI_CD_STAGE == "dev":
+elif CI_CD_STAGE == "testing" or CI_CD_STAGE == "development":
     DEBUG = True
 
 ALLOWED_HOSTS = [config("API_HOSTNAME")]
@@ -69,6 +69,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "rollbar.contrib.django.middleware.RollbarNotifierMiddleware",
 ]
 
 ROOT_URLCONF = "proeliumx.urls"
@@ -95,8 +96,14 @@ WSGI_APPLICATION = "proeliumx.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-
-if CI_CD_STAGE == "prod":
+if DEBUG:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+        }
+    }
+else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -108,13 +115,6 @@ if CI_CD_STAGE == "prod":
         }
     }
 
-elif CI_CD_STAGE == "dev" or CI_CD_STAGE == "test":
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
-        }
-    }
 
 CACHES = {
     "default": {
@@ -220,3 +220,15 @@ CELERY_BROKER_URL = config("REDIS_CACHE_URL")
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
+
+
+################################################################################
+# Rollbar
+ROLLBAR = {
+    "access_token": config("ROLLBAR_ACCESS_TOKEN"),
+    "environment": "development" if DEBUG else "production",
+    "root": BASE_DIR,
+}
+import rollbar
+
+rollbar.init(**ROLLBAR)
