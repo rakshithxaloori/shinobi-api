@@ -1,5 +1,6 @@
 import requests
 from os import cpu_count
+from time import sleep
 from decouple import config
 from ratelimit import limits, sleep_and_retry
 
@@ -68,26 +69,28 @@ def region_url(platform: str = None):
 # instead of limitting #requests in each cpu,
 # so max won't exceed total limit
 @sleep_and_retry
-@limits(calls=int(15 / cpu_count()), period=1)
+@limits(calls=int(20 / cpu_count()), period=1)
 @sleep_and_retry
-@limits(calls=int(80 / cpu_count()), period=120)
-def lol_wrapper(endpoint):
-    headers = {"X-Riot-Token": RIOT_API_KEY}
-    response = requests.get(endpoint, headers=headers)
+@limits(calls=int(100 / cpu_count()), period=120)
+def lol_wrapper(endpoint, max_tries=10):
+    for i in range(max_tries):
+        headers = {"X-Riot-Token": RIOT_API_KEY}
+        response = requests.get(endpoint, headers=headers)
 
-    if response.ok:
-        return response.json()
+        if response.ok:
+            return response.json()
 
-    else:
-        if response.status_code == 429:
-            print(response.headers)
-            raise Exception("RETRY WITH BACKOFF {}".format(response.status_code))
-        elif response.status_code >= 500:
-            raise Exception("RIOT SERVER ERROR {}".format(response.status_code))
         else:
-            print("RIOT RESPONSE ERROR {}".format(response.status_code))
-            # TODO sent this to someone
-            return None
+            if response.status_code == 429:
+                sleep(float(response.headers["Retry-After"]))
+                continue
+            elif response.status_code >= 500:
+                return None
+            else:
+                print("RIOT RESPONSE ERROR {}".format(response.status_code))
+                # TODO sent this to someone
+                return None
+    return None
 
 
 def get_summoner(

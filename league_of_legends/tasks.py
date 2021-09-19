@@ -141,39 +141,39 @@ def update_match_history(lol_profile_pk):
     print("UPDATE MATCH HISTORY")
     try:
         lol_profile = LolProfile.objects.get(pk=lol_profile_pk)
+        if lol_profile.profile is not None:
+            # Only fetch match history if profile is attached
+            fetch_all = False
+            try:
+                team = lol_profile.participations.order_by("-team__creation").first()
+                team = team.team
+                if team.color == "B":
+                    latest_match_local = team.b_match
+                else:
+                    latest_match_local = team.r_match
+            except Exception:
+                print("FETCH ALL")
+                fetch_all = True
+
+            matchlist = get_matchlist_v5(
+                puuid=lol_profile.puuid,
+                start_index=0,
+                count=20,
+                platform=lol_profile.platform,
+            )
+
+            if matchlist is not None:
+                for match_id in matchlist:
+                    if not fetch_all and match_id == latest_match_local.id:
+                        break
+                    print("ADD TO DB")
+                    add_match_to_db.delay(
+                        match_id=match_id, platform=lol_profile.platform
+                    )
+                    # add_match_to_db(match_id=match_id)
     except LolProfile.DoesNotExist:
         print("LOL PROFILE NOT FOUND")
-        return
-    if lol_profile.profile is None:
-        # Only fetch match history if profile is attached
-        print("PROFILE NOT ATTACHED")
-        return
-
-    fetch_all = False
-    try:
-        team = lol_profile.participations.order_by("-team__creation").first()
-        team = team.team
-        if team.color == "B":
-            latest_match_local = team.b_match
-        else:
-            latest_match_local = team.r_match
-    except Exception:
-        print("FETCH ALL")
-        fetch_all = True
-
-    matchlist = get_matchlist_v5(
-        puuid=lol_profile.puuid, start_index=0, count=5, platform=lol_profile.platform
-    )
-
-    if matchlist is None:
-        return
-
-    for match_id in matchlist:
-        if not fetch_all and match_id == latest_match_local.id:
-            break
-        print("ADD TO DB")
-        add_match_to_db.delay(match_id=match_id, platform=lol_profile.platform)
-        # add_match_to_db(match_id=match_id)
+        pass
 
     if not lol_profile.active:
         lol_profile.active = True
@@ -187,46 +187,47 @@ def update_match_history(lol_profile_pk):
 def check_new_matches(lol_profile_pk):
     try:
         lol_profile = LolProfile.objects.get(pk=lol_profile_pk)
+        summoner = get_summoner(puuid=lol_profile.puuid, platform=lol_profile.platform)
+        if summoner is not None:
+            lol_profile = LolProfile.objects.get(puuid=summoner["puuid"])
+            lol_profile.name = summoner["name"]
+            lol_profile.profile_icon = summoner["profileIconId"]
+            lol_profile.level = summoner["summonerLevel"]
+            lol_profile.summoner_id = summoner["id"]
+            lol_profile.save(
+                update_fields=["name", "profile_icon", "level", "summoner_id"]
+            )
+
+            try:
+                latest_remote_match_id = get_matchlist_v5(
+                    puuid=lol_profile.puuid,
+                    start_index=0,
+                    count=1,
+                    platform=lol_profile.platform,
+                )
+
+                if latest_remote_match_id is not None:
+                    latest_remote_match_id = latest_remote_match_id[0]
+
+                    team = (
+                        lol_profile.participations.order_by("-team__creation")
+                        .first()
+                        .team
+                    )
+                    if team.color == "B":
+                        latest_match_local = team.b_match
+                    else:
+                        latest_match_local = team.r_match
+
+                    if latest_remote_match_id != latest_match_local.id:
+                        lol_profile.updating = True
+                        lol_profile.save(update_fields=["updating"])
+                        update_match_history.delay(lol_profile_pk)
+                        # update_match_history(lol_profile_pk)
+
+            except Exception as e:
+                print("EXCEPTION def create_new_matches:", e)
+                pass
+
     except LolProfile.DoesNotExist:
-        return
-
-    summoner = get_summoner(puuid=lol_profile.puuid, platform=lol_profile.platform)
-    if summoner is None:
-        return
-
-    lol_profile = LolProfile.objects.get(puuid=summoner["puuid"])
-    lol_profile.name = summoner["name"]
-    lol_profile.profile_icon = summoner["profileIconId"]
-    lol_profile.level = summoner["summonerLevel"]
-    lol_profile.summoner_id = summoner["id"]
-    lol_profile.save(update_fields=["name", "profile_icon", "level", "summoner_id"])
-
-    try:
-
-        latest_remote_match_id = get_matchlist_v5(
-            puuid=lol_profile.puuid,
-            start_index=0,
-            count=1,
-            platform=lol_profile.platform,
-        )
-
-        if latest_remote_match_id is None:
-            return
-
-        latest_remote_match_id = latest_remote_match_id[0]
-
-        team = lol_profile.participations.order_by("-team__creation").first().team
-        if team.color == "B":
-            latest_match_local = team.b_match
-        else:
-            latest_match_local = team.r_match
-
-    except Exception as e:
-        print("EXCEPTION def create_new_matches:", e)
-        return
-
-    if latest_remote_match_id != latest_match_local.id:
-        lol_profile.updating = True
-        lol_profile.save(update_fields=["updating"])
-        update_match_history.delay(lol_profile_pk)
-        # update_match_history(lol_profile_pk)
+        pass
