@@ -87,7 +87,9 @@ def profile_view(request, username):
 @permission_classes([IsAuthenticated, HasAPIKey])
 def search_view(request, username):
     # TODO cache will be very useful for this view
-    profiles = Profile.objects.filter(user__username__startswith=username)[:10]
+    profiles = Profile.objects.filter(
+        user__username__startswith=username, user__is_staff=False
+    )[:10]
     profiles_data = MiniProfileSerializer(profiles, many=True).data
 
     return JsonResponse(
