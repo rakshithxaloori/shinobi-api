@@ -1,3 +1,4 @@
+import rollbar
 import requests
 from os import cpu_count
 from time import sleep
@@ -91,8 +92,14 @@ def lol_wrapper(endpoint, max_tries=10):
             elif response.status_code >= 500:
                 return None
             else:
-                print("RIOT RESPONSE ERROR {}".format(response.status_code))
-                # TODO sent this to someone
+                rollbar.report_exc_info(
+                    extra_data={
+                        "type": "riot_response",
+                        "detail": "Encountered some Riot League of Legends Response Error.",
+                        "status_code": response.status_code,
+                        "endpoint": endpoint,
+                    }
+                )
                 return None
     return None
 
