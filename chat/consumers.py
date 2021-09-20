@@ -19,7 +19,6 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
 
         self.user = self.scope["user"]
 
-        # TODO test this
         chat_access = await self.check_chat_access()
         if chat_access is False:
             self.close(4200)
@@ -36,7 +35,7 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, code):
         if code == 4200:
-            # TODO Someone tried to do something that they don't
+            # Someone tried to do something that they don't
             # have access to
             print("Someone tried to do something that they don't have access to")
 

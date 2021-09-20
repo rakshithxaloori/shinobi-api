@@ -52,7 +52,6 @@ class MiniProfileSerializer(ModelSerializer):
     def get_game_alias(self, obj):
         """Return the game that user plays the most."""
         try:
-            # TODO {game_alias, game_logo_url}
             # The currently supported formats are png, jpg, jpeg, bmp, gif, webp, psd (iOS only) - RN Image Component
             return {
                 "alias": obj.lol_profile.name,

@@ -40,7 +40,6 @@ from league_of_legends.models import VerifyLolProfile
 #     # TODO
 #     # Check if the leagueoflegends profile already exists
 #     # Create only if doesn't
-#     # TODO get all of match history - SUPER IMPORTANT, use signals
 
 #     # return "detail": "Fetching data, come back in a while"
 #     pass
