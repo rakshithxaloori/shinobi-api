@@ -16,10 +16,10 @@ from authentication.models import User
 from notification.models import Notification, ExponentPushToken
 
 
-def send_push_message(token, title, message, extra=None):
+def send_push_message(token, title, message, data=None):
     try:
         response = PushClient().publish(
-            PushMessage(to=token, title=title, body=message, data=extra)
+            PushMessage(to=token, title=title, body=message, data=data)
         )
     except PushServerError as exc:
         # Encountered some likely formatting/validation error.
@@ -30,7 +30,7 @@ def send_push_message(token, title, message, extra=None):
                 "token": token,
                 "title": title,
                 "message": message,
-                "extra": extra,
+                "extra": data,
                 "errors": exc.errors,
                 "response_data": exc.response_data,
             }
@@ -44,7 +44,7 @@ def send_push_message(token, title, message, extra=None):
                 "detail": "Encountered some Connection or HTTP error - retry a few times in case it is transient.",
                 "token": token,
                 "message": message,
-                "extra": extra,
+                "extra": data,
             }
         )
         # TODO raise self.retry(exc=exc)
@@ -66,7 +66,7 @@ def send_push_message(token, title, message, extra=None):
                 "detail": "Encountered some other per-notification error.",
                 "token": token,
                 "message": message,
-                "extra": extra,
+                "extra": data,
                 "push_response": exc.push_response._asdict(),
             }
         )
@@ -90,7 +90,16 @@ def create_notification(type, sender_pk, receiver_pk):
         message = "{} follows you".format(sender.username)
         for expo_token in expo_tokens:
             # Send a push notification
-            send_push_message(expo_token.token, title, message)
+            send_push_message(
+                token=expo_token.token,
+                title=title,
+                message=message,
+                data={
+                    "type": type,
+                    "followee": receiver.username,
+                    "follower": sender.username,
+                },
+            )
 
     except ValidationError:
         # Report the error
