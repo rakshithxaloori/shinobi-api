@@ -55,6 +55,11 @@ def instagram_connect_view(request):
                 {"detail": "access_token required"}, status=status.HTTP_400_BAD_REQUEST
             )
         user_info = instagram.get_user_info(authorization_code=authorization_code)
+        if user_info is None:
+            return JsonResponse(
+                {"detail": "Something went wrong when connecting your IG."},
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
 
         new_instagram_profile = InstagramProfile.objects.create(
             profile=request.user.profile,

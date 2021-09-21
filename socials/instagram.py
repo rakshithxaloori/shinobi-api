@@ -1,14 +1,16 @@
 import requests
+import rollbar
 from decouple import config
 
 
 INSTAGRAM_CLIENT_ID = config("INSTAGRAM_CLIENT_ID")
 INSTAGRAM_CLIENT_SECRET = config("INSTAGRAM_CLIENT_SECRET")
+OAUTH_REDIRECT_URI = config("OAUTH_REDIRECT_URI")
 
 
 def _get_user_info(access_token=None, user_id=None):
     if access_token is None or user_id is None:
-        return "FAILED"
+        return None
 
     api_version = "v11.0"
     endpoint = "https://graph.instagram.com/{}/{}?fields=account_type,id,username&access_token={}".format(
@@ -20,7 +22,7 @@ def _get_user_info(access_token=None, user_id=None):
         data = response.json()
         return data
     else:
-        return "FAILED"
+        return None
 
 
 def get_user_info(authorization_code):
@@ -33,7 +35,7 @@ def get_user_info(authorization_code):
         "client_secret": INSTAGRAM_CLIENT_SECRET,
         "code": authorization_code,
         "grant_type": "authorization_code",
-        "redirect_uri": "https://auth.expo.io/@rakshith.aloori/ProeliumX",
+        "redirect_uri": OAUTH_REDIRECT_URI,
     }
 
     response = requests.post(endpoint, data=payload)
@@ -46,4 +48,11 @@ def get_user_info(authorization_code):
         # }
         return _get_user_info(data["access_token"], data["user_id"])
     else:
-        return "FAILED"
+        rollbar.report_exc_info(
+            extra_data={
+                "type": "instagram_connect",
+                "detail": "Encountered some Instagram Request Error.",
+                "endpoint": endpoint,
+            }
+        )
+        return None
