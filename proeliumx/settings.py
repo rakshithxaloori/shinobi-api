@@ -10,9 +10,14 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
-from pathlib import Path
-from decouple import config
 import os
+from pathlib import Path
+
+if os.getenv("CI_CD_STAGE", None) is None:
+    # Only loads in dev environment
+    from dotenv import load_dotenv
+
+    load_dotenv()
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -23,17 +28,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config("SECRET_KEY")
+SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-CI_CD_STAGE = config("CI_CD_STAGE")
+CI_CD_STAGE = os.environ["CI_CD_STAGE"]
 
 if CI_CD_STAGE == "production":
     DEBUG = False
 elif CI_CD_STAGE == "testing" or CI_CD_STAGE == "development":
     DEBUG = True
 
-ALLOWED_HOSTS = [config("API_HOSTNAME")]
+ALLOWED_HOSTS = [os.environ["API_HOSTNAME"]]
 
 
 # Application definition
@@ -96,14 +101,25 @@ WSGI_APPLICATION = "proeliumx.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-if DEBUG:
+if CI_CD_STAGE == "development":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
         }
     }
-else:
+elif CI_CD_STAGE == "testing":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": "postgres",
+            "USER": "postgres",
+            "PASSWORD": "postgres",
+            "HOST": os.environ["DB_HOSTNAME"],
+            "PORT": 5432,
+        }
+    }
+elif CI_CD_STAGE == "production":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -119,7 +135,7 @@ else:
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "{}/1".format(config("REDIS_CACHE_URL")),
+        "LOCATION": "{}/1".format(os.environ["REDIS_CACHE_URL"]),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
@@ -178,7 +194,7 @@ AUTH_USER_MODEL = "authentication.User"
 
 ################################################################################
 # CORS
-CORS_ALLOWED_ORIGINS = [config("ANDROID_APP_ROOT_URL"), config("IOS_APP_ROOT_URL")]
+CORS_ALLOW_ALL_ORIGINS = True
 
 
 ################################################################################
@@ -216,7 +232,7 @@ CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
 
 ################################################################################
 
-CELERY_BROKER_URL = config("REDIS_CACHE_URL")
+CELERY_BROKER_URL = os.environ["REDIS_CACHE_URL"]
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
@@ -225,10 +241,16 @@ CELERY_RESULT_SERIALIZER = "json"
 ################################################################################
 # Rollbar
 ROLLBAR = {
-    "access_token": config("ROLLBAR_ACCESS_TOKEN"),
+    "access_token": os.environ["ROLLBAR_ACCESS_TOKEN"],
     "environment": "development" if DEBUG else "production",
     "root": BASE_DIR,
 }
 import rollbar
 
 rollbar.init(**ROLLBAR)
+
+################################################################################
+# Only transmit HTTPS requests to Django
+# if CI_CD_STAGE == "production":
+#     CSRF_COOKIE_SECURE = True
+#     SESSION_COOKIE_SECURE = True

@@ -1,7 +1,7 @@
+import os
 import hmac
 import requests
 from hashlib import sha256
-from decouple import config
 from celery import shared_task
 
 from django.core.cache import cache
@@ -10,7 +10,7 @@ from socials.models import TwitchProfile, TwitchStream
 from profiles.models import Game
 
 
-TWITCH_CLIENT_ID = config("TWITCH_CLIENT_ID")
+TWITCH_CLIENT_ID = os.environ["TWITCH_CLIENT_ID"]
 
 
 # User token or access_token for the topics that require a scope
@@ -49,7 +49,7 @@ def get_app_access_token():
         endpoint = "https://id.twitch.tv/oauth2/token"
         payload = {
             "client_id": TWITCH_CLIENT_ID,
-            "client_secret": config("TWITCH_CLIENT_SECRET"),
+            "client_secret": os.environ["TWITCH_CLIENT_SECRET"],
             "grant_type": "client_credentials",
             "scope": ["user_read"],
         }
@@ -89,7 +89,7 @@ def create_subscription(twitch_profile_pk=None):
         "Content-Type": "application/json",
     }
     TWITCH_CALLBACK_URL = "https://{}/socials/twitch/callback/".format(
-        config("API_HOSTNAME")
+        os.environ["API_HOSTNAME"]
     )
     payload = [
         {

@@ -1,16 +1,15 @@
 import rollbar
 import requests
-from os import cpu_count
+import os
 from time import sleep
-from decouple import config
 from ratelimit import limits, sleep_and_retry
 
 
-RIOT_API_KEY = config("RIOT_API_KEY")
-RIOT_LOL_RATE_LIMIT_1 = config("RIOT_LOL_RATE_LIMIT_1", cast=int)
-RIOT_LOL_RATE_PERIOD_1 = config("RIOT_LOL_RATE_PERIOD_1", cast=int)
-RIOT_LOL_RATE_LIMIT_2 = config("RIOT_LOL_RATE_LIMIT_2", cast=int)
-RIOT_LOL_RATE_PERIOD_2 = config("RIOT_LOL_RATE_PERIOD_2", cast=int)
+RIOT_API_KEY = os.environ["RIOT_API_KEY"]
+RIOT_LOL_RATE_LIMIT_1 = int(os.environ["RIOT_LOL_RATE_LIMIT_1"])
+RIOT_LOL_RATE_PERIOD_1 = int(os.environ["RIOT_LOL_RATE_PERIOD_1"])
+RIOT_LOL_RATE_LIMIT_2 = int(os.environ["RIOT_LOL_RATE_LIMIT_2"])
+RIOT_LOL_RATE_PERIOD_2 = int(os.environ["RIOT_LOL_RATE_PERIOD_2"])
 
 # FOR RIOT ACCOUNT
 # AMERICAS 	americas.api.riotgames.com
@@ -74,9 +73,13 @@ def region_url(platform: str = None):
 # instead of limitting #requests in each cpu,
 # so max won't exceed total limit
 @sleep_and_retry
-@limits(calls=int(RIOT_LOL_RATE_LIMIT_1 / cpu_count()), period=RIOT_LOL_RATE_PERIOD_1)
+@limits(
+    calls=int(RIOT_LOL_RATE_LIMIT_1 / os.cpu_count()), period=RIOT_LOL_RATE_PERIOD_1
+)
 @sleep_and_retry
-@limits(calls=int(RIOT_LOL_RATE_LIMIT_2 / cpu_count()), period=RIOT_LOL_RATE_PERIOD_2)
+@limits(
+    calls=int(RIOT_LOL_RATE_LIMIT_2 / os.cpu_count()), period=RIOT_LOL_RATE_PERIOD_2
+)
 def lol_wrapper(endpoint, max_tries=10):
     for i in range(max_tries):
         headers = {"X-Riot-Token": RIOT_API_KEY}

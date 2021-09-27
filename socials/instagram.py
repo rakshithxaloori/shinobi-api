@@ -1,11 +1,11 @@
 import requests
 import rollbar
-from decouple import config
+import os
 
 
-INSTAGRAM_CLIENT_ID = config("INSTAGRAM_CLIENT_ID")
-INSTAGRAM_CLIENT_SECRET = config("INSTAGRAM_CLIENT_SECRET")
-OAUTH_REDIRECT_URI = config("OAUTH_REDIRECT_URI")
+INSTAGRAM_CLIENT_ID = os.environ["INSTAGRAM_CLIENT_ID"]
+INSTAGRAM_CLIENT_SECRET = os.environ["INSTAGRAM_CLIENT_SECRET"]
+OAUTH_REDIRECT_URI = os.environ["OAUTH_REDIRECT_URI"]
 
 
 def _get_user_info(access_token=None, user_id=None):
