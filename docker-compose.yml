@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  migration:
+    build: .
+    command: python manage.py migrate
+    volumes:
+      - .:/usr/src/app
+
+  static:
+    build: .
+    command: python manage.py collectstatic --noinput
+    volumes:
+      - .:/usr/src/app
+
+  web:
+    build: .
+    command: daphne -b 0.0.0.0 -p 8000 proeliumx.asgi:application
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - migration
+      - static
+
+  celery:
+    build: .
+    environment:
+      - REDIS_CACHE_URL
+    command: celery -A proeliumx worker -l INFO --uid=nobody --gid=nogroup
+    volumes:
+      - .:/usr/src/app
+    depends_on:
+      - migration
+      - web
