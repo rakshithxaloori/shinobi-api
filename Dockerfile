@@ -15,5 +15,3 @@ RUN pip3 install -r requirements.txt
 
 # copy project
 COPY . /usr/src/app/
-
-EXPOSE 8000

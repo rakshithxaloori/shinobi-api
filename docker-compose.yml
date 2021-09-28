@@ -1,36 +1,34 @@
 version: "3.9"
 
 services:
-  migration:
+  daphne:
     build: .
-    command: python manage.py migrate
+    command: bash -c "python manage.py migrate --noinput &&
+      python manage.py collectstatic --noinput &&
+      daphne -b 0.0.0.0 -p 8000 proeliumx.asgi:application"
     volumes:
       - .:/usr/src/app
+      - static:/usr/src/app/static
+    restart: on-failure
 
-  static:
-    build: .
-    command: python manage.py collectstatic --noinput
+  nginx:
+    build: ./nginx
     volumes:
-      - .:/usr/src/app
-
-  web:
-    build: .
-    command: daphne -b 0.0.0.0 -p 8000 proeliumx.asgi:application
-    volumes:
-      - .:/usr/src/app
+      - static:/usr/src/app/static
     ports:
-      - "8000:8000"
+      - "80:80"
+    restart: on-failure
     depends_on:
-      - migration
-      - static
+      - daphne
 
   celery:
     build: .
-    environment:
-      - REDIS_CACHE_URL
     command: celery -A proeliumx worker -l INFO --uid=nobody --gid=nogroup
     volumes:
       - .:/usr/src/app
+    restart: on-failure
     depends_on:
-      - migration
-      - web
+      - daphne
+
+volumes:
+  static:
