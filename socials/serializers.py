@@ -1,7 +1,7 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from profiles.models import Game, Profile
-from socials.models import InstagramProfile, TwitchProfile, TwitchStream, YouTubeProfile
+from socials.models import InstagramProfile, TwitchProfile, YouTubeProfile
 
 
 ##########################################
@@ -12,13 +12,13 @@ class GameSerializer(ModelSerializer):
         read_only_fields = fields
 
 
-class TwitchStreamSerializer(ModelSerializer):
-    game = GameSerializer()
+# class TwitchStreamSerializer(ModelSerializer):
+#     game = GameSerializer()
 
-    class Meta:
-        model = TwitchStream
-        fields = ["game", "title", "thumbnail_url"]
-        read_only_fields = fields
+#     class Meta:
+#         model = TwitchStream
+#         fields = ["game", "title", "thumbnail_url"]
+#         read_only_fields = fields
 
 
 ##########################################

@@ -1,6 +1,4 @@
-from django.contrib import auth
 from django.http import JsonResponse, HttpResponse
-from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -15,7 +13,7 @@ from rest_framework_api_key.permissions import HasAPIKey
 from knox.auth import TokenAuthentication
 
 
-from socials.models import InstagramProfile, TwitchProfile, TwitchStream, YouTubeProfile
+from socials.models import InstagramProfile, TwitchProfile, YouTubeProfile
 
 from profiles import tasks as p_tasks
 from socials import twitch_tasks, youtube, instagram
@@ -134,7 +132,7 @@ def twitch_connect_view(request):
                 user_id=user_info.get("id", None),
                 login=user_info.get("login", None),
                 display_name=user_info.get("display_name", None),
-                view_count=user_info.get("view_count", None),
+                # view_count=user_info.get("view_count", None),
             )
             twitch_profile.save()
 
@@ -153,87 +151,6 @@ def twitch_connect_view(request):
         )
 
 
-@api_view(["POST"])
-def twitch_callback_view(request):
-    # Handle callback based on callback_data["subscription"]["status"]
-    request_body = request.body
-    callback_data = request.data
-    print(callback_data)
-
-    callback_status = callback_data["subscription"]["status"]
-    try:
-        twitch_profile = TwitchProfile.objects.get(
-            user_id=callback_data["subscription"]["condition"]["broadcaster_user_id"]
-        )
-        if (
-            twitch_tasks.verify_signature(
-                headers=request.headers,
-                request_body=request_body,
-                webhook_secret=twitch_profile.secret,
-            )
-            != 200
-        ):
-            # Signature doesn't match
-            return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
-
-        if callback_status == "enabled":
-            if callback_data["subscription"]["type"] == "stream.online":
-                twitch_tasks.stream_online.delay(twitch_profile_pk=twitch_profile.pk)
-
-            elif callback_data["subscription"]["type"] == "stream.offline":
-                try:
-                    twitch_stream = twitch_profile.twitch_stream
-                    twitch_stream.title = ""
-                    twitch_stream.is_streaming = False
-                    twitch_stream.save(update_fields=["title", "is_streaming"])
-                except TwitchStream.DoesNotExist:
-                    pass
-
-            return HttpResponse(status=status.HTTP_200_OK)
-
-        elif callback_status == "webhook_callback_verification_pending":
-            if callback_data["subscription"]["type"] == "stream.online":
-                twitch_profile.stream_online_subscription_id = callback_data[
-                    "subscription"
-                ]["id"]
-            elif callback_data["subscription"]["type"] == "stream.offline":
-                twitch_profile.stream_offline_subscription_id = callback_data[
-                    "subscription"
-                ]["id"]
-            twitch_profile.save(
-                update_fields=[
-                    "stream_online_subscription_id",
-                    "stream_offline_subscription_id",
-                ]
-            )
-            return HttpResponse(callback_data["challenge"], status=status.HTTP_200_OK)
-
-        elif callback_status == "webhook_callback_verification_failed":
-            return HttpResponse(status=status.HTTP_200_OK)
-
-        elif callback_status == "notification_failures_exceeded":
-            return HttpResponse(status=status.HTTP_200_OK)
-
-        elif callback_status == "authorization_revoked":
-            twitch_profile.is_active = False
-            twitch_profile.save(update_fields=["is_active"])
-            return HttpResponse(status=status.HTTP_200_OK)
-
-        elif callback_status == "user_removed":
-            try:
-                twitch_profile.twitch_stream.delete()
-            except TwitchStream.DoesNotExist:
-                pass
-            twitch_profile.delete()
-            return HttpResponse(status=status.HTTP_200_OK)
-
-    except TwitchProfile.DoesNotExist:
-        return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
-    except Exception as e:
-        print(e)
-        return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
-
-
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
@@ -247,10 +164,10 @@ def twitch_disconnect_view(request):
 
     else:
         twitch_profile = profile.twitch_profile
-        twitch_tasks.delete_subscription.delay(
-            twitch_profile.stream_online_subscription_id,
-            twitch_profile.stream_offline_subscription_id,
-        )
+        # twitch_tasks.delete_subscription.delay(
+        #     twitch_profile.stream_online_subscription_id,
+        #     twitch_profile.stream_offline_subscription_id,
+        # )
         twitch_profile.delete()
         return JsonResponse(
             {"detail": "Twitch profile deleted"}, status=status.HTTP_200_OK
@@ -387,6 +304,87 @@ def youtube_disconnect_view(request):
         return JsonResponse(
             {"detail": "YouTube profile deleted"}, status=status.HTTP_200_OK
         )
+
+
+# @api_view(["POST"])
+# def twitch_callback_view(request):
+#     # Handle callback based on callback_data["subscription"]["status"]
+#     request_body = request.body
+#     callback_data = request.data
+#     print(callback_data)
+
+#     callback_status = callback_data["subscription"]["status"]
+#     try:
+#         twitch_profile = TwitchProfile.objects.get(
+#             user_id=callback_data["subscription"]["condition"]["broadcaster_user_id"]
+#         )
+#         if (
+#             twitch_tasks.verify_signature(
+#                 headers=request.headers,
+#                 request_body=request_body,
+#                 webhook_secret=twitch_profile.secret,
+#             )
+#             != 200
+#         ):
+#             # Signature doesn't match
+#             return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
+
+#         if callback_status == "enabled":
+#             if callback_data["subscription"]["type"] == "stream.online":
+#                 twitch_tasks.stream_online.delay(twitch_profile_pk=twitch_profile.pk)
+
+#             elif callback_data["subscription"]["type"] == "stream.offline":
+#                 try:
+#                     twitch_stream = twitch_profile.twitch_stream
+#                     twitch_stream.title = ""
+#                     twitch_stream.is_streaming = False
+#                     twitch_stream.save(update_fields=["title", "is_streaming"])
+#                 except TwitchStream.DoesNotExist:
+#                     pass
+
+#             return HttpResponse(status=status.HTTP_200_OK)
+
+#         elif callback_status == "webhook_callback_verification_pending":
+#             if callback_data["subscription"]["type"] == "stream.online":
+#                 twitch_profile.stream_online_subscription_id = callback_data[
+#                     "subscription"
+#                 ]["id"]
+#             elif callback_data["subscription"]["type"] == "stream.offline":
+#                 twitch_profile.stream_offline_subscription_id = callback_data[
+#                     "subscription"
+#                 ]["id"]
+#             twitch_profile.save(
+#                 update_fields=[
+#                     "stream_online_subscription_id",
+#                     "stream_offline_subscription_id",
+#                 ]
+#             )
+#             return HttpResponse(callback_data["challenge"], status=status.HTTP_200_OK)
+
+#         elif callback_status == "webhook_callback_verification_failed":
+#             return HttpResponse(status=status.HTTP_200_OK)
+
+#         elif callback_status == "notification_failures_exceeded":
+#             return HttpResponse(status=status.HTTP_200_OK)
+
+#         elif callback_status == "authorization_revoked":
+#             twitch_profile.is_active = False
+#             twitch_profile.save(update_fields=["is_active"])
+#             return HttpResponse(status=status.HTTP_200_OK)
+
+#         elif callback_status == "user_removed":
+#             try:
+#                 twitch_profile.twitch_stream.delete()
+#             except TwitchStream.DoesNotExist:
+#                 pass
+#             twitch_profile.delete()
+#             return HttpResponse(status=status.HTTP_200_OK)
+
+#     except TwitchProfile.DoesNotExist:
+#         return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
+#     except Exception as e:
+#         print(e)
+#         return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
 
 # if callback_data["subscription"]["type"] == "stream.online":
