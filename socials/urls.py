@@ -11,7 +11,7 @@ urlpatterns = [
         name="instagram disconnect",
     ),
     path("twitch/connect/", views.twitch_connect_view, name="twitch connect"),
-    path("twitch/callback/", views.twitch_callback_view, name="twitch callback"),
+    # path("twitch/callback/", views.twitch_callback_view, name="twitch callback"),
     path("twitch/disconnect/", views.twitch_disconnect_view, name="twitch disconnect"),
     path("youtube/connect/", views.youtube_connect_view, name="youtube connect"),
     path(
