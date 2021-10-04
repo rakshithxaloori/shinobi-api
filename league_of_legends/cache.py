@@ -6,7 +6,7 @@ from django.core.cache import cache
 
 def save_champions_data_cache():
     with urllib.request.urlopen(
-        "https://ddragon.leagueoflegends.com/cdn/11.18.1/data/en_US/championFull.json"
+        "https://ddragon.leagueoflegends.com/cdn/11.19.1/data/en_US/championFull.json"
     ) as url:
         champions_data = json.loads(url.read().decode())
         cache.set("lol_champions", champions_data, timeout=86400)
@@ -29,11 +29,10 @@ def get_champion_full(champion_key=None):
     try:
         champion_nick = champions_data["keys"][str(champion_key)]
         champion = champions_data["data"][champion_nick]
-        print(champion["key"])
         return {
             "key": champion["key"],  # int
             "name": champion["name"],
-            "image": "https://ddragon.leagueoflegends.com/cdn/11.18.1/img/champion/{}".format(
+            "image": "https://ddragon.leagueoflegends.com/cdn/11.19.1/img/champion/{}".format(
                 champion["image"]["full"]
             ),
             "blurb": champion["blurb"],
@@ -43,6 +42,8 @@ def get_champion_full(champion_key=None):
         }
 
     except Exception:
+        print("RELOADING CHAMPIONS")
+        save_champions_data_cache()
         return None
 
 
@@ -57,11 +58,13 @@ def get_champion_mini(champion_key=None):
         return {
             "key": champion["key"],
             "name": champion["name"],
-            "image": "https://ddragon.leagueoflegends.com/cdn/11.18.1/img/champion/{}".format(
+            "image": "https://ddragon.leagueoflegends.com/cdn/11.19.1/img/champion/{}".format(
                 champion["image"]["full"]
             ),
         }
     except Exception:
+        print("RELOADING CHAMPIONS")
+        save_champions_data_cache()
         return None
 
 
