@@ -29,24 +29,40 @@ def new_user_analytics():
 @shared_task
 def update_active_user(last_open_str):
     last_open_date = date.fromisoformat(last_open_str)
-    da_instance = DailyAnalytics.objects.order_by("-date").first()
 
-    if last_open_date < da_instance.date:
+    # Daily Analytics
+    da_instance = DailyAnalytics.objects.order_by("-date").first()
+    if da_instance is None:
+        # Happens when the db is first created
+        da_instance = DailyAnalytics.objects.create(date=date.today())
+        da_instance.save()
+
+    elif last_open_date < da_instance.date:
         # If last opened before today
         da_instance.active_users += 1
         da_instance.save(update_fields=["active_users"])
 
+    # Weekly Analytics
     wa_instance = WeeklyAnalytics.objects.order_by("-date").first()
-    if (
-        last_open_date < wa_instance.date
-    ):  # if not (last.open >= wa_instance.date) # If last not today or later this week
+    if wa_instance is None:
+        wa_instance = WeeklyAnalytics.objects.create(date=date.today())
+        wa_instance.save()
+
+    elif last_open_date < wa_instance.date:
+        # if not (last.open >= wa_instance.date)
+        # If last not today or later this week
         wa_instance.active_users += 1
         wa_instance.save(update_fields=["active_users"])
 
+    # Monthly Analytics
     ma_instance = MonthlyAnalytics.objects.order_by("-date").first()
-    if (
-        last_open_date < ma_instance.date
-    ):  # if not (last.open >= ma_instance.date) # If last not today or later this month
+    if ma_instance is None:
+        ma_instance = MonthlyAnalytics.objects.create(date=date.today())
+        ma_instance.save()
+
+    elif last_open_date < ma_instance.date:
+        # if not (last.open >= ma_instance.date)
+        # If last not today or later this month
         # If last opened before this month
         ma_instance.active_users += 1
         ma_instance.save(update_fields=["active_users"])
