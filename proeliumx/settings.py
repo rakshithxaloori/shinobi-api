@@ -112,11 +112,11 @@ elif CI_CD_STAGE == "testing":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": "postgres",
-            "USER": "postgres",
-            "PASSWORD": "postgres",
+            "NAME": os.environ["DB_NAME"],
+            "USER": os.environ["DB_USER"],
+            "PASSWORD": os.environ["DB_PASSWORD"],
             "HOST": os.environ["DB_HOSTNAME"],
-            "PORT": 5432,
+            "PORT": os.environ["DB_PORT"],
         }
     }
 elif CI_CD_STAGE == "production":
