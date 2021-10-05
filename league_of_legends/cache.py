@@ -9,12 +9,12 @@ def save_champions_data_cache():
         "https://ddragon.leagueoflegends.com/cdn/11.19.1/data/en_US/championFull.json"
     ) as url:
         champions_data = json.loads(url.read().decode())
-        cache.set("lol_champions", champions_data, timeout=86400)
+        cache.set("lol:champions", champions_data, timeout=86400)
         return champions_data
 
 
 def get_champions_data_cache():
-    champions_data = cache.get("lol_champions")
+    champions_data = cache.get("lol:champions")
     if champions_data is None:
         return save_champions_data_cache()
     else:
@@ -42,7 +42,7 @@ def get_champion_full(champion_key=None):
         }
 
     except Exception:
-        print("RELOADING CHAMPIONS")
+        # Reload the champions
         save_champions_data_cache()
         return None
 
@@ -63,7 +63,7 @@ def get_champion_mini(champion_key=None):
             ),
         }
     except Exception:
-        print("RELOADING CHAMPIONS")
+        # Reload the champions
         save_champions_data_cache()
         return None
 
