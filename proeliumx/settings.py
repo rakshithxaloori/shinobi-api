@@ -132,10 +132,18 @@ elif CI_CD_STAGE == "production":
     }
 
 
+REDIS_URL = "redis://{}:{}@{}:{}".format(
+    os.environ["REDIS_USERNAME"],
+    os.environ["REDIS_PASSWORD"],
+    os.environ["REDIS_HOSTNAME"],
+    os.environ["REDIS_PORT"],
+)
+print("REDIS_URL", REDIS_URL)
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "{}/1".format(os.environ["REDIS_CACHE_URL"]),
+        "LOCATION": REDIS_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
@@ -232,7 +240,8 @@ CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
 
 ################################################################################
 
-CELERY_BROKER_URL = os.environ["REDIS_CACHE_URL"]
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
