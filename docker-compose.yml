@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  daphne:
+    build: .
+    env_file:
+      - .env
+    command: bash -c "python manage.py migrate --noinput &&
+      python manage.py collectstatic --noinput &&
+      daphne -b 0.0.0.0 -p 8000 proeliumx.asgi:application"
+    volumes:
+      - .:/usr/src/app
+      - static:/usr/src/app/static
+    restart: on-failure
+
+  nginx:
+    build: ./nginx
+    volumes:
+      - static:/usr/src/app/static
+    ports:
+      - "80:80"
+    restart: on-failure
+    depends_on:
+      - daphne
+
+  celery:
+    build: .
+    env_file:
+      - .env
+    command: celery -A proeliumx worker -l INFO --uid=nobody --gid=nogroup
+    volumes:
+      - .:/usr/src/app
+    restart: on-failure
+    depends_on:
+      - daphne
+
+volumes:
+  static:

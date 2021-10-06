@@ -9,10 +9,10 @@ class User(AbstractUser):
     last_open = models.DateTimeField(
         default=timezone.now
     )  # The last time the user opened the app
-    last_active = models.DateTimeField(
+    last_close = models.DateTimeField(
         default=timezone.now
     )  # The last time the user closed the app
-    active = models.BooleanField(default=False)
+    online = models.BooleanField(default=False)
 
     def __str__(self):
         return "{} || {}".format(self.username, self.email)
