@@ -130,7 +130,7 @@ class Participant(models.Model):
     stats = models.OneToOneField(
         ParticipantStats, related_name="participant", on_delete=models.PROTECT
     )
-    # https://ddragon.leagueoflegends.com/cdn/11.19.1/img/champion/{}.png
+    # https://ddragon.leagueoflegends.com/cdn/11.20.1/img/champion/{}.png
     champion_key = models.PositiveSmallIntegerField(null=False, blank=False)
     role = models.CharField(max_length=15, null=False, blank=False)
 
