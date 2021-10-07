@@ -35,15 +35,18 @@ class VerifyLolProfileSerializer(ModelSerializer):
 
 
 class LolProfileSerializer(ModelSerializer):
-    profile_exists = SerializerMethodField()
+    username = SerializerMethodField()
     profile_icon = SerializerMethodField()
 
     class Meta:
         model = LolProfile
-        fields = ["name", "profile_icon", "level", "profile_exists"]
+        fields = ["name", "profile_icon", "platform", "level", "username"]
 
-    def get_profile_exists(self, obj):
-        return obj.profile is not None
+    def get_username(self, obj):
+        try:
+            return obj.profile.user.username
+        except Exception:
+            return None
 
     def get_profile_icon(self, obj):
         return "http://ddragon.leagueoflegends.com/cdn/11.19.1/img/profileicon/{}.png".format(
@@ -63,9 +66,12 @@ class ParticipantStatsSerializer(ModelSerializer):
 
     def get_items(self, obj):
         return [
-            "https://ddragon.leagueoflegends.com/cdn/11.19.1/img/item/{}.png".format(
-                item
-            )
+            {
+                "key": item,
+                "image": "https://ddragon.leagueoflegends.com/cdn/11.19.1/img/item/{}.png".format(
+                    item
+                ),
+            }
             for item in obj.items
         ]
 
