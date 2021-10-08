@@ -1,10 +1,10 @@
-from celery import shared_task
+from proeliumx.celery import app as celery_app
 
 from authentication.models import User
 from chat.models import Chat, ChatUser
 
 
-@shared_task
+@celery_app.task(queue="celery")
 def create_chat(being_followed_user_pk, follower_user_pk):
     try:
         being_followed_user = User.objects.get(pk=being_followed_user_pk)
@@ -30,7 +30,7 @@ def create_chat(being_followed_user_pk, follower_user_pk):
         new_chat_user_2.save()
 
 
-@shared_task
+@celery_app.task(queue="celery")
 def delete_chat(being_followed_user_pk, follower_user_pk):
     try:
         being_followed_user = User.objects.get(pk=being_followed_user_pk)

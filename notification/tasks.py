@@ -1,5 +1,4 @@
 import rollbar
-from celery import shared_task
 
 from django.core.exceptions import ValidationError
 
@@ -11,6 +10,8 @@ from exponent_server_sdk import (
     PushTicketError,
 )
 from requests.exceptions import ConnectionError, HTTPError
+
+from proeliumx.celery import app as celery_app
 
 from authentication.models import User
 from notification.models import Notification, ExponentPushToken
@@ -74,7 +75,7 @@ def send_push_message(token, title, message, data=None):
 
 
 # TODO override Notification's create method?
-@shared_task
+@celery_app.task(queue="celery")
 def create_notification(type, sender_pk, receiver_pk):
     try:
         sender = User.objects.get(pk=sender_pk)
@@ -118,7 +119,7 @@ def create_notification(type, sender_pk, receiver_pk):
         return
 
 
-@shared_task
+@celery_app.task(queue="celery")
 def delete_push_token(user_pk, token):
     # Used in logout
     try:

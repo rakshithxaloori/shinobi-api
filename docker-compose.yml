@@ -27,7 +27,18 @@ services:
     build: .
     env_file:
       - .env
-    command: celery -A proeliumx worker -l INFO --uid=nobody --gid=nogroup
+    command: celery -A proeliumx worker -l INFO --uid=nobody --gid=nogroup -Q celery
+    volumes:
+      - .:/usr/src/app
+    restart: on-failure
+    depends_on:
+      - daphne
+
+  lol_celery:
+    build: .
+    env_file:
+      - .env
+    command: celery -A proeliumx worker -l INFO --uid=nobody --gid=nogroup -Q lol --concurrency 1
     volumes:
       - .:/usr/src/app
     restart: on-failure

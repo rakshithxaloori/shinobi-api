@@ -1,8 +1,8 @@
 import re
 from datetime import datetime
 
-from celery import shared_task
 
+from proeliumx.celery import app as celery_app
 
 from league_of_legends.wrapper import get_match_v5, get_summoner, get_matchlist_v5
 from league_of_legends.models import (
@@ -14,7 +14,7 @@ from league_of_legends.models import (
 )
 
 
-@shared_task
+@celery_app.task(queue="lol")
 def add_match_to_db(match_id, platform):
     try:
         Match.objects.get(id=match_id)
@@ -136,7 +136,7 @@ def add_match_to_db(match_id, platform):
         print("EXCEPTION def add_match_to_db:", e)
 
 
-@shared_task
+@celery_app.task(queue="lol")
 def update_match_history(lol_profile_pk):
     print("UPDATE MATCH HISTORY")
     try:
@@ -183,7 +183,7 @@ def update_match_history(lol_profile_pk):
         lol_profile.save(update_fields=["updating"])
 
 
-@shared_task
+@celery_app.task(queue="lol")
 def check_new_matches(lol_profile_pk):
     try:
         lol_profile = LolProfile.objects.get(pk=lol_profile_pk)

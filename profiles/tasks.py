@@ -1,10 +1,10 @@
-from celery import shared_task
+from proeliumx.celery import app as celery_app
 
 from authentication.models import User
 from profiles.models import Profile
 
 
-@shared_task
+@celery_app.task(queue="celery")
 def add_profile_picture(user_pk, picture):
     """Add the picture to user if a picture doesn't exist."""
     try:
@@ -16,7 +16,7 @@ def add_profile_picture(user_pk, picture):
         user.save()
 
 
-@shared_task
+@celery_app.task(queue="celery")
 def after_follow(user_profile_pk):
     try:
         user_profile = Profile.objects.get(pk=user_profile_pk)
@@ -26,7 +26,7 @@ def after_follow(user_profile_pk):
     user_profile.save(update_fields=["follower_count"])
 
 
-@shared_task
+@celery_app.task(queue="celery")
 def after_unfollow(user_profile_pk):
     try:
         user_profile = Profile.objects.get(pk=user_profile_pk)
