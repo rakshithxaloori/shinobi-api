@@ -44,6 +44,7 @@ ALLOWED_HOSTS = [os.environ["API_HOSTNAME"]]
 # Application definition
 
 INSTALLED_APPS = [
+    "django_cassandra_engine",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -117,7 +118,19 @@ elif CI_CD_STAGE == "testing":
             "PASSWORD": os.environ["DB_PASSWORD"],
             "HOST": os.environ["DB_HOSTNAME"],
             "PORT": os.environ["DB_PORT"],
-        }
+        },
+        "chat": {
+            "ENGINE": "django_cassandra_engine",
+            "NAME": "db",
+            "TEST_NAME": "test_db",
+            "HOST": "localhost",
+            "OPTIONS": {
+                "replication": {
+                    "strategy_class": "SimpleStrategy",
+                    "replication_factor": 1,
+                }
+            },
+        },
     }
 elif CI_CD_STAGE == "production":
     DATABASES = {
@@ -128,9 +141,22 @@ elif CI_CD_STAGE == "production":
             "PASSWORD": os.environ["RDS_PASSWORD"],
             "HOST": os.environ["RDS_HOSTNAME"],
             "PORT": os.environ["RDS_PORT"],
-        }
+        },
+        "chat": {
+            "ENGINE": "django_cassandra_engine",
+            "NAME": "db",
+            "TEST_NAME": "test_db",
+            "HOST": "localhost",
+            "OPTIONS": {
+                "replication": {
+                    "strategy_class": "SimpleStrategy",
+                    "replication_factor": 1,
+                }
+            },
+        },
     }
 
+DATABASE_ROUTERS = ["chat.db_router.ChatRouter"]
 
 REDIS_URL = "redis://{}:{}@{}:{}".format(
     os.environ["REDIS_USERNAME"],
@@ -138,7 +164,6 @@ REDIS_URL = "redis://{}:{}@{}:{}".format(
     os.environ["REDIS_HOSTNAME"],
     os.environ["REDIS_PORT"],
 )
-print("REDIS_URL", REDIS_URL)
 
 CACHES = {
     "default": {

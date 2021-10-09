@@ -1,6 +1,7 @@
 from proeliumx.celery import app as celery_app
 
 from authentication.models import User
+from chat.models import UserReplica
 from profiles.models import Profile
 
 
@@ -13,7 +14,10 @@ def add_profile_picture(user_pk, picture):
         return
     if user.picture is None or user.picture == "":
         user.picture = picture
+        user_replica = UserReplica.objects.get(username=user.username)
+        user_replica.picture = picture
         user.save()
+        user_replica.save()
 
 
 @celery_app.task(queue="celery")

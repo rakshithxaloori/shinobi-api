@@ -13,6 +13,8 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["chat_id"]
         self.room_chat_name = "chat_%s" % self.room_name
+
+        # self.scope["user"] is of chat.models.UserReplica type or AnonymousUser
         if self.scope["user"].is_anonymous:
             self.close(4200)
             return

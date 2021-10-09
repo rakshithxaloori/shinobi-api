@@ -1,12 +1,20 @@
 from django.db import models
 from django.utils import timezone
 
-from authentication.models import User
+from cassandra.cqlengine import columns
+from django_cassandra_engine.models import DjangoCassandraModel
 
 
+class UserReplica(DjangoCassandraModel):
+    username = columns.Text(max_length=150)
+    picture = columns.Text(required=False)
+    picture = models.URLField(null=True, blank=True)
+
+
+# TODO use DjangoCassandraModel for all models
 class Chat(models.Model):
     # users here is redundant, but saves db time
-    users = models.ManyToManyField(User, related_name="chats")
+    users = models.ManyToManyField(UserReplica, related_name="chats")
     last_updated = models.DateTimeField(default=timezone.now)
     created = models.DateTimeField(auto_now_add=True)
 
@@ -23,7 +31,9 @@ class Chat(models.Model):
 
 
 class ChatUser(models.Model):
-    user = models.ForeignKey(User, related_name="chat_users", on_delete=models.PROTECT)
+    user = models.ForeignKey(
+        UserReplica, related_name="chat_users", on_delete=models.PROTECT
+    )
     chat = models.ForeignKey(Chat, related_name="chat_users", on_delete=models.CASCADE)
     # last_read is the last datetime when the user read the chat
     last_read = models.DateTimeField(default=timezone.now)
@@ -35,7 +45,7 @@ class ChatUser(models.Model):
 class Message(models.Model):
     chat = models.ForeignKey(Chat, related_name="messages", on_delete=models.CASCADE)
     sent_by = models.ForeignKey(
-        User, related_name="sent_messages", on_delete=models.PROTECT
+        UserReplica, related_name="sent_messages", on_delete=models.PROTECT
     )
     text = models.TextField()
     is_read = models.BooleanField(default=False)

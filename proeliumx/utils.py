@@ -5,6 +5,8 @@ from django.contrib.auth.models import AnonymousUser
 
 from knox.auth import TokenAuthentication
 
+from chat.models import UserReplica
+
 knoxAuth = TokenAuthentication()
 
 
@@ -12,7 +14,7 @@ knoxAuth = TokenAuthentication()
 def get_user(token_key):
     try:
         user = knoxAuth.authenticate_credentials(token=token_key)[0]
-        return user
+        return UserReplica.objects.get(username=user.username)
     except Exception:
         return AnonymousUser()
 
