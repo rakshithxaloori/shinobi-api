@@ -78,6 +78,7 @@ def lol_wrapper(endpoint, max_tries=10):
     for i in range(max_tries):
         headers = {"X-Riot-Token": RIOT_API_KEY}
         response = requests.get(endpoint, headers=headers)
+        print("LOL RESPONSE CODE", response.status_code)
 
         if response.ok:
             return response.json()

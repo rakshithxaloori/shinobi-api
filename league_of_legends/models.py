@@ -103,9 +103,17 @@ class ParticipantStats(models.Model):
     assists = models.PositiveSmallIntegerField(null=False, blank=False)
     deaths = models.PositiveSmallIntegerField(null=False, blank=False)
     kills = models.PositiveSmallIntegerField(null=False, blank=False)
+    total_damage_dealt = models.PositiveIntegerField(null=False, blank=False)
+
+    double_kills = models.PositiveSmallIntegerField(null=False, blank=False)
+    penta_kills = models.PositiveSmallIntegerField(null=False, blank=False)
+    quadra_kills = models.PositiveSmallIntegerField(null=False, blank=False)
+    triple_kills = models.PositiveSmallIntegerField(null=False, blank=False)
+
     # items is JSON string of [{"name", "image"}]
     # eg [{"name": "Sorcerer's Shoes", "image": "3020.png'"}, ...]
     items = models.JSONField(null=False, blank=False)
+    spell_casts = models.JSONField(null=False, blank=False)
 
     def __str__(self):
         try:

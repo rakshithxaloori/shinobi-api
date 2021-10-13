@@ -74,6 +74,7 @@ def add_match_to_db(match_id, platform):
                 )
                 lol_profiles_list.append(lol_profile)
 
+            # Items
             item_regex = re.compile("^item\d")  # ^ -> starts with
             item_keys = list(filter(item_regex.match, p.keys()))
 
@@ -84,11 +85,28 @@ def add_match_to_db(match_id, platform):
                 if item != 0:
                     items.append(item)
 
+            # Spell casts
+            spell_cast_regex = re.compile("^spell\d")
+            spell_cast_keys = list(filter(spell_cast_regex.match, p.keys()))
+
+            spell_casts = []
+
+            for key in spell_cast_keys:
+                spell_cast = p[key]
+                if spell_cast != 0:
+                    spell_casts.append(spell_cast)
+
             new_p_stats = ParticipantStats(
                 assists=p["assists"],
                 deaths=p["deaths"],
                 kills=p["kills"],
+                total_damage_dealt=p["totalDamageDealt"],
+                double_kills=p["doubleKills"],
+                penta_kills=p["pentaKills"],
+                quadra_kills=p["quadraKills"],
+                triple_kills=p["tripleKills"],
                 items=items,
+                spell_casts=spell_casts,
             )
 
             team = None
@@ -161,6 +179,8 @@ def update_match_history(lol_profile_pk):
                 count=20,
                 platform=lol_profile.platform,
             )
+
+            print("MATCHLIST", matchlist)
 
             if matchlist is not None:
                 for match_id in matchlist:
