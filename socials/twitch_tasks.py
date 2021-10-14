@@ -2,9 +2,11 @@ import os
 import hmac
 import requests
 from hashlib import sha256
-from celery import shared_task
+
 
 from django.core.cache import cache
+
+from proeliumx.celery import app as celery_app
 
 from socials.models import TwitchProfile
 from profiles.models import Game
@@ -42,7 +44,7 @@ def get_user_info(access_token=None):
 
 
 # def get_app_access_token():
-#     app_access_token = cache.get("twitch_app_access_token")
+#     app_access_token = cache.get("soc:twitch_app_access_token")
 
 #     if app_access_token is None or not validate_app_access_token(app_access_token):
 #         # Fetch new app access token
@@ -56,7 +58,7 @@ def get_user_info(access_token=None):
 #         response = requests.post(endpoint, data=payload)
 #         if response.ok:
 #             app_access_token = response.json()["access_token"]
-#             cache.set("twitch_app_access_token", app_access_token, timeout=86400)
+#             cache.set("soc:twitch_app_access_token", app_access_token, timeout=86400)
 #             return app_access_token
 #         else:
 #             return None
@@ -66,7 +68,7 @@ def get_user_info(access_token=None):
 #         return app_access_token
 
 
-# @shared_task
+# @celery_app.task(queue="celery")
 # def create_subscription(twitch_profile_pk=None):
 #     if twitch_profile_pk is None:
 #         return
@@ -121,7 +123,7 @@ def get_user_info(access_token=None):
 #         return
 
 
-# @shared_task
+# @celery_app.task(queue="celery")
 # def delete_subscription(
 #     stream_online_subscription_id=None, stream_offline_subscription_id=None
 # ):
@@ -180,7 +182,7 @@ def get_user_info(access_token=None):
 #         return None
 
 
-# @shared_task
+# @celery_app.task(queue="celery")
 # def stream_online(twitch_profile_pk=None):
 #     if twitch_profile_pk is None:
 #         return

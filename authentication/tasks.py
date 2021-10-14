@@ -1,13 +1,12 @@
-from celery.app import shared_task
-from celery import shared_task
-
 from django.utils import timezone
+
+from proeliumx.celery import app as celery_app
 
 from authentication.models import User
 from analytics.tasks import update_active_user
 
 
-@shared_task
+@celery_app.task(queue="celery")
 def user_online(user_pk):
     try:
         user = User.objects.get(pk=user_pk)
@@ -20,7 +19,7 @@ def user_online(user_pk):
     user.save(update_fields=["last_open", "online"])
 
 
-@shared_task
+@celery_app.task(queue="celery")
 def user_offline(user_pk):
     try:
         user = User.objects.get(pk=user_pk)

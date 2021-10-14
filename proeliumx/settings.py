@@ -14,10 +14,11 @@ import os
 from pathlib import Path
 
 if os.getenv("CI_CD_STAGE", None) is None:
+    print("LOADING ENV")
     # Only loads in dev environment
     from dotenv import load_dotenv
 
-    load_dotenv()
+    load_dotenv(dotenv_path="dev.env")
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -131,14 +132,8 @@ elif CI_CD_STAGE == "production":
         }
     }
 
+REDIS_URL = os.environ["REDIS_URL"]
 
-REDIS_URL = "redis://{}:{}@{}:{}".format(
-    os.environ["REDIS_USERNAME"],
-    os.environ["REDIS_PASSWORD"],
-    os.environ["REDIS_HOSTNAME"],
-    os.environ["REDIS_PORT"],
-)
-print("REDIS_URL", REDIS_URL)
 
 CACHES = {
     "default": {

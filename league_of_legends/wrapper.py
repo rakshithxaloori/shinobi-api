@@ -2,6 +2,7 @@ import rollbar
 import requests
 import os
 from time import sleep
+
 from ratelimit import limits, sleep_and_retry
 
 
@@ -69,21 +70,15 @@ def region_url(platform: str = None):
     return "https://{}.api.riotgames.com".format(region)
 
 
-# TODO is there a better way to pipe requests
-# instead of limitting #requests in each cpu,
-# so max won't exceed total limit
 @sleep_and_retry
-@limits(
-    calls=int(RIOT_LOL_RATE_LIMIT_1 / os.cpu_count()), period=RIOT_LOL_RATE_PERIOD_1
-)
+@limits(calls=int(RIOT_LOL_RATE_LIMIT_1), period=RIOT_LOL_RATE_PERIOD_1)
 @sleep_and_retry
-@limits(
-    calls=int(RIOT_LOL_RATE_LIMIT_2 / os.cpu_count()), period=RIOT_LOL_RATE_PERIOD_2
-)
+@limits(calls=int(RIOT_LOL_RATE_LIMIT_2), period=RIOT_LOL_RATE_PERIOD_2)
 def lol_wrapper(endpoint, max_tries=10):
     for i in range(max_tries):
         headers = {"X-Riot-Token": RIOT_API_KEY}
         response = requests.get(endpoint, headers=headers)
+        print("LOL RESPONSE CODE", response.status_code)
 
         if response.ok:
             return response.json()

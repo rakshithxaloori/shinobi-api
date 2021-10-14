@@ -103,9 +103,17 @@ class ParticipantStats(models.Model):
     assists = models.PositiveSmallIntegerField(null=False, blank=False)
     deaths = models.PositiveSmallIntegerField(null=False, blank=False)
     kills = models.PositiveSmallIntegerField(null=False, blank=False)
+    total_damage_dealt = models.PositiveIntegerField(null=False, blank=False)
+
+    double_kills = models.PositiveSmallIntegerField(null=False, blank=False)
+    penta_kills = models.PositiveSmallIntegerField(null=False, blank=False)
+    quadra_kills = models.PositiveSmallIntegerField(null=False, blank=False)
+    triple_kills = models.PositiveSmallIntegerField(null=False, blank=False)
+
     # items is JSON string of [{"name", "image"}]
     # eg [{"name": "Sorcerer's Shoes", "image": "3020.png'"}, ...]
     items = models.JSONField(null=False, blank=False)
+    spell_casts = models.JSONField(null=False, blank=False)
 
     def __str__(self):
         try:
@@ -130,7 +138,7 @@ class Participant(models.Model):
     stats = models.OneToOneField(
         ParticipantStats, related_name="participant", on_delete=models.PROTECT
     )
-    # https://ddragon.leagueoflegends.com/cdn/11.19.1/img/champion/{}.png
+    # https://ddragon.leagueoflegends.com/cdn/11.20.1/img/champion/{}.png
     champion_key = models.PositiveSmallIntegerField(null=False, blank=False)
     role = models.CharField(max_length=15, null=False, blank=False)
 

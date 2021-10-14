@@ -1,0 +1,16 @@
+version: 0.0
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: <TASK_DEFINITION>
+        LoadBalancerInfo:
+          ContainerName: "plx-dev"
+          ContainerPort: 80
+        PlatformVersion: "LATEST"
+        NetworkConfiguration:
+          AwsvpcConfiguration:
+            Subnets:
+              ["plx-dev Private Subnet (AZ1)", "plx-dev Private Subnet (AZ2)"]
+            SecurityGroups: ["plx-de-274"]
+            AssignPublicIp: "DISABLED"

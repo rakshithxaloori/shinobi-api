@@ -1,5 +1,4 @@
 from datetime import date
-from celery import shared_task
 from celery.schedules import crontab
 
 from proeliumx.celery import app as celery_app
@@ -8,7 +7,7 @@ from authentication.models import User
 from analytics.models import DailyAnalytics, WeeklyAnalytics, MonthlyAnalytics
 
 
-@shared_task
+@celery_app.task(queue="celery")
 def new_user_analytics():
     old_analytics = DailyAnalytics.objects.order_by("-date").first()
     old_analytics.active_users += 1
@@ -26,7 +25,7 @@ def new_user_analytics():
     old_analytics.save(update_fields=["active_users", "new_users"])
 
 
-@shared_task
+@celery_app.task(queue="celery")
 def update_active_user(last_open_str):
     last_open_date = date.fromisoformat(last_open_str)
 
