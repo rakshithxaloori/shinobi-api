@@ -132,21 +132,8 @@ elif CI_CD_STAGE == "production":
         }
     }
 
+REDIS_URL = os.environ["REDIS_URL"]
 
-if CI_CD_STAGE == "development":
-    REDIS_URL = "redis://{}:{}".format(
-        os.environ["REDIS_HOSTNAME"], os.environ["REDIS_PORT"]
-    )
-elif CI_CD_STAGE == "testing" or CI_CD_STAGE == "production":
-    REDIS_URL = "redis://{}:{}@{}:{}".format(
-        os.environ["REDIS_USERNAME"],
-        os.environ["REDIS_PASSWORD"],
-        os.environ["REDIS_HOSTNAME"],
-        os.environ["REDIS_PORT"],
-    )
-
-
-print("REDIS_URL", REDIS_URL)
 
 CACHES = {
     "default": {
