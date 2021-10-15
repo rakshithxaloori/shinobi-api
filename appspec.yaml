@@ -10,7 +10,6 @@ Resources:
         PlatformVersion: "LATEST"
         NetworkConfiguration:
           AwsvpcConfiguration:
-            Subnets:
-              ["plx-dev Private Subnet (AZ1)", "plx-dev Private Subnet (AZ2)"]
-            SecurityGroups: ["plx-de-274"]
-            AssignPublicIp: "DISABLED"
+            Subnets: ["subnet-091fa93896a236c59", "subnet-04295b61608393f4d"]
+            SecurityGroups: ["sg-0e46a6542f88c1747"]
+            AssignPublicIp: "ENABLED"

@@ -1,0 +1,24 @@
+{
+  "taskDefinition": "plx-dev:1",
+  "cluster": "plx-dev",
+  "loadBalancers": [
+    {
+      "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:476691507110:targetgroup/plx-dev-1/f5f6ac44ef08bf5d",
+      "containerName": "plx-dev",
+      "containerPort": 80
+    }
+  ],
+  "desiredCount": 1,
+  "launchType": "FARGATE",
+  "schedulingStrategy": "REPLICA",
+  "deploymentController": {
+    "type": "CODE_DEPLOY"
+  },
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": ["subnet-091fa93896a236c59", "subnet-04295b61608393f4d"],
+      "securityGroups": ["sg-0e46a6542f88c1747"],
+      "assignPublicIp": "ENABLED"
+    }
+  }
+}
