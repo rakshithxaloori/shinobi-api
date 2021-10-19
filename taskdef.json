@@ -11,7 +11,23 @@
           "protocol": "tcp",
           "containerPort": 80
         }
-      ]
+      ],
+      "environmentFiles": [
+        {
+          "value": "arn:aws:s3:::plx-dev/test-aws.env",
+          "type": "s3"
+        }
+      ],
+      "pseudoTerminal": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "secretOptions": null,
+        "options": {
+          "awslogs-group": "/ecs/plx-dev",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
     }
   ],
   "requiresCompatibilities": ["FARGATE"],

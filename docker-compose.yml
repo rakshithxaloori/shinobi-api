@@ -3,8 +3,7 @@ version: "3.9"
 services:
   daphne:
     build: .
-    env_file:
-      - .env
+    image:
     command: bash -c "python manage.py migrate --noinput &&
       python manage.py collectstatic --noinput &&
       daphne -b 0.0.0.0 -p 8000 proeliumx.asgi:application"
@@ -25,8 +24,6 @@ services:
 
   celery:
     build: .
-    env_file:
-      - .env
     command: celery -A proeliumx worker -l INFO --uid=nobody --gid=nogroup -Q celery
     volumes:
       - .:/usr/src/app
@@ -36,8 +33,6 @@ services:
 
   lol_celery:
     build: .
-    env_file:
-      - .env
     command: celery -A proeliumx worker -l INFO --uid=nobody --gid=nogroup -Q lol --concurrency 1
     volumes:
       - .:/usr/src/app
