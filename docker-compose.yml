@@ -3,7 +3,6 @@ version: "3.9"
 services:
   daphne:
     build: .
-    image:
     command: bash -c "python manage.py migrate --noinput &&
       python manage.py collectstatic --noinput &&
       daphne -b 0.0.0.0 -p 8000 proeliumx.asgi:application"
