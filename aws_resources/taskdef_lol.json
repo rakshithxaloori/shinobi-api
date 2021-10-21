@@ -1,0 +1,31 @@
+{
+  "executionRoleArn": "arn:aws:iam::476691507110:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "plx-lol-celery",
+      "image": "<IMAGE_NAME>",
+      "essential": true,
+      "environmentFiles": [
+        {
+          "value": "arn:aws:s3:::plx-dev/test-aws.env",
+          "type": "s3"
+        }
+      ],
+      "pseudoTerminal": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "secretOptions": [],
+        "options": {
+          "awslogs-group": "/ecs/plx-dev-lol",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ],
+  "requiresCompatibilities": ["FARGATE"],
+  "networkMode": "awsvpc",
+  "cpu": "1024",
+  "memory": "2048",
+  "family": "plx-dev-lol"
+}
