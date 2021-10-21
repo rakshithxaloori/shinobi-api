@@ -5,7 +5,7 @@ Resources:
       Properties:
         TaskDefinition: <TASK_DEFINITION>
         LoadBalancerInfo:
-          ContainerName: "plx-dev"
+          ContainerName: "plx-dev-main"
           ContainerPort: 80
         PlatformVersion: "LATEST"
         NetworkConfiguration:
