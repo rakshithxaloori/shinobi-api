@@ -8,28 +8,34 @@ phases:
       - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
   build:
     commands:
+      - DATE = $(date +"%Y%m%d_%H%M%S")
       - echo Build started on $(date +"%Y%m%d_%H%M%S")
       - echo Building the Docker images...
+      - DAPHNE_URI_T = $REPOSITORY_URI:daphne_$DATE
+      - NGINX_URI_T = $REPOSITORY_URI:nginx_$DATE
+      - CELERY_URI_T = $REPOSITORY_URI:celery_$DATE
+      - LOL_CELERY_URI_T = $REPOSITORY_URI:lol_celery_$DATE
 
       - docker-compose build
-      - docker tag daphne:latest $REPOSITORY_URI:daphne_latest
-      - docker tag nginx:latest $REPOSITORY_URI:nginx_latest
-      - docker tag celery:latest $REPOSITORY_URI:celery_latest
-      - docker tag lol_celery:latest $REPOSITORY_URI:lol_celery_latest
-      # - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_REPO_NAME:$IMAGE_TAG
+      - docker tag daphne:latest $DAPHNE_URI_T
+      - docker tag nginx:latest $NGINX_URI_T
+      - docker tag celery:latest $CELERY_URI_T
+      - docker tag lol_celery:latest $LOL_CELERY_URI_T
+      # - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI/$IMAGE_REPO_NAME:$IMAGE_TAG
   post_build:
     commands:
       - echo Build completed on $(date +"%Y%m%d_%H%M%S")
       - echo Pushing the Docker images...
-      - docker push $REPOSITORY_URI:daphne_latest
-      - docker push $REPOSITORY_URI:nginx_latest
-      - docker push $REPOSITORY_URI:celery_latest
-      - docker push $REPOSITORY_URI:lol_celery_latest
+      - docker push $DAPHNE_URI_T
+      - docker push $NGINX_URI_T
+      - docker push $CELERY_URI_T
+      - docker push $LOL_CELERY_URI_T
 
-      - printf '[{"name":"plx-dev-main","imageUri":"%s"},{"name":"plx-dev-main","imageUri":"%s"},{"name":"plx-dev-main","imageUri":"%s"}]' $REPOSITORY_URI:daphne_latest $REPOSITORY_URI:nginx_latest $REPOSITORY_URI:celery_latest > imagedefinitions1.json
-      - printf '[{"name":"plx-dev-lol","imageUri":"%s"}]' $REPOSITORY_URI:lol_celery_latest  > imagedefinitions2.json
+      - printf '[{"name":"plx-dev-main","imageUri":"%s"},{"name":"plx-dev-main","imageUri":"%s"},{"name":"plx-dev-main","imageUri":"%s"}]' $DAPHNE_URI_T $NGINX_URI_T $CELERY_URI_T > imagedefinitions1.json
+      - printf '[{"name":"plx-dev-lol","imageUri":"%s"}]' $LOL_CELERY_URI_T  > imagedefinitions2.json
 
 artifacts:
   files:
     - imagedefinitions1.json
     - imagedefinitions2.json
+  name: imagedefinitions
