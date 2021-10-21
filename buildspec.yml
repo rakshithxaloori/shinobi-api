@@ -8,13 +8,13 @@ phases:
       - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
   build:
     commands:
-      - DATE = $(date +"%Y%m%d_%H%M%S")
+      - DATE=$(date +"%Y%m%d_%H%M%S")
       - echo Build started on $(date +"%Y%m%d_%H%M%S")
       - echo Building the Docker images...
-      - DAPHNE_URI_T = $REPOSITORY_URI:daphne_$DATE
-      - NGINX_URI_T = $REPOSITORY_URI:nginx_$DATE
-      - CELERY_URI_T = $REPOSITORY_URI:celery_$DATE
-      - LOL_CELERY_URI_T = $REPOSITORY_URI:lol_celery_$DATE
+      - DAPHNE_URI_T=$REPOSITORY_URI:daphne_$DATE
+      - NGINX_URI_T=$REPOSITORY_URI:nginx_$DATE
+      - CELERY_URI_T=$REPOSITORY_URI:celery_$DATE
+      - LOL_CELERY_URI_T=$REPOSITORY_URI:lol_celery_$DATE
 
       - docker-compose build
       - docker tag daphne:latest $DAPHNE_URI_T
