@@ -14,7 +14,7 @@ phases:
       - docker-compose build
       - docker tag daphne:latest $REPOSITORY_URI:daphne_latest
       - docker tag nginx:latest $REPOSITORY_URI:nginx_latest
-      - docker tag celery:latest $REPOSITORY_URI_celery:latest
+      - docker tag celery:latest $REPOSITORY_URI:celery_latest
       - docker tag lol_celery:latest $REPOSITORY_URI:lol_celery_latest
       # - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_REPO_NAME:$IMAGE_TAG
   post_build:
@@ -23,10 +23,10 @@ phases:
       - echo Pushing the Docker images...
       - docker push $REPOSITORY_URI:daphne_latest
       - docker push $REPOSITORY_URI:nginx_latest
-      - docker push $REPOSITORY_URI_celery:latest
+      - docker push $REPOSITORY_URI:celery_latest
       - docker push $REPOSITORY_URI:lol_celery_latest
 
-      - printf '[{"name":"plx-dev-main","imageUri":"%s"},{"name":"plx-dev-main","imageUri":"%s"},{"name":"plx-dev-main","imageUri":"%s"}]' $REPOSITORY_URI:daphne_latest $REPOSITORY_URI:nginx_latest $REPOSITORY_URI_celery:latest > imagedefinitions1.json
+      - printf '[{"name":"plx-dev-main","imageUri":"%s"},{"name":"plx-dev-main","imageUri":"%s"},{"name":"plx-dev-main","imageUri":"%s"}]' $REPOSITORY_URI:daphne_latest $REPOSITORY_URI:nginx_latest $REPOSITORY_URI:celery_latest > imagedefinitions1.json
       - printf '[{"name":"plx-dev-lol","imageUri":"%s"}]' $REPOSITORY_URI:lol_celery_latest  > imagedefinitions2.json
 
 artifacts:
