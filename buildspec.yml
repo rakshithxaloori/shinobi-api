@@ -31,9 +31,9 @@ phases:
       - docker push $CELERY_URI_T
       - docker push $LOL_CELERY_URI_T
 
-      - sed -i 's/<NGINX_IMAGE>/'"$NGINX_URI_T"'/g' aws_resources/taskdef_main.json
-      - sed -i 's/<DAPHNE_IMAGE>/'"$DAPHNE_URI_T"'/g' aws_resources/taskdef_main.json
-      - sed -i 's/<CELERY_IMAGE>/'"$CELERY_URI_T"'/g' aws_resources/taskdef_main.json
+      - sed -i 's@<NGINX_IMAGE>@'"$NGINX_URI_T"'@' aws_resources/taskdef_main.json
+      - sed -i 's@<DAPHNE_IMAGE>@'"$DAPHNE_URI_T"'@' aws_resources/taskdef_main.json
+      - sed -i 's@<CELERY_IMAGE>@'"$CELERY_URI_T"'@' aws_resources/taskdef_main.json
 
       - cat aws_resources/taskdef_main.json
 
