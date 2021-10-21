@@ -3,7 +3,7 @@ Resources:
   - TargetService:
       Type: AWS::ECS::Service
       Properties:
-        TaskDefinition: <TASK_DEFINITION>
+        TaskDefinition: "arn:aws:ecs:us-east-1:476691507110:task-definition/plx-dev-main:1"
         LoadBalancerInfo:
           ContainerName: "plx-dev-main"
           ContainerPort: 80
