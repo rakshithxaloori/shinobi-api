@@ -31,8 +31,8 @@ phases:
       - docker push $CELERY_URI_T
       - docker push $LOL_CELERY_URI_T
 
-      - printf '[{"name":"plx-dev-main","imageUri":"%s"},{"name":"plx-dev-main","imageUri":"%s"},{"name":"plx-dev-main","imageUri":"%s"}]' $DAPHNE_URI_T $NGINX_URI_T $CELERY_URI_T > imagedefinitions1.json
-      - printf '[{"name":"plx-dev-lol","imageUri":"%s"}]' $LOL_CELERY_URI_T  > imagedefinitions2.json
+      - printf '[{"name":"plx-daphne","imageUri":"%s"},{"name":"plx-nginx","imageUri":"%s"},{"name":"plx-celery","imageUri":"%s"}]' $DAPHNE_URI_T $NGINX_URI_T $CELERY_URI_T > imagedefinitions1.json
+      - printf '[{"name":"plx-lol-celery","imageUri":"%s"}]' $LOL_CELERY_URI_T  > imagedefinitions2.json
 
 artifacts:
   files:
