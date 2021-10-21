@@ -5,14 +5,31 @@ phases:
     commands:
       - echo Logging in to Amazon ECR...
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
   build:
     commands:
-      - echo Build started on `date`
-      - echo Building the Docker image...
+      - echo Build started on $(date +"%Y%m%d_%H%M%S")
+      - echo Building the Docker images...
+
       - docker-compose build
-      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+      - docker tag daphne:latest $REPOSITORY_URI/daphne:latest
+      - docker tag nginx:latest $REPOSITORY_URI/nginx:latest
+      - docker tag celery:latest $REPOSITORY_URI/celery:latest
+      - docker tag lol_celery:latest $REPOSITORY_URI/lol_celery:latest
+      # - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI/$IMAGE_REPO_NAME:$IMAGE_TAG
   post_build:
     commands:
-      - echo Build completed on `date`
-      - echo Pushing the Docker image...
-      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+      - echo Build completed on $(date +"%Y%m%d_%H%M%S")
+      - echo Pushing the Docker images...
+      - docker push $REPOSITORY_URI/daphne:latest
+      - docker push $REPOSITORY_URI/nginx:latest
+      - docker push $REPOSITORY_URI/celery:latest
+      - docker push $REPOSITORY_URI/lol_celery:latest
+
+      - printf '[{"name":"plx-dev-main","imageUri":"%s"},{"name":"plx-dev-main","imageUri":"%s"},{"name":"plx-dev-main","imageUri":"%s"}]' $REPOSITORY_URI/daphne:latest $REPOSITORY_URI/nginx:latest $REPOSITORY_URI/celery:latest > imagedefinitions1.json
+      - printf '[{"name":"plx-dev-lol","imageUri":"%s"}]' $REPOSITORY_URI/lol_celery:latest  > imagedefinitions2.json
+
+artifacts:
+  files:
+    - imagedefinitions1.json
+    - imagedefinitions2.json
