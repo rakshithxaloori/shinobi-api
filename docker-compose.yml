@@ -2,8 +2,9 @@ version: "3.8"
 
 services:
   daphne:
-    build: .
-    dockerfile: Dockerfiles/daphne.Dockerfile
+    build:
+      context: .
+      dockerfile: Dockerfiles/daphne.Dockerfile
     image: daphne:latest
     command: bash -c "python manage.py migrate --noinput &&
       python manage.py collectstatic --noinput &&
@@ -25,8 +26,9 @@ services:
       - daphne
 
   celery:
-    build: .
-    dockerfile: Dockerfiles/celery.Dockerfile
+    build:
+      context: .
+      dockerfile: Dockerfiles/celery.Dockerfile
     image: celery:latest
     command: celery -A proeliumx worker -l INFO --uid=nobody --gid=nogroup -Q celery
     volumes:
@@ -36,8 +38,9 @@ services:
       - daphne
 
   lol_celery:
-    build: .
-    dockerfile: Dockerfiles/lol_celery.Dockerfile
+    build:
+      context: .
+      dockerfile: Dockerfiles/lol_celery.Dockerfile
     image: lol_celery:latest
     command: celery -A proeliumx worker -l INFO --uid=nobody --gid=nogroup -Q lol --concurrency 1
     volumes:
