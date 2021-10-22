@@ -1,5 +1,5 @@
 # pull the official base image
-FROM python:3.9
+FROM public.ecr.aws/g7q8g9j4/python_3.9:latest
 
 # set work directory
 WORKDIR /usr/src/app
