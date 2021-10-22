@@ -26,10 +26,10 @@ phases:
     commands:
       - echo Build completed on $(date +"%Y%m%d_%H%M%S")
       - echo Pushing the Docker images...
-      - docker push —all-tags $DAPHNE_URI_T
-      - docker push —all-tags $NGINX_URI_T
-      - docker push —all-tags $CELERY_URI_T
-      - docker push —all-tags $LOL_CELERY_URI_T
+      - docker push —-all-tags $DAPHNE_URI_T
+      - docker push —-all-tags $NGINX_URI_T
+      - docker push —-all-tags $CELERY_URI_T
+      - docker push —-all-tags $LOL_CELERY_URI_T
 
       - sed -i 's@<NGINX_IMAGE>@'"$NGINX_URI_T"'@' aws_resources/taskdef_main.json
       - sed -i 's@<DAPHNE_IMAGE>@'"$DAPHNE_URI_T"'@' aws_resources/taskdef_main.json
