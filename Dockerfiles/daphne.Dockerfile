@@ -18,5 +18,6 @@ COPY . /usr/src/app/
 # python manage.py migrate --noinput &&
 # python manage.py collectstatic --noinput &&
 # daphne -b 0.0.0.0 -p 8000 proeliumx.asgi:application
+EXPOSE 8000
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "proeliumx.asgi:application"]
 # CMD ["python", "manage.py", "migrate", "--noinput", "&&", "python", "manage.py", "collectstatic", "--noinput", "&&", "daphne", "-b", "0.0.0.0", "-p", "8000", "proeliumx.asgi:application"]
