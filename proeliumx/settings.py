@@ -39,7 +39,7 @@ if CI_CD_STAGE == "production":
 elif CI_CD_STAGE == "testing" or CI_CD_STAGE == "development":
     DEBUG = True
 
-ALLOWED_HOSTS = [os.environ["API_HOSTNAME"]]
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition

@@ -15,7 +15,8 @@ RUN pip3 install -r requirements.txt
 
 # copy project
 COPY . /usr/src/app/
-RUN python manage.py migrate --noinput 
-RUN python manage.py collectstatic --noinput 
+# python manage.py migrate --noinput &&
+# python manage.py collectstatic --noinput &&
 # daphne -b 0.0.0.0 -p 8000 proeliumx.asgi:application
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "proeliumx.asgi:application"]
+# CMD ["python", "manage.py", "migrate", "--noinput", "&&", "python", "manage.py", "collectstatic", "--noinput", "&&", "daphne", "-b", "0.0.0.0", "-p", "8000", "proeliumx.asgi:application"]
