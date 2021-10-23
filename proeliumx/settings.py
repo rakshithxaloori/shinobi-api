@@ -39,7 +39,7 @@ if CI_CD_STAGE == "production":
 elif CI_CD_STAGE == "testing" or CI_CD_STAGE == "development":
     DEBUG = True
 
-ALLOWED_HOSTS = ["0.0.0.0"]
+ALLOWED_HOSTS = ["0.0.0.0", "localhost"]
 
 
 # Application definition
@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "notification",
     "analytics",
     "league_of_legends",
+    "health_checks",
 ]
 
 MIDDLEWARE = [
