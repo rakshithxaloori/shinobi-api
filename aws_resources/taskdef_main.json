@@ -21,7 +21,13 @@
           "awslogs-region": "us-east-1",
           "awslogs-stream-prefix": "ecs"
         }
-      }
+      },
+      "dependsOn": [
+        {
+          "containerName": "plx-daphne",
+          "condition": "START"
+        }
+      ]
     },
     {
       "name": "plx-daphne",
@@ -63,7 +69,13 @@
           "awslogs-region": "us-east-1",
           "awslogs-stream-prefix": "ecs"
         }
-      }
+      },
+      "dependsOn": [
+        {
+          "containerName": "plx-daphne",
+          "condition": "START"
+        }
+      ]
     }
   ],
   "requiresCompatibilities": ["FARGATE"],
