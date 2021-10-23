@@ -39,7 +39,7 @@ if CI_CD_STAGE == "production":
 elif CI_CD_STAGE == "testing" or CI_CD_STAGE == "development":
     DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["0.0.0.0"]
 
 
 # Application definition
