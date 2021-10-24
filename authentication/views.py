@@ -55,7 +55,10 @@ def google_login_view(request):
 
     try:
         id_info = id_token.verify_oauth2_token(google_id_token, requests.Request())
-        if id_info["aud"] not in [os.environ["GOOGLE_MOBILE_APP_CLIENT_ID"]]:
+        if id_info["aud"] not in [
+            os.environ["GOOGLE_EXPO_GO_APP_CLIENT_ID"],
+            os.environ["GOOGLE_ANDROID_APP_CLIENT_ID"],
+        ]:
             return JsonResponse(
                 {"detail": "Couldn't verify"}, status=status.HTTP_403_FORBIDDEN
             )
@@ -113,7 +116,10 @@ def google_signup_view(request):
 
     try:
         id_info = id_token.verify_oauth2_token(google_id_token, requests.Request())
-        if id_info["aud"] not in [os.environ["GOOGLE_MOBILE_APP_CLIENT_ID"]]:
+        if id_info["aud"] not in [
+            os.environ["GOOGLE_EXPO_GO_APP_CLIENT_ID"],
+            os.environ["GOOGLE_ANDROID_APP_CLIENT_ID"],
+        ]:
             return JsonResponse(
                 {"detail": "Couldn't verify"}, status=status.HTTP_403_FORBIDDEN
             )

@@ -28,11 +28,11 @@ phases:
       - echo Pushing the Docker images...
       - docker push --all-tags $REPOSITORY_URI
 
-      - sed -i 's@<NGINX_IMAGE>@'"$NGINX_URI_T"'@' aws_resources/taskdef_main.json
-      - sed -i 's@<DAPHNE_IMAGE>@'"$DAPHNE_URI_T"'@' aws_resources/taskdef_main.json
-      - sed -i 's@<CELERY_IMAGE>@'"$CELERY_URI_T"'@' aws_resources/taskdef_main.json
+      - sed -i 's@<NGINX_IMAGE>@'"$NGINX_URI_T"'@' aws_resources/test/taskdef_main.json
+      - sed -i 's@<DAPHNE_IMAGE>@'"$DAPHNE_URI_T"'@' aws_resources/test/taskdef_main.json
+      - sed -i 's@<CELERY_IMAGE>@'"$CELERY_URI_T"'@' aws_resources/test/taskdef_main.json
 
-      - cat aws_resources/taskdef_main.json
+      - cat aws_resources/test/taskdef_main.json
 
       - printf '[{"name":"plx-daphne","imageUri":"%s"},{"name":"plx-nginx","imageUri":"%s"},{"name":"plx-celery","imageUri":"%s"}]' $DAPHNE_URI_T $NGINX_URI_T $CELERY_URI_T > imagedefinitions1.json
       - printf '[{"name":"plx-lol-celery","imageUri":"%s"}]' $LOL_CELERY_URI_T  > imagedefinitions2.json
@@ -41,6 +41,6 @@ artifacts:
   files:
     - imagedefinitions1.json
     - imagedefinitions2.json
-    - aws_resources/taskdef_main.json
+    - aws_resources/test/taskdef_main.json
     - appspec.yml
   name: buildartifacts

@@ -110,18 +110,7 @@ if CI_CD_STAGE == "development":
             "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
         }
     }
-elif CI_CD_STAGE == "testing":
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ["DB_NAME"],
-            "USER": os.environ["DB_USER"],
-            "PASSWORD": os.environ["DB_PASSWORD"],
-            "HOST": os.environ["DB_HOSTNAME"],
-            "PORT": os.environ["DB_PORT"],
-        }
-    }
-elif CI_CD_STAGE == "production":
+elif CI_CD_STAGE == "testing" or CI_CD_STAGE == "production":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",

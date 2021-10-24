@@ -1,0 +1,181 @@
+{
+  "executionRoleArn": "arn:aws:iam::476691507110:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "plx-nginx",
+      "image": "<NGINX_IMAGE>",
+      "essential": true,
+      "portMappings": [
+        {
+          "hostPort": 80,
+          "protocol": "tcp",
+          "containerPort": 80
+        }
+      ],
+      "pseudoTerminal": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "secretOptions": [],
+        "options": {
+          "awslogs-group": "/ecs/plx-dev-main",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "dependsOn": [
+        {
+          "containerName": "plx-daphne",
+          "condition": "HEALTHY"
+        }
+      ]
+    },
+    {
+      "name": "plx-daphne",
+      "image": "<DAPHNE_IMAGE>",
+      "essential": true,
+      "environmentFiles": [
+        {
+          "value": "arn:aws:s3:::plx-dev/test.env",
+          "type": "s3"
+        }
+      ],
+      "pseudoTerminal": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "secretOptions": [],
+        "options": {
+          "awslogs-group": "/ecs/plx-dev-main",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "secrets": [
+        {
+          "name": "SECRET_KEY",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/SECRET_KEY"
+        },
+        {
+          "name": "RDS_USERNAME",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/RDS_USERNAME"
+        },
+        {
+          "name": "RDS_PASSWORD",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/RDS_PASSWORD"
+        },
+        {
+          "name": "RDS_HOSTNAME",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/RDS_HOSTNAME"
+        },
+        {
+          "name": "INSTAGRAM_CLIENT_ID",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/INSTAGRAM_CLIENT_ID"
+        },
+        {
+          "name": "INSTAGRAM_CLIENT_SECRET",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/INSTAGRAM_CLIENT_SECRET"
+        },
+        {
+          "name": "TWITCH_CLIENT_ID",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/TWITCH_CLIENT_ID"
+        },
+        {
+          "name": "TWITCH_CLIENT_SECRET",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/TWITCH_CLIENT_SECRET"
+        },
+        {
+          "name": "GOOGLE_EXPO_GO_APP_CLIENT_ID",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/GOOGLE_EXPO_GO_APP_CLIENT_ID"
+        },
+        {
+          "name": "GOOGLE_ANDROID_APP_CLIENT_ID",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/GOOGLE_ANDROID_APP_CLIENT_ID"
+        },
+        {
+          "name": "ROLLBAR_ACCESS_TOKEN",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/ROLLBAR_ACCESS_TOKEN"
+        }
+      ],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:8000/ht/ || exit 1"]
+      }
+    },
+    {
+      "name": "plx-celery",
+      "image": "<CELERY_IMAGE>",
+      "essential": true,
+      "environmentFiles": [
+        {
+          "value": "arn:aws:s3:::plx-dev/test.env",
+          "type": "s3"
+        }
+      ],
+      "pseudoTerminal": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "secretOptions": [],
+        "options": {
+          "awslogs-group": "/ecs/plx-dev-main",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "secrets": [
+        {
+          "name": "SECRET_KEY",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/SECRET_KEY"
+        },
+        {
+          "name": "RDS_USERNAME",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/RDS_USERNAME"
+        },
+        {
+          "name": "RDS_PASSWORD",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/RDS_PASSWORD"
+        },
+        {
+          "name": "RDS_HOSTNAME",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/RDS_HOSTNAME"
+        },
+        {
+          "name": "INSTAGRAM_CLIENT_ID",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/INSTAGRAM_CLIENT_ID"
+        },
+        {
+          "name": "INSTAGRAM_CLIENT_SECRET",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/INSTAGRAM_CLIENT_SECRET"
+        },
+        {
+          "name": "TWITCH_CLIENT_ID",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/TWITCH_CLIENT_ID"
+        },
+        {
+          "name": "TWITCH_CLIENT_SECRET",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/TWITCH_CLIENT_SECRET"
+        },
+        {
+          "name": "GOOGLE_EXPO_GO_APP_CLIENT_ID",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/GOOGLE_EXPO_GO_APP_CLIENT_ID"
+        },
+        {
+          "name": "GOOGLE_ANDROID_APP_CLIENT_ID",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/GOOGLE_ANDROID_APP_CLIENT_ID"
+        },
+        {
+          "name": "ROLLBAR_ACCESS_TOKEN",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/ROLLBAR_ACCESS_TOKEN"
+        }
+      ],
+      "dependsOn": [
+        {
+          "containerName": "plx-daphne",
+          "condition": "HEALTHY"
+        }
+      ]
+    }
+  ],
+  "requiresCompatibilities": ["FARGATE"],
+  "networkMode": "awsvpc",
+  "cpu": "1024",
+  "memory": "2048",
+  "family": "plx-dev-main"
+}
