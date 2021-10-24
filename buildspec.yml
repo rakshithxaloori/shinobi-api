@@ -20,7 +20,7 @@ phases:
       - echo Fetching env variables from S3...
       - touch .env
       - aws s3 cp $S3_ENV_FILE .env
-      - source .env
+      - . .env
 
       - echo CI_CD_STAGE $CI_CD_STAGE
 
