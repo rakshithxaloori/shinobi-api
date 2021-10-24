@@ -13,10 +13,13 @@ RUN pip3 install --upgrade pip
 COPY requirements.txt /usr/src/app/
 RUN pip3 install -r requirements.txt
 
-# copy project
-COPY . /usr/src/app/
+# run migrate and collectstatic
 RUN python manage.py migrate --noinput
 RUN python manage.py collectstatic --noinput
+
+# copy project
+COPY . /usr/src/app/
+
 # daphne -b 0.0.0.0 -p 8000 proeliumx.asgi:application
 EXPOSE 8000
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "proeliumx.asgi:application"]
