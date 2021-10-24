@@ -1,8 +1,29 @@
 version: 0.2
 
+env:
+  parameter-store:
+    SECRET_KEY: "/plx-dev/SECRET_KEY"
+    RDS_USERNAME: "/plx-dev/RDS_USERNAME"
+    RDS_PASSWORD: "/plx-dev/RDS_PASSWORD"
+    RDS_HOSTNAME: "/plx-dev/RDS_HOSTNAME"
+    INSTAGRAM_CLIENT_ID: "/plx-dev/INSTAGRAM_CLIENT_ID"
+    INSTAGRAM_CLIENT_SECRET: "/plx-dev/INSTAGRAM_CLIENT_SECRET"
+    TWITCH_CLIENT_ID: "/plx-dev/TWITCH_CLIENT_ID"
+    TWITCH_CLIENT_SECRET: "/plx-dev/TWITCH_CLIENT_SECRET"
+    GOOGLE_EXPO_GO_APP_CLIENT_ID: "/plx-dev/GOOGLE_EXPO_GO_APP_CLIENT_ID"
+    GOOGLE_ANDROID_APP_CLIENT_ID: "/plx-dev/GOOGLE_ANDROID_APP_CLIENT_ID"
+    ROLLBAR_ACCESS_TOKEN: "/plx-dev/ROLLBAR_ACCESS_TOKEN"
+
 phases:
   pre_build:
     commands:
+      - echo Fetching env variables from S3...
+      - touch .env
+      - aws s3 cp $S3_ENV_FILE .env
+      - source .env
+
+      - echo CI_CD_STAGE $CI_CD_STAGE
+
       - echo Logging in to Amazon ECR...
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
