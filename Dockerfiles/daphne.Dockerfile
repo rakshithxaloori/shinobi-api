@@ -63,8 +63,12 @@ RUN pip3 install -r requirements.txt
 # copy project
 COPY . /usr/src/app/
 
+
+ARG TEST_VALUE
+ENV TEST_VALUE=${RDS_HOSTNAME}
+
 RUN echo "DAPHNE Dockerfile CI_CD_STAGE" $CI_CD_STAGE
-RUN echo "DAPHNE Dockerfile GOOGLE_EXPO_GO_APP_CLIENT_ID" $GOOGLE_EXPO_GO_APP_CLIENT_ID
+RUN echo "DAPHNE Dockerfile TEST_VALUE" $TEST_VALUE
 
 # run migrate and collectstatic
 RUN python manage.py migrate --noinput
