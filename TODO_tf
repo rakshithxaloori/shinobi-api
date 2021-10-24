@@ -1,0 +1,28 @@
+REGION (resources to create in new regions)
+    - RDS Database
+    - Redis
+        - 
+
+    - ECS
+        - Cluster
+        - Task Definition
+            - Task execution role
+                - S3 file only env access
+                - Parameter required resources only access
+                - Secret Manager (in future)
+            - Log groups for all containers
+            - S3 env file
+            - Secret values
+            
+        - Service
+
+    - Codecommit
+        - Add MIRROR username password to Gitlab
+    - Codebuild
+        - Previleged true
+    - Codepipeline
+        - Deploy stage (2 stages)
+            - STAGE 1
+                - service: main
+            - STAGE 2
+                - service: lol
