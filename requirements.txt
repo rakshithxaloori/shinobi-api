@@ -14,3 +14,5 @@ ratelimit==2.2.1
 rollbar==0.16.1
 psycopg2-binary==2.9
 daphne==3.0.2
+django-storages==1.12.2
+boto3==1.19.2

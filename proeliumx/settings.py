@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "rest_framework_api_key",
     "knox",
     "channels",
+    "storages",
     "authentication",
     "profiles",
     "socials",
@@ -172,8 +173,23 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "static")
+if CI_CD_STAGE == "development":
+    STATIC_URL = "/static/"
+    STATIC_ROOT = os.path.join(BASE_DIR, "static")
+
+elif CI_CD_STAGE == "testing" or CI_CD_STAGE == "production":
+    AWS_S3_ACCESS_KEY_ID = os.environ["AWS_S3_ACCESS_KEY_ID"]
+    AWS_S3_SECRET_ACCESS_KEY = os.environ["AWS_S3_SECRET_ACCESS_KEY"]
+    AWS_STORAGE_BUCKET_NAME = os.environ["AWS_STORAGE_BUCKET_NAME"]
+    AWS_S3_REGION_NAME = os.environ["AWS_S3_REGION_NAME"]
+
+    STATIC_URL = "https://s3.{}.amazonaws.com/{}".format(
+        AWS_S3_REGION_NAME, AWS_STORAGE_BUCKET_NAME
+    )
+    STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, "static"),
+    ]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field

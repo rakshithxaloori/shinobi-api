@@ -18,6 +18,9 @@ services:
         - GOOGLE_ANDROID_APP_CLIENT_ID=${GOOGLE_ANDROID_APP_CLIENT_ID}
         - ROLLBAR_ACCESS_TOKEN=${ROLLBAR_ACCESS_TOKEN}
         - RIOT_API_KEY=${RIOT_API_KEY}
+        - AWS_S3_ACCESS_KEY_ID=${AWS_S3_ACCESS_KEY_ID}
+        - AWS_S3_SECRET_ACCESS_KEY=${AWS_S3_SECRET_ACCESS_KEY}
+        - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME}
 
         - RDS_DB_NAME=${RDS_DB_NAME}
         - RDS_PORT=${RDS_PORT}
@@ -28,6 +31,7 @@ services:
         - CI_CD_STAGE=${CI_CD_STAGE}
         - REDIS_URL=${REDIS_URL}
         - OAUTH_REDIRECT_URI=${OAUTH_REDIRECT_URI}
+        - AWS_S3_REGION_NAME=${AWS_S3_REGION_NAME}
 
     image: daphne:latest
     command:
@@ -36,7 +40,6 @@ services:
       - daphne -b 0.0.0.0 -p 8000 proeliumx.asgi:application
     volumes:
       - .:/usr/src/app
-      - static:/usr/src/app/static
     ports:
       - "8000:8000"
     restart: on-failure
@@ -44,8 +47,6 @@ services:
   nginx:
     build: ./nginx
     image: nginx:latest
-    volumes:
-      - static:/usr/src/app/static
     ports:
       - "80:80"
     restart: on-failure
@@ -69,6 +70,9 @@ services:
         - GOOGLE_ANDROID_APP_CLIENT_ID=${GOOGLE_ANDROID_APP_CLIENT_ID}
         - ROLLBAR_ACCESS_TOKEN=${ROLLBAR_ACCESS_TOKEN}
         - RIOT_API_KEY=${RIOT_API_KEY}
+        - AWS_S3_ACCESS_KEY_ID=${AWS_S3_ACCESS_KEY_ID}
+        - AWS_S3_SECRET_ACCESS_KEY=${AWS_S3_SECRET_ACCESS_KEY}
+        - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME}
 
         - RDS_DB_NAME=${RDS_DB_NAME}
         - RDS_PORT=${RDS_PORT}
@@ -79,6 +83,7 @@ services:
         - CI_CD_STAGE=${CI_CD_STAGE}
         - REDIS_URL=${REDIS_URL}
         - OAUTH_REDIRECT_URI=${OAUTH_REDIRECT_URI}
+        - AWS_S3_REGION_NAME=${AWS_S3_REGION_NAME}
     image: celery:latest
     command: celery -A proeliumx worker -l INFO --uid=nobody --gid=nogroup -Q celery
     volumes:
@@ -104,6 +109,9 @@ services:
         - GOOGLE_ANDROID_APP_CLIENT_ID=${GOOGLE_ANDROID_APP_CLIENT_ID}
         - ROLLBAR_ACCESS_TOKEN=${ROLLBAR_ACCESS_TOKEN}
         - RIOT_API_KEY=${RIOT_API_KEY}
+        - AWS_S3_ACCESS_KEY_ID=${AWS_S3_ACCESS_KEY_ID}
+        - AWS_S3_SECRET_ACCESS_KEY=${AWS_S3_SECRET_ACCESS_KEY}
+        - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME}
 
         - RDS_DB_NAME=${RDS_DB_NAME}
         - RDS_PORT=${RDS_PORT}
@@ -114,6 +122,7 @@ services:
         - CI_CD_STAGE=${CI_CD_STAGE}
         - REDIS_URL=${REDIS_URL}
         - OAUTH_REDIRECT_URI=${OAUTH_REDIRECT_URI}
+        - AWS_S3_REGION_NAME=${AWS_S3_REGION_NAME}
     image: lol_celery:latest
     command: celery -A proeliumx worker -l INFO --uid=nobody --gid=nogroup -Q lol --concurrency 1
     volumes:
@@ -121,6 +130,3 @@ services:
     restart: on-failure
     depends_on:
       - daphne
-
-volumes:
-  static:
