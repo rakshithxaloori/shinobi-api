@@ -69,6 +69,8 @@ RUN echo "DAPHNE Dockerfile CI_CD_STAGE" $CI_CD_STAGE
 RUN python manage.py migrate --noinput
 RUN python manage.py collectstatic --noinput
 
+RUN ls
+
 # daphne -b 0.0.0.0 -p 8000 proeliumx.asgi:application
 EXPOSE 8000
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "proeliumx.asgi:application"]
