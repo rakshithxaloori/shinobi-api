@@ -45,7 +45,7 @@ services:
     restart: on-failure
 
   nginx:
-    build: ./nginx
+    build: ./nginx.prod
     image: nginx:latest
     ports:
       - "80:80"
