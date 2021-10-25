@@ -174,10 +174,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 if CI_CD_STAGE == "development":
-    #     STATIC_URL = "/static/"
-    #     STATIC_ROOT = os.path.join(BASE_DIR, "static")
+    STATIC_URL = "/static/"
+    STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
-    # elif CI_CD_STAGE == "testing" or CI_CD_STAGE == "production":
+elif CI_CD_STAGE == "testing" or CI_CD_STAGE == "production":
     AWS_S3_ACCESS_KEY_ID = os.environ["AWS_S3_ACCESS_KEY_ID"]
     AWS_S3_SECRET_ACCESS_KEY = os.environ["AWS_S3_SECRET_ACCESS_KEY"]
     AWS_STORAGE_BUCKET_NAME = os.environ["AWS_STORAGE_BUCKET_NAME"]
