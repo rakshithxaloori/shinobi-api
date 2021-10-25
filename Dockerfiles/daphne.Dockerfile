@@ -64,7 +64,6 @@ RUN pip3 install -r requirements.txt
 COPY . /usr/src/app/
 
 RUN echo "DAPHNE Dockerfile CI_CD_STAGE" $CI_CD_STAGE
-RUN echo "DAPHNE Dockerfile RDS_HOSTNAME" $RDS_HOSTNAME
 
 # run migrate and collectstatic
 RUN python manage.py migrate --noinput
