@@ -40,7 +40,7 @@ phases:
       - CELERY_URI_T=$REPOSITORY_URI:celery_$DATE
       - LOL_CELERY_URI_T=$REPOSITORY_URI:lol_celery_$DATE
 
-      - docker-compose build
+      - docker-compose -f docker-compose.prod.yml build
       - docker tag daphne:latest $DAPHNE_URI_T
       - docker tag nginx:latest $NGINX_URI_T
       - docker tag celery:latest $CELERY_URI_T

@@ -18,7 +18,7 @@ if os.getenv("CI_CD_STAGE", None) is None:
     # Only loads in dev environment
     from dotenv import load_dotenv
 
-    load_dotenv(dotenv_path="dev.env")
+    load_dotenv(dotenv_path=".env")
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
