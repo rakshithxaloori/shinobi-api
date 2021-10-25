@@ -75,6 +75,7 @@ RUN echo "DAPHNE Dockerfile CI_CD_STAGE" $CI_CD_STAGE
 
 # run migrate and collectstatic
 RUN python manage.py migrate --noinput
+RUN python manage.py collectstatic --noinput
 
 RUN ls
 
