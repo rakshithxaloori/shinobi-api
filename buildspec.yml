@@ -23,8 +23,6 @@ phases:
       - . ./.env
 
       - echo CI_CD_STAGE $CI_CD_STAGE
-      - TEST_VALUE=$RDS_HOSTNAME
-      - echo TEST_VALUE $TEST_VALUE
 
       - echo Logging in to Amazon ECR...
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
