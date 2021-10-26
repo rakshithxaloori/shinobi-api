@@ -191,17 +191,16 @@ def update_match_history(lol_profile_pk):
                         match_id=match_id, platform=lol_profile.platform
                     )
                     # add_match_to_db(match_id=match_id)
-    except LolProfile.DoesNotExist:
-        print("LOL PROFILE NOT FOUND")
-        pass
 
-    finally:
         if not lol_profile.active:
             lol_profile.active = True
             lol_profile.save(update_fields=["active"])
         elif lol_profile.updating:
             lol_profile.updating = False
             lol_profile.save(update_fields=["updating"])
+    except LolProfile.DoesNotExist:
+        print("LOL PROFILE NOT FOUND")
+        pass
 
 
 @celery_app.task(queue="lol")
