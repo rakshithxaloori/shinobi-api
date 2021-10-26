@@ -4,12 +4,13 @@
   "cluster": "plx-dev",
   "loadBalancers": [
     {
-      "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:476691507110:targetgroup/plx-dev-1/f5f6ac44ef08bf5d",
+      "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:476691507110:targetgroup/plx-dev-http/159126f992a7a5cb",
       "containerName": "plx-nginx",
       "containerPort": 80
     }
   ],
   "desiredCount": 1,
+  "enableExecuteCommand": true,
   "launchType": "FARGATE",
   "schedulingStrategy": "REPLICA",
   "networkConfiguration": {
