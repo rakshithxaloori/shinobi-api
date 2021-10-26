@@ -195,12 +195,13 @@ def update_match_history(lol_profile_pk):
         print("LOL PROFILE NOT FOUND")
         pass
 
-    if not lol_profile.active:
-        lol_profile.active = True
-        lol_profile.save(update_fields=["active"])
-    elif lol_profile.updating:
-        lol_profile.updating = False
-        lol_profile.save(update_fields=["updating"])
+    finally:
+        if not lol_profile.active:
+            lol_profile.active = True
+            lol_profile.save(update_fields=["active"])
+        elif lol_profile.updating:
+            lol_profile.updating = False
+            lol_profile.save(update_fields=["updating"])
 
 
 @celery_app.task(queue="lol")
