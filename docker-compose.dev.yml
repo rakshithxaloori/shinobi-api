@@ -24,6 +24,19 @@ services:
     depends_on:
       - daphne
 
+  chat:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: daphne -b 0.0.0.0 -p 9001 proeliumx.asgi:application
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - "9001:9001"
+    restart: on-failure
+    depends_on:
+      - daphne
+
   celery:
     build:
       context: .
