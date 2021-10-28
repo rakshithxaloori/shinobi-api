@@ -38,7 +38,7 @@ phases:
       - echo Building the Docker images...
       - API_URI_T=$REPOSITORY_URI:api_$DATE
       - NGINX_URI_T=$REPOSITORY_URI:nginx_$DATE
-      - CHAT_URI_T=$REPOSITORY_URI:CHAT_$DATE
+      - CHAT_URI_T=$REPOSITORY_URI:chat_$DATE
       - CELERY_URI_T=$REPOSITORY_URI:celery_$DATE
       - LOL_CELERY_URI_T=$REPOSITORY_URI:lol_celery_$DATE
 
