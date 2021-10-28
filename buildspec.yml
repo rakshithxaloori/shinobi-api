@@ -36,14 +36,16 @@ phases:
       - DATE=$(date +"%Y%m%d_%H%M%S")
       - echo Build started on $(date +"%Y%m%d_%H%M%S")
       - echo Building the Docker images...
-      - DAPHNE_URI_T=$REPOSITORY_URI:daphne_$DATE
+      - API_URI_T=$REPOSITORY_URI:api_$DATE
       - NGINX_URI_T=$REPOSITORY_URI:nginx_$DATE
+      - CHAT_URI_T=$REPOSITORY_URI:CHAT_$DATE
       - CELERY_URI_T=$REPOSITORY_URI:celery_$DATE
       - LOL_CELERY_URI_T=$REPOSITORY_URI:lol_celery_$DATE
 
       - docker-compose -f docker-compose.prod.yml build
-      - docker tag daphne:latest $DAPHNE_URI_T
+      - docker tag api:latest $API_URI_T
       - docker tag nginx:latest $NGINX_URI_T
+      - docker tag chat:latest $CHAT_URI_T
       - docker tag celery:latest $CELERY_URI_T
       - docker tag lol_celery:latest $LOL_CELERY_URI_T
       # - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI/$IMAGE_REPO_NAME:$IMAGE_TAG
@@ -54,12 +56,13 @@ phases:
       - docker push --all-tags $REPOSITORY_URI
 
       - sed -i 's@<NGINX_IMAGE>@'"$NGINX_URI_T"'@' aws_resources/test/taskdef_main.json
-      - sed -i 's@<DAPHNE_IMAGE>@'"$DAPHNE_URI_T"'@' aws_resources/test/taskdef_main.json
+      - sed -i 's@<API_IMAGE>@'"$API_URI_T"'@' aws_resources/test/taskdef_main.json
+      - sed -i 's@<CHAT_IMAGE>@'"$CHAT_URI_T"'@' aws_resources/test/taskdef_main.json
       - sed -i 's@<CELERY_IMAGE>@'"$CELERY_URI_T"'@' aws_resources/test/taskdef_main.json
 
       - cat aws_resources/test/taskdef_main.json
 
-      - printf '[{"name":"plx-daphne","imageUri":"%s"},{"name":"plx-nginx","imageUri":"%s"},{"name":"plx-celery","imageUri":"%s"}]' $DAPHNE_URI_T $NGINX_URI_T $CELERY_URI_T > imagedefinitions1.json
+      - printf '[{"name":"plx-api","imageUri":"%s"},{"name":"plx-CHAT","imageUri":"%s"},{"name":"plx-nginx","imageUri":"%s"},{"name":"plx-celery","imageUri":"%s"}]' $API_URI_T $CHAT_URI_T $NGINX_URI_T $CELERY_URI_T > imagedefinitions1.json
       - printf '[{"name":"plx-lol-celery","imageUri":"%s"}]' $LOL_CELERY_URI_T  > imagedefinitions2.json
 
 artifacts:

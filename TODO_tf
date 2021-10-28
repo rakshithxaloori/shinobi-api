@@ -5,21 +5,26 @@ REGION (resources to create in new regions)
 
     - ECS
         - Cluster
+            - SG Add My IP for ecs exec
         - Task Definition
             - Task execution role
                 - S3 file only env access
                 - Parameter required resources only access
                 - Secret Manager (in future)
+                - Execute command 
             - Log groups for all containers
             - S3 env file
             - Secret values
             
         - Service
 
+        - Security Grp of Redis - Add sg of ecs cluster
+
     - Codecommit
         - Add MIRROR username password to Gitlab
     - Codebuild
         - Previleged true
+        - S3 bucket policy
     - Codepipeline
         - Deploy stage (2 stages)
             - STAGE 1

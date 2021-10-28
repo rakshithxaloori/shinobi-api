@@ -73,7 +73,7 @@ RUN pip3 install -r requirements.txt
 # copy project
 COPY . /usr/src/app/
 
-RUN echo "DAPHNE Dockerfile CI_CD_STAGE" $CI_CD_STAGE
+RUN echo "API Dockerfile CI_CD_STAGE" $CI_CD_STAGE
 
 # run migrate and collectstatic
 RUN python manage.py migrate --noinput
@@ -81,7 +81,5 @@ RUN python manage.py collectstatic --noinput
 
 RUN ls
 
-# daphne -b 0.0.0.0 -p 8000 proeliumx.asgi:application
 EXPOSE 8000
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "proeliumx.asgi:application"]
-# CMD ["python", "manage.py", "migrate", "--noinput", "&&", "python", "manage.py", "collectstatic", "--noinput", "&&", "daphne", "-b", "0.0.0.0", "-p", "8000", "proeliumx.asgi:application"]

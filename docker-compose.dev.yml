@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  daphne:
+  api:
     build:
       context: .
       dockerfile: Dockerfile.dev
@@ -22,7 +22,7 @@ services:
     volumes:
       - ./static:/usr/src/app/static
     depends_on:
-      - daphne
+      - api
 
   chat:
     build:
@@ -35,7 +35,7 @@ services:
       - "9001:9001"
     restart: on-failure
     depends_on:
-      - daphne
+      - api
 
   celery:
     build:
@@ -46,7 +46,7 @@ services:
       - .:/usr/src/app
     restart: on-failure
     depends_on:
-      - daphne
+      - api
 
   lol_celery:
     build:
@@ -57,7 +57,7 @@ services:
       - .:/usr/src/app
     restart: on-failure
     depends_on:
-      - daphne
+      - api
 
 volumes:
   static:

@@ -1,10 +1,10 @@
 version: "3.8"
 
 services:
-  daphne:
+  api:
     build:
       context: .
-      dockerfile: Dockerfiles/daphne.Dockerfile
+      dockerfile: Dockerfiles/api.Dockerfile
       args:
         - SECRET_KEY=${SECRET_KEY}
         - RDS_USERNAME=${RDS_USERNAME}
@@ -34,7 +34,7 @@ services:
         - OAUTH_REDIRECT_URI=${OAUTH_REDIRECT_URI}
         - AWS_S3_REGION_NAME=${AWS_S3_REGION_NAME}
 
-    image: daphne:latest
+    image: api:latest
     command:
       - python manage.py migrate --noinput
       - python manage.py collectstatic --noinput
@@ -52,7 +52,47 @@ services:
       - "80:80"
     restart: on-failure
     depends_on:
-      - daphne
+      - api
+
+  chat:
+    build:
+      context: .
+      dockerfile: Dockerfiles/chat.Dockerfile
+      args:
+        - SECRET_KEY=${SECRET_KEY}
+        - RDS_USERNAME=${RDS_USERNAME}
+        - RDS_PASSWORD=${RDS_PASSWORD}
+        - RDS_HOSTNAME=${RDS_HOSTNAME}
+        - INSTAGRAM_CLIENT_ID=${INSTAGRAM_CLIENT_ID}
+        - INSTAGRAM_CLIENT_SECRET=${INSTAGRAM_CLIENT_SECRET}
+        - TWITCH_CLIENT_ID=${TWITCH_CLIENT_ID}
+        - TWITCH_CLIENT_SECRET=${TWITCH_CLIENT_SECRET}
+        - GOOGLE_EXPO_GO_APP_CLIENT_ID=${GOOGLE_EXPO_GO_APP_CLIENT_ID}
+        - GOOGLE_ANDROID_APP_CLIENT_ID=${GOOGLE_ANDROID_APP_CLIENT_ID}
+        - ROLLBAR_ACCESS_TOKEN=${ROLLBAR_ACCESS_TOKEN}
+        - RIOT_API_KEY=${RIOT_API_KEY}
+        - AWS_S3_ACCESS_KEY_ID=${AWS_S3_ACCESS_KEY_ID}
+        - AWS_S3_SECRET_ACCESS_KEY=${AWS_S3_SECRET_ACCESS_KEY}
+        - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME}
+        - ADMIN_URL=${ADMIN_URL}
+
+        - RDS_DB_NAME=${RDS_DB_NAME}
+        - RDS_PORT=${RDS_PORT}
+        - RIOT_LOL_RATE_LIMIT_1=${RIOT_LOL_RATE_LIMIT_1}
+        - RIOT_LOL_RATE_PERIOD_1=${RIOT_LOL_RATE_PERIOD_1}
+        - RIOT_LOL_RATE_LIMIT_2=${RIOT_LOL_RATE_LIMIT_2}
+        - RIOT_LOL_RATE_PERIOD_2=${RIOT_LOL_RATE_PERIOD_2}
+        - CI_CD_STAGE=${CI_CD_STAGE}
+        - REDIS_URL=${REDIS_URL}
+        - OAUTH_REDIRECT_URI=${OAUTH_REDIRECT_URI}
+        - AWS_S3_REGION_NAME=${AWS_S3_REGION_NAME}
+    image: chat:latest
+    command: daphne -b 0.0.0.0 -p 9001 proeliumx.asgi:application
+    volumes:
+      - .:/usr/src/app
+    restart: on-failure
+    depends_on:
+      - api
 
   celery:
     build:
@@ -92,7 +132,7 @@ services:
       - .:/usr/src/app
     restart: on-failure
     depends_on:
-      - daphne
+      - api
 
   lol_celery:
     build:
@@ -132,4 +172,4 @@ services:
       - .:/usr/src/app
     restart: on-failure
     depends_on:
-      - daphne
+      - api
