@@ -62,7 +62,7 @@ phases:
 
       - cat aws_resources/test/taskdef_main.json
 
-      - printf '[{"name":"plx-api","imageUri":"%s"},{"name":"plx-CHAT","imageUri":"%s"},{"name":"plx-nginx","imageUri":"%s"},{"name":"plx-celery","imageUri":"%s"}]' $API_URI_T $CHAT_URI_T $NGINX_URI_T $CELERY_URI_T > imagedefinitions1.json
+      - printf '[{"name":"plx-api","imageUri":"%s"},{"name":"plx-chat","imageUri":"%s"},{"name":"plx-nginx","imageUri":"%s"},{"name":"plx-celery","imageUri":"%s"}]' $API_URI_T $CHAT_URI_T $NGINX_URI_T $CELERY_URI_T > imagedefinitions1.json
       - printf '[{"name":"plx-lol-celery","imageUri":"%s"}]' $LOL_CELERY_URI_T  > imagedefinitions2.json
 
 artifacts:
