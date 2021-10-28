@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  daphne:
+  api:
     build:
       context: .
       dockerfile: Dockerfile.dev
@@ -22,7 +22,20 @@ services:
     volumes:
       - ./static:/usr/src/app/static
     depends_on:
-      - daphne
+      - api
+
+  chat:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: daphne -b 0.0.0.0 -p 9001 proeliumx.asgi:application
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - "9001:9001"
+    restart: on-failure
+    depends_on:
+      - api
 
   celery:
     build:
@@ -33,7 +46,7 @@ services:
       - .:/usr/src/app
     restart: on-failure
     depends_on:
-      - daphne
+      - api
 
   lol_celery:
     build:
@@ -44,7 +57,7 @@ services:
       - .:/usr/src/app
     restart: on-failure
     depends_on:
-      - daphne
+      - api
 
 volumes:
   static:
