@@ -1,5 +1,6 @@
 {
   "executionRoleArn": "arn:aws:iam::476691507110:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::476691507110:role/ecsTaskContainerRole",
   "containerDefinitions": [
     {
       "name": "plx-nginx",
