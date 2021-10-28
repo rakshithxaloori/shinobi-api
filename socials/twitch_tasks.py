@@ -6,7 +6,7 @@ from hashlib import sha256
 
 from django.core.cache import cache
 
-from proeliumx.celery import app as celery_app
+from shinobi.celery import app as celery_app
 
 from socials.models import TwitchProfile
 from profiles.models import Game

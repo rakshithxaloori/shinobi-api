@@ -1,4 +1,4 @@
-from proeliumx.celery import app as celery_app
+from shinobi.celery import app as celery_app
 
 from authentication.models import User
 from profiles.models import Profile

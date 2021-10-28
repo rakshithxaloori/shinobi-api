@@ -72,5 +72,5 @@ RUN pip3 install -r requirements.txt
 
 # copy project
 COPY . /usr/src/app/
-# celery -A proeliumx worker -l INFO --uid=nobody --gid=nogroup -Q celery
-CMD ["celery", "-A", "proeliumx", "worker", "-l", "INFO", "--uid=nobody", "--gid=nogroup", "-Q", "celery"]
+# celery -A shinobi worker -l INFO --uid=nobody --gid=nogroup -Q celery
+CMD ["celery", "-A", "shinobi", "worker", "-l", "INFO", "--uid=nobody", "--gid=nogroup", "-Q", "celery"]

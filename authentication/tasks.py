@@ -1,6 +1,6 @@
 from django.utils import timezone
 
-from proeliumx.celery import app as celery_app
+from shinobi.celery import app as celery_app
 
 from authentication.models import User
 from analytics.tasks import update_active_user

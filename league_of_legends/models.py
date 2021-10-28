@@ -59,7 +59,7 @@ class LolProfile(models.Model):
 
     puuid = models.CharField(max_length=78, primary_key=True)
     # profile is
-    # null or blank when summoner hasn't signed up for proeliumx yet
+    # null or blank when summoner hasn't signed up for shinobi yet
     # but has participant data
     profile = models.OneToOneField(
         Profile,

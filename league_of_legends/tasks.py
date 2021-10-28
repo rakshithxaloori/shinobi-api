@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 
 
-from proeliumx.celery import app as celery_app
+from shinobi.celery import app as celery_app
 
 from league_of_legends.wrapper import get_match_v5, get_summoner, get_matchlist_v5
 from league_of_legends.models import (

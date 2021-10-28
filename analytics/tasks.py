@@ -1,7 +1,7 @@
 from datetime import date
 from celery.schedules import crontab
 
-from proeliumx.celery import app as celery_app
+from shinobi.celery import app as celery_app
 
 from authentication.models import User
 from analytics.models import DailyAnalytics, WeeklyAnalytics, MonthlyAnalytics
