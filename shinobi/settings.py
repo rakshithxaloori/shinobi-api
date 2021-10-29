@@ -80,7 +80,7 @@ MIDDLEWARE = [
     "rollbar.contrib.django.middleware.RollbarNotifierMiddleware",
 ]
 
-ROOT_URLCONF = "proeliumx.urls"
+ROOT_URLCONF = "shinobi.urls"
 
 TEMPLATES = [
     {
@@ -98,7 +98,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "proeliumx.wsgi.application"
+WSGI_APPLICATION = "shinobi.wsgi.application"
 
 
 # Database
@@ -226,7 +226,7 @@ REST_KNOX = {
 
 ################################################################################
 # Chat
-ASGI_APPLICATION = "proeliumx.routing.application"
+ASGI_APPLICATION = "shinobi.routing.application"
 CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 # CHANNEL_LAYERS = {
 #     "default": {

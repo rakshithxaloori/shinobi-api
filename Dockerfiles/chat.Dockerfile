@@ -75,6 +75,6 @@ COPY . /usr/src/app/
 
 RUN ls
 
-# daphne -b 0.0.0.0 -p 9001 proeliumx.asgi:application
+# daphne -b 0.0.0.0 -p 9001 shinobi.asgi:application
 EXPOSE 9001
-CMD ["daphne", "-b", "0.0.0.0", "-p", "9001", "proeliumx.asgi:application"]
+CMD ["daphne", "-b", "0.0.0.0", "-p", "9001", "shinobi.asgi:application"]

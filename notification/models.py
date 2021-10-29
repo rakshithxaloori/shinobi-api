@@ -3,6 +3,9 @@ from django.utils import timezone
 
 from authentication.models import User
 
+# TODO notif preferences
+# fields - new follower (True/False)
+
 
 class Notification(models.Model):
     FOLLOW = "f"
@@ -41,7 +44,6 @@ class ExponentPushToken(models.Model):
     user = models.ForeignKey(
         User, related_name="exponent_push_tokens", on_delete=models.PROTECT
     )
-    # TODO deactivate the token depending upon the response from Expo servers/APNs/FCMs
     token = models.TextField(blank=False, null=False)
     is_active = models.BooleanField(default=True)
 

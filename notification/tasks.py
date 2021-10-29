@@ -11,7 +11,7 @@ from exponent_server_sdk import (
 )
 from requests.exceptions import ConnectionError, HTTPError
 
-from proeliumx.celery import app as celery_app
+from shinobi.celery import app as celery_app
 
 from authentication.models import User
 from notification.models import Notification, ExponentPushToken

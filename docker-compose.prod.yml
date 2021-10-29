@@ -38,7 +38,7 @@ services:
     command:
       - python manage.py migrate --noinput
       - python manage.py collectstatic --noinput
-      - daphne -b 0.0.0.0 -p 8000 proeliumx.asgi:application
+      - daphne -b 0.0.0.0 -p 8000 shinobi.asgi:application
     volumes:
       - .:/usr/src/app
     ports:
@@ -87,7 +87,7 @@ services:
         - OAUTH_REDIRECT_URI=${OAUTH_REDIRECT_URI}
         - AWS_S3_REGION_NAME=${AWS_S3_REGION_NAME}
     image: chat:latest
-    command: daphne -b 0.0.0.0 -p 9001 proeliumx.asgi:application
+    command: daphne -b 0.0.0.0 -p 9001 shinobi.asgi:application
     volumes:
       - .:/usr/src/app
     restart: on-failure
@@ -127,7 +127,7 @@ services:
         - OAUTH_REDIRECT_URI=${OAUTH_REDIRECT_URI}
         - AWS_S3_REGION_NAME=${AWS_S3_REGION_NAME}
     image: celery:latest
-    command: celery -A proeliumx worker -l INFO --uid=nobody --gid=nogroup -Q celery
+    command: celery -A shinobi worker -l INFO --uid=nobody --gid=nogroup -Q celery
     volumes:
       - .:/usr/src/app
     restart: on-failure
@@ -167,7 +167,7 @@ services:
         - OAUTH_REDIRECT_URI=${OAUTH_REDIRECT_URI}
         - AWS_S3_REGION_NAME=${AWS_S3_REGION_NAME}
     image: lol_celery:latest
-    command: celery -A proeliumx worker -l INFO --uid=nobody --gid=nogroup -Q lol --concurrency 1
+    command: celery -A shinobi worker -l INFO --uid=nobody --gid=nogroup -Q lol --concurrency 1
     volumes:
       - .:/usr/src/app
     restart: on-failure
