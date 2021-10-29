@@ -1,10 +1,13 @@
 # Environment
 .vscode
-.env
+**.env
 
 # Cache
 *.pyc
 
 db.sqlite3
+static
 
-# Apps
+# Custom
+**/custom.py
+**.DS_Store

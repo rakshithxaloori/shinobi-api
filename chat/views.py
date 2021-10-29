@@ -90,7 +90,7 @@ def chat_messages(request, chat_id, begin_index=0, end_index=25):
     try:
         chat = Chat.objects.get(id=chat_id)
 
-        messages_count = chat.messages.all().count()
+        messages_count = chat.messages.count()
         if messages_count <= begin_index:
             return JsonResponse(
                 {
