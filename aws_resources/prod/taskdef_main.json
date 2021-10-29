@@ -36,7 +36,7 @@
       "essential": true,
       "environmentFiles": [
         {
-          "value": "arn:aws:s3:::shn-api/prod.env",
+          "value": "arn:aws:s3:::shinobi-api/prod.env",
           "type": "s3"
         }
       ],
@@ -61,7 +61,7 @@
       "essential": true,
       "environmentFiles": [
         {
-          "value": "arn:aws:s3:::shn-api/prod.env",
+          "value": "arn:aws:s3:::shinobi-api/prod.env",
           "type": "s3"
         }
       ],
@@ -89,7 +89,7 @@
       "essential": true,
       "environmentFiles": [
         {
-          "value": "arn:aws:s3:::shn-api/prod.env",
+          "value": "arn:aws:s3:::shinobi-api/prod.env",
           "type": "s3"
         }
       ],

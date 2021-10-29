@@ -7,7 +7,7 @@
       "essential": true,
       "environmentFiles": [
         {
-          "value": "arn:aws:s3:::shn/prod.env",
+          "value": "arn:aws:s3:::shinobi-api/prod.env",
           "type": "s3"
         }
       ],
