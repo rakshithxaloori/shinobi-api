@@ -80,5 +80,6 @@ artifacts:
     - imagedefinitions1.json
     - imagedefinitions2.json
     - aws_resources/prod/taskdef_main.json
+    - aws_resources/prod/taskdef_lol.json
     - appspec.yml
   name: buildartifacts
