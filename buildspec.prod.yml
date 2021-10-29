@@ -1,0 +1,84 @@
+version: 0.2
+
+env:
+  parameter-store:
+    SECRET_KEY: "/shn/SECRET_KEY"
+    RDS_USERNAME: "/shn/RDS_USERNAME"
+    RDS_PASSWORD: "/shn/RDS_PASSWORD"
+    RDS_HOSTNAME: "/shn/RDS_HOSTNAME"
+    INSTAGRAM_CLIENT_ID: "/shn/INSTAGRAM_CLIENT_ID"
+    INSTAGRAM_CLIENT_SECRET: "/shn/INSTAGRAM_CLIENT_SECRET"
+    TWITCH_CLIENT_ID: "/shn/TWITCH_CLIENT_ID"
+    TWITCH_CLIENT_SECRET: "/shn/TWITCH_CLIENT_SECRET"
+    GOOGLE_EXPO_GO_APP_CLIENT_ID: "/shn/GOOGLE_EXPO_GO_APP_CLIENT_ID"
+    GOOGLE_ANDROID_APP_CLIENT_ID: "/shn/GOOGLE_ANDROID_APP_CLIENT_ID"
+    RIOT_API_KEY: "/shn/RIOT_API_KEY"
+    ROLLBAR_ACCESS_TOKEN: "/shn/ROLLBAR_ACCESS_TOKEN"
+    AWS_S3_ACCESS_KEY_ID: "/shn/AWS_S3_ACCESS_KEY_ID"
+    AWS_S3_SECRET_ACCESS_KEY: "/shn/AWS_S3_SECRET_ACCESS_KEY"
+    AWS_STORAGE_BUCKET_NAME: "/shn/AWS_STORAGE_BUCKET_NAME"
+    ADMIN_URL: "/shn/ADMIN_URL"
+
+phases:
+  pre_build:
+    commands:
+      - echo Fetching env variables from S3...
+      - touch .env
+      - aws s3 cp $S3_ENV_FILE ./.env
+      - . ./.env
+
+      - echo CI_CD_STAGE $CI_CD_STAGE
+
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
+  build:
+    commands:
+      - DATE=$(date +"%Y%m%d_%H%M%S")
+      - echo Build started on $(date +"%Y%m%d_%H%M%S")
+      - echo Building the Docker images...
+      - API_URI_T=$REPOSITORY_URI:api_$DATE
+      - NGINX_URI_T=$REPOSITORY_URI:nginx_$DATE
+      - CHAT_URI_T=$REPOSITORY_URI:chat_$DATE
+      - CELERY_URI_T=$REPOSITORY_URI:celery_$DATE
+      - LOL_CELERY_URI_T=$REPOSITORY_URI:lol_celery_$DATE
+
+      - docker-compose -f docker-compose.prod.yml build
+      - docker tag api:latest $API_URI_T
+      - docker tag nginx:latest $NGINX_URI_T
+      - docker tag chat:latest $CHAT_URI_T
+      - docker tag celery:latest $CELERY_URI_T
+      - docker tag lol_celery:latest $LOL_CELERY_URI_T
+      # - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI/$IMAGE_REPO_NAME:$IMAGE_TAG
+  post_build:
+    commands:
+      - echo Build completed on $(date +"%Y%m%d_%H%M%S")
+      - echo Pushing the Docker images...
+      - docker push --all-tags $REPOSITORY_URI
+
+      # Replace tags in taskdef files
+      - sed -i 's@<NGINX_IMAGE>@'"$NGINX_URI_T"'@' aws_resources/prod/taskdef_main.json
+      - sed -i 's@<API_IMAGE>@'"$API_URI_T"'@' aws_resources/prod/taskdef_main.json
+      - sed -i 's@<CHAT_IMAGE>@'"$CHAT_URI_T"'@' aws_resources/prod/taskdef_main.json
+      - sed -i 's@<CELERY_IMAGE>@'"$CELERY_URI_T"'@' aws_resources/prod/taskdef_main.json
+
+      - sed -i 's@<IMAGE_NAME>@'"$LOL_CELERY_URI_T"'@' aws_resources/prod/taskdef_lol.json
+
+      - sed -i 's@<EXECUTION_ROLE_ARN>@'"$EXECUTION_ROLE_ARN"'@' aws_resources/prod/taskdef_main.json
+      - sed -i 's@<TASK_ROLE_ARN>@'"$TASK_ROLE_ARN"'@' aws_resources/prod/taskdef_main.json
+      - sed -i 's@<EXECUTION_ROLE_ARN>@'"$EXECUTION_ROLE_ARN"'@' aws_resources/prod/taskdef_lol.json
+
+      # Verify if everything is properly set
+      - cat aws_resources/prod/taskdef_main.json
+
+      # Create imagedefinitions files
+      - printf '[{"name":"shn-api","imageUri":"%s"},{"name":"shn-chat","imageUri":"%s"},{"name":"shn-nginx","imageUri":"%s"},{"name":"shn-celery","imageUri":"%s"}]' $API_URI_T $CHAT_URI_T $NGINX_URI_T $CELERY_URI_T > imagedefinitions1.json
+      - printf '[{"name":"shn-lol-celery","imageUri":"%s"}]' $LOL_CELERY_URI_T  > imagedefinitions2.json
+
+artifacts:
+  files:
+    - imagedefinitions1.json
+    - imagedefinitions2.json
+    - aws_resources/prod/taskdef_main.json
+    - appspec.yml
+  name: buildartifacts
