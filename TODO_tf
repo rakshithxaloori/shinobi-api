@@ -1,24 +1,41 @@
 REGION (resources to create in new regions)
+    - VPC (use template)
+
+    - Load balancer
+        - Security Group
+            - All ipv4, ipv6
+        - Target groups
+
+
+    - Create SGs for RDS DB, Redis first
     - RDS Database
     - Redis
-        - 
+
+    - ECR Repo
 
     - ECS
         - Cluster
-            - SG Add My IP for ecs exec
+
+        - Service
+            - Security Group
+                - Add My IP for ecs exec
+                - Add LB SG
+
         - Task Definition
             - Task execution role
-                - S3 file only env access
-                - Parameter required resources only access
-                - Secret Manager (in future)
-                - Execute command 
+                - Inline policies
+                    - S3 file only env access
+                    - Execute command
+                - Create policy
+                    - Parameter required resources only access
+                    - Secret Manager (in future)
+
             - Log groups for all containers
             - S3 env file
             - Secret values
             
-        - Service
-
-        - Security Grp of Redis - Add sg of ecs cluster
+        - Security Grp of Redis - Add sg of ecs service
+        - SG of RDS DB - Add sg of ecs service, codebuild
 
     - Codecommit
         - Add MIRROR username password to Gitlab
@@ -31,3 +48,7 @@ REGION (resources to create in new regions)
                 - service: main
             - STAGE 2
                 - service: lol
+
+    - S3 bucket for static files
+        - IAM User
+            - Inline policy

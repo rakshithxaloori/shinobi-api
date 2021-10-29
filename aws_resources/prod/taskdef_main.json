@@ -1,0 +1,120 @@
+{
+  "executionRoleArn": "<EXECUTION_ROLE_ARN>",
+  "taskRoleArn": "<TASK_ROLE_ARN>",
+  "containerDefinitions": [
+    {
+      "name": "shn-nginx",
+      "image": "<NGINX_IMAGE>",
+      "essential": true,
+      "portMappings": [
+        {
+          "hostPort": 80,
+          "protocol": "tcp",
+          "containerPort": 80
+        }
+      ],
+      "pseudoTerminal": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "secretOptions": [],
+        "options": {
+          "awslogs-group": "/ecs/shn-main",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "dependsOn": [
+        {
+          "containerName": "shn-api",
+          "condition": "HEALTHY"
+        }
+      ]
+    },
+    {
+      "name": "shn-api",
+      "image": "<API_IMAGE>",
+      "essential": true,
+      "environmentFiles": [
+        {
+          "value": "arn:aws:s3:::shn-api/prod.env",
+          "type": "s3"
+        }
+      ],
+      "pseudoTerminal": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "secretOptions": [],
+        "options": {
+          "awslogs-group": "/ecs/shn-main",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "secrets": [],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:8000/ht/ || exit 1"]
+      }
+    },
+    {
+      "name": "shn-chat",
+      "image": "<CHAT_IMAGE>",
+      "essential": true,
+      "environmentFiles": [
+        {
+          "value": "arn:aws:s3:::shn-api/prod.env",
+          "type": "s3"
+        }
+      ],
+      "pseudoTerminal": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "secretOptions": [],
+        "options": {
+          "awslogs-group": "/ecs/shn-main",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "secrets": [],
+      "dependsOn": [
+        {
+          "containerName": "shn-api",
+          "condition": "HEALTHY"
+        }
+      ]
+    },
+    {
+      "name": "shn-celery",
+      "image": "<CELERY_IMAGE>",
+      "essential": true,
+      "environmentFiles": [
+        {
+          "value": "arn:aws:s3:::shn-api/prod.env",
+          "type": "s3"
+        }
+      ],
+      "pseudoTerminal": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "secretOptions": [],
+        "options": {
+          "awslogs-group": "/ecs/shn-main",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "secrets": [],
+      "dependsOn": [
+        {
+          "containerName": "shn-api",
+          "condition": "HEALTHY"
+        }
+      ]
+    }
+  ],
+  "requiresCompatibilities": ["FARGATE"],
+  "networkMode": "awsvpc",
+  "cpu": "2048",
+  "memory": "4096",
+  "family": "shn-main"
+}

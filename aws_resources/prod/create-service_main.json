@@ -1,0 +1,23 @@
+{
+  "serviceName": "shn-main",
+  "taskDefinition": "shn-main:1",
+  "cluster": "shinobi",
+  "loadBalancers": [
+    {
+      "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:830335385191:targetgroup/shn-http/fcfde149c75771be",
+      "containerName": "shn-nginx",
+      "containerPort": 80
+    }
+  ],
+  "desiredCount": 1,
+  "enableExecuteCommand": true,
+  "launchType": "FARGATE",
+  "schedulingStrategy": "REPLICA",
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": ["subnet-03eeddb51bca8add8", "subnet-010516ccdc32bc338"],
+      "securityGroups": ["sg-007c15b39a2978a10"],
+      "assignPublicIp": "DISABLED"
+    }
+  }
+}
