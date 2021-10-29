@@ -1,5 +1,6 @@
 {
   "executionRoleArn": "<EXECUTION_ROLE_ARN>",
+  "taskRoleArn": "<TASK_ROLE_ARN>",
   "containerDefinitions": [
     {
       "name": "shn-lol-celery",

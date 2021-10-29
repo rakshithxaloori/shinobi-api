@@ -67,6 +67,7 @@ phases:
       - sed -i 's@<EXECUTION_ROLE_ARN>@'"$EXECUTION_ROLE_ARN"'@' aws_resources/prod/taskdef_main.json
       - sed -i 's@<TASK_ROLE_ARN>@'"$TASK_ROLE_ARN"'@' aws_resources/prod/taskdef_main.json
       - sed -i 's@<EXECUTION_ROLE_ARN>@'"$EXECUTION_ROLE_ARN"'@' aws_resources/prod/taskdef_lol.json
+      - sed -i 's@<TASK_ROLE_ARN>@'"$TASK_ROLE_ARN"'@' aws_resources/prod/taskdef_lol.json
 
       # Verify if everything is properly set
       - cat aws_resources/prod/taskdef_main.json
@@ -80,5 +81,6 @@ artifacts:
     - imagedefinitions1.json
     - imagedefinitions2.json
     - aws_resources/prod/taskdef_main.json
+    - aws_resources/prod/taskdef_lol.json
     - appspec.yml
   name: buildartifacts
