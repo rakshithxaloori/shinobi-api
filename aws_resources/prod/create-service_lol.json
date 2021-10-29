@@ -1,6 +1,6 @@
 {
   "serviceName": "shn-lol",
-  "taskDefinition": "shn-lol:1",
+  "taskDefinition": "shn-lol:12",
   "cluster": "shinobi",
   "loadBalancers": [],
   "desiredCount": 1,
@@ -10,7 +10,7 @@
     "awsvpcConfiguration": {
       "subnets": ["subnet-03eeddb51bca8add8", "subnet-010516ccdc32bc338"],
       "securityGroups": ["sg-007c15b39a2978a10"],
-      "assignPublicIp": "DISABLED"
+      "assignPublicIp": "ENABLED"
     }
   }
 }

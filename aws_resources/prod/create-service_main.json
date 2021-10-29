@@ -4,7 +4,7 @@
   "cluster": "shinobi",
   "loadBalancers": [
     {
-      "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:830335385191:targetgroup/shn-http/fcfde149c75771be",
+      "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:830335385191:targetgroup/shn-https/d70fb48d6817c7e7",
       "containerName": "shn-nginx",
       "containerPort": 80
     }
@@ -17,7 +17,7 @@
     "awsvpcConfiguration": {
       "subnets": ["subnet-03eeddb51bca8add8", "subnet-010516ccdc32bc338"],
       "securityGroups": ["sg-007c15b39a2978a10"],
-      "assignPublicIp": "DISABLED"
+      "assignPublicIp": "ENABLED"
     }
   }
 }
