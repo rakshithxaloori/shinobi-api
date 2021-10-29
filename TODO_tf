@@ -2,9 +2,13 @@ REGION (resources to create in new regions)
     - VPC (use template)
 
     - Load balancer
+        - Listeners
+            - https 443 forward to target grp http 80
         - Security Group
+            - HTTPS only
             - All ipv4, ipv6
         - Target groups
+            - http
 
 
     - Create SGs for RDS DB, Redis first
