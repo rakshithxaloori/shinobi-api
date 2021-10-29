@@ -4,7 +4,7 @@
   "cluster": "shinobi",
   "loadBalancers": [
     {
-      "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:830335385191:targetgroup/shn-https/d70fb48d6817c7e7",
+      "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:830335385191:targetgroup/shn-http/bb148a8cf1c84508",
       "containerName": "shn-nginx",
       "containerPort": 80
     }
