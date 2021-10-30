@@ -191,11 +191,14 @@ def youtube_connect_view(request):
                 {"detail": "access_token required"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        yt_channels = youtube.get_user_info(access_token=access_token).get("items")
+        yt_channels = youtube.get_user_info(access_token=access_token)
+
         if yt_channels is None:
             return JsonResponse(
                 {"detail": "access_token invalid"}, status=status.HTTP_400_BAD_REQUEST
             )
+
+        yt_channels = yt_channels.get("items")
 
         if len(yt_channels) > 1:
             channel_ids = [
