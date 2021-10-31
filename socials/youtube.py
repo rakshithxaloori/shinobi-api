@@ -12,6 +12,12 @@ def get_user_info(access_token=None):
         "Authorization": "Bearer {}".format(access_token),
     }
     response = requests.get(endpoint, headers=headers)
+    try:
+        print(response.status_code)
+        print(response.reason)
+        print(response.json())
+    except Exception:
+        pass
     if response.ok:
         return response.json()
     else:
