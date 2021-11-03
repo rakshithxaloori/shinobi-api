@@ -245,6 +245,79 @@
           "condition": "HEALTHY"
         }
       ]
+    },
+    {
+      "name": "plx-scheduler-celery",
+      "image": "<SCHEDULER_CELERY_IMAGE>",
+      "essential": true,
+      "environmentFiles": [
+        {
+          "value": "arn:aws:s3:::plx-dev/test.env",
+          "type": "s3"
+        }
+      ],
+      "pseudoTerminal": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "secretOptions": [],
+        "options": {
+          "awslogs-group": "/ecs/plx-dev-main",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "secrets": [
+        {
+          "name": "SECRET_KEY",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/SECRET_KEY"
+        },
+        {
+          "name": "RDS_USERNAME",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/RDS_USERNAME"
+        },
+        {
+          "name": "RDS_PASSWORD",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/RDS_PASSWORD"
+        },
+        {
+          "name": "RDS_HOSTNAME",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/RDS_HOSTNAME"
+        },
+        {
+          "name": "INSTAGRAM_CLIENT_ID",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/INSTAGRAM_CLIENT_ID"
+        },
+        {
+          "name": "INSTAGRAM_CLIENT_SECRET",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/INSTAGRAM_CLIENT_SECRET"
+        },
+        {
+          "name": "TWITCH_CLIENT_ID",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/TWITCH_CLIENT_ID"
+        },
+        {
+          "name": "TWITCH_CLIENT_SECRET",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/TWITCH_CLIENT_SECRET"
+        },
+        {
+          "name": "GOOGLE_EXPO_GO_APP_CLIENT_ID",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/GOOGLE_EXPO_GO_APP_CLIENT_ID"
+        },
+        {
+          "name": "GOOGLE_ANDROID_APP_CLIENT_ID",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/GOOGLE_ANDROID_APP_CLIENT_ID"
+        },
+        {
+          "name": "ROLLBAR_ACCESS_TOKEN",
+          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/ROLLBAR_ACCESS_TOKEN"
+        }
+      ],
+      "dependsOn": [
+        {
+          "containerName": "plx-api",
+          "condition": "HEALTHY"
+        }
+      ]
     }
   ],
   "requiresCompatibilities": ["FARGATE"],
