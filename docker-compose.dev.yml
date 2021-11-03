@@ -59,5 +59,16 @@ services:
     depends_on:
       - api
 
+  scheduler_celery:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: celery -A shinobi beat
+    volumes:
+      - .:/usr/src/app
+    restart: on-failure
+    depends_on:
+      - api
+
 volumes:
   static:
