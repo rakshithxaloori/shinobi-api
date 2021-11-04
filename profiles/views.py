@@ -15,10 +15,11 @@ from knox.auth import TokenAuthentication
 
 from authentication.models import User
 from chat.models import Chat
-from profiles.models import Profile
+from profiles.models import Profile, Following
 from profiles.serializers import (
     FullProfileSerializer,
     MiniProfileSerializer,
+    FollowersSerializer,
 )
 
 
@@ -193,5 +194,32 @@ def update_profile_view(request):
             profile.save(update_fields=["bio"])
     return JsonResponse(
         {"detail": "{}'s profile updated".format(request.user.username)},
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def followers_list_view(request, username=None, begin_index=0, end_index=10):
+    if username is None:
+        return JsonResponse(
+            {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if not User.objects.filter(username=username).exists():
+        return JsonResponse(
+            {"detail": "user not found"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    followers = Following.objects.filter(user__username=username)[begin_index:end_index]
+    followers_serializers_data = FollowersSerializer(followers, many=True).data
+    return JsonResponse(
+        {
+            "detail": "{}'s followers".format(request.user.username),
+            "payload": {
+                "followers": followers_serializers_data,
+            },
+        },
         status=status.HTTP_200_OK,
     )

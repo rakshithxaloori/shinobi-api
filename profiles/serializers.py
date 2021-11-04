@@ -1,8 +1,9 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from authentication.models import User
-from profiles.models import Profile
+from profiles.models import Profile, Following
 from socials.serializers import SocialsSerializer
+from profiles.utils import game_alias
 
 ##########################################
 class UserSerializer(ModelSerializer):
@@ -51,11 +52,23 @@ class MiniProfileSerializer(ModelSerializer):
 
     def get_game_alias(self, obj):
         """Return the game that user plays the most."""
-        try:
-            # The currently supported formats are png, jpg, jpeg, bmp, gif, webp, psd (iOS only) - RN Image Component
-            return {
-                "alias": obj.lol_profile.name,
-                "logo": "https://ubuntuhandbook.org/wp-content/uploads/2018/09/lol-icon.png",
-            }
-        except Exception:
-            return {"alias": "", "logo": ""}
+        return game_alias(obj)
+
+
+##########################################
+class FollowersSerializer(ModelSerializer):
+    user = SerializerMethodField()
+    game_alias = SerializerMethodField()
+
+    class Meta:
+        model = Following
+        fields = ["user", "game_alias"]
+
+    def get_user(self, obj):
+        return {
+            "username": obj.profile.user.username,
+            "picture": obj.profile.user.picture,
+        }
+
+    def get_game_alias(self, obj):
+        return game_alias(obj)
