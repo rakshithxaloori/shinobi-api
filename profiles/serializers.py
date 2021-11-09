@@ -65,10 +65,23 @@ class FollowersSerializer(ModelSerializer):
         fields = ["user", "game_alias"]
 
     def get_user(self, obj):
-        return {
-            "username": obj.profile.user.username,
-            "picture": obj.profile.user.picture,
-        }
+        return UserSerializer(obj.profile.user).data
 
     def get_game_alias(self, obj):
-        return game_alias(obj)
+        return game_alias(obj.profile)
+
+
+##########################################
+class FollowingSerializer(ModelSerializer):
+    user = SerializerMethodField()
+    game_alias = SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ["user", "game_alias"]
+
+    def get_user(self, obj):
+        return UserSerializer(obj).data
+
+    def get_game_alias(self, obj):
+        return game_alias(obj.profile)

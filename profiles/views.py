@@ -17,6 +17,7 @@ from authentication.models import User
 from chat.models import Chat
 from profiles.models import Profile, Following
 from profiles.serializers import (
+    FollowingSerializer,
     FullProfileSerializer,
     MiniProfileSerializer,
     FollowersSerializer,
@@ -216,9 +217,38 @@ def followers_list_view(request, username=None, begin_index=0, end_index=10):
     followers_serializers_data = FollowersSerializer(followers, many=True).data
     return JsonResponse(
         {
-            "detail": "{}'s followers".format(request.user.username),
+            "detail": "{}'s followers".format(username),
             "payload": {
                 "followers": followers_serializers_data,
+            },
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def following_list_view(request, username=None, begin_index=0, end_index=10):
+    if username is None:
+        return JsonResponse(
+            {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if not User.objects.filter(username=username).exists():
+        return JsonResponse(
+            {"detail": "user not found"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    following = Profile.objects.get(user__username=username).followings.all()[
+        begin_index:end_index
+    ]
+    following_serializers_data = FollowingSerializer(following, many=True).data
+    return JsonResponse(
+        {
+            "detail": "{}'s following".format(username),
+            "payload": {
+                "following": following_serializers_data,
             },
         },
         status=status.HTTP_200_OK,

@@ -20,4 +20,9 @@ urlpatterns = [
         views.followers_list_view,
         name="followers",
     ),
+    path(
+        "following/<str:username>/<int:begin_index>/<int:end_index>/",
+        views.following_list_view,
+        name="following",
+    ),
 ]
