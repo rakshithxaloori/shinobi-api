@@ -15,4 +15,14 @@ urlpatterns = [
         views.remove_follower_view,
         name="remove follower",
     ),
+    path(
+        "followers/<str:username>/<int:begin_index>/<int:end_index>/",
+        views.followers_list_view,
+        name="followers",
+    ),
+    path(
+        "following/<str:username>/<int:begin_index>/<int:end_index>/",
+        views.following_list_view,
+        name="following",
+    ),
 ]
