@@ -13,6 +13,7 @@ from rest_framework_api_key.permissions import HasAPIKey
 from knox.auth import TokenAuthentication
 
 
+from authentication.models import User
 from league_of_legends.models import LolProfile, Participant
 from league_of_legends.serializers import ParticipationFeedSerializer
 from profiles.models import Profile
@@ -26,6 +27,7 @@ def feed_view(request):
     begin_index = request.data.get("begin_index", 0)
     end_index = request.data.get("end_index", 10)
     following_users = request.user.profile.followings.all()
+    following_users |= User.objects.filter(pk=request.user.pk)
     following_profiles = Profile.objects.filter(user__in=following_users)
     lol_profiles = LolProfile.objects.filter(profile__in=following_profiles)
     participations = Participant.objects.filter(summoner__in=lol_profiles).order_by(
