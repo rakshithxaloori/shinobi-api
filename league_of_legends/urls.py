@@ -18,5 +18,5 @@ urlpatterns = [
         name="champion masteries",
     ),
     path("champion/<str:champion_key>/", views.champion_view, name="champion"),
-    path("match/<str:match_id>/", views.match_view, name="match"),
+    path("match/", views.match_view, name="match"),
 ]
