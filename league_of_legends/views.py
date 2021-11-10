@@ -351,11 +351,11 @@ def champion_view(request, champion_key=None):
     )
 
 
-# TODO why isn't the decorator working?
-# @api_view(["GET"])
+@api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
-def match_view(request, match_id=None):
+def match_view(request):
+    match_id = request.data.get("match_id", None)
     if match_id is None:
         return JsonResponse(
             {"detail": "champion_key is required"},
