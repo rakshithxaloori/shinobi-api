@@ -192,10 +192,15 @@ def disconnect_view(request):
         )
 
 
-@api_view(["GET"])
+@api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
-def lol_profile_view(request, username):
+def lol_profile_view(request):
+    username = request.data.get("username", None)
+    if username is None:
+        return JsonResponse(
+            {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
     lol_profile = get_lol_profile(username=username)
     if lol_profile is None:
         return JsonResponse(
@@ -283,10 +288,22 @@ def match_history_view(request):
     )
 
 
-@api_view(["GET"])
+@api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
-def champion_masteries_view(request, username=None, begin_index=0, end_index=20):
+def champion_masteries_view(request):
+    username = request.data.get("username", None)
+    if username is None:
+        return JsonResponse(
+            {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        begin_index = int(request.data.get("begin_index", 0))
+        end_index = int(request.data.get("end_index", 20))
+    except Exception:
+        begin_index = 0
+        end_index = 10
     lol_profile = get_lol_profile(username=username)
     if lol_profile is None:
         return JsonResponse(
@@ -324,10 +341,11 @@ def champion_masteries_view(request, username=None, begin_index=0, end_index=20)
     )
 
 
-@api_view(["GET"])
+@api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
-def champion_view(request, champion_key=None):
+def champion_view(request):
+    champion_key = request.data.get("champion_key", None)
     if champion_key is None:
         return JsonResponse(
             {"detail": "champion_key is required"},
