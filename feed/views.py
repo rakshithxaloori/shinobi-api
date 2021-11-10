@@ -24,8 +24,12 @@ from profiles.models import Profile
 @permission_classes([IsAuthenticated, HasAPIKey])
 def feed_view(request):
     """Response contains the match history from all games of all the followers."""
-    begin_index = request.data.get("begin_index", 0)
-    end_index = request.data.get("end_index", 10)
+    try:
+        begin_index = int(request.data.get("begin_index", 0))
+        end_index = int(request.data.get("end_index", 10))
+    except Exception:
+        begin_index = 0
+        end_index = 10
     following_users = request.user.profile.followings.all()
     following_users |= User.objects.filter(pk=request.user.pk)
     following_profiles = Profile.objects.filter(user__in=following_users)
