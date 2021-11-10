@@ -211,11 +211,22 @@ def lol_profile_view(request, username):
     )
 
 
-# TODO why isn't the decorator working?
-# @api_view(["GET"])
+@api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
-def match_history_view(request, username=None, begin_index=0, end_index=10):
+def match_history_view(request):
+    try:
+        username = request.data.get("username", None)
+        if username is None:
+            return JsonResponse(
+                {"detail": "username required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        begin_index = int(request.data.get("begin_index", 0))
+        end_index = int(request.data.get("end_index", 10))
+    except Exception:
+        begin_index = 0
+        end_index = 10
+
     if begin_index < 0 or begin_index >= end_index:
         return JsonResponse(
             {"detail": "Bad indices"}, status=status.HTTP_400_BAD_REQUEST
@@ -340,11 +351,11 @@ def champion_view(request, champion_key=None):
     )
 
 
-# TODO why isn't the decorator working?
-# @api_view(["GET"])
+@api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
-def match_view(request, match_id=None):
+def match_view(request):
+    match_id = request.data.get("match_id", None)
     if match_id is None:
         return JsonResponse(
             {"detail": "champion_key is required"},
