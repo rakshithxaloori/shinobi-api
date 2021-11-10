@@ -10,6 +10,8 @@ from league_of_legends.models import (
     VerifyLolProfile,
 )
 from league_of_legends.cache import get_champion_mini
+from profiles.serializers import UserSerializer
+from profiles.utils import lol_logo
 
 
 class VerifyLolProfileSerializer(ModelSerializer):
@@ -144,6 +146,30 @@ class MatchSerializer(ModelSerializer):
     class Meta:
         model = Match
         fields = ["id", "creation", "blue_team", "red_team", "mode", "platform"]
+
+
+###################################################
+class ParticipationFeedSerializer(ModelSerializer):
+    user = SerializerMethodField()
+    summoner = SerializerMethodField()
+    participation = SerializerMethodField()
+    game = SerializerMethodField()
+
+    class Meta:
+        model = Participant
+        fields = ["user", "summoner", "participation", "game"]
+
+    def get_user(self, obj):
+        return UserSerializer(obj.summoner.profile.user).data
+
+    def get_summoner(self, obj):
+        return {"name": obj.summoner.name, "platform": obj.summoner.platform}
+
+    def get_participation(self, obj):
+        return ParticipantSerializer(obj).data
+
+    def get_game(self, obj):
+        return {"name": "lol", "logo": lol_logo}
 
 
 # from league_of_legends.models import Match
