@@ -39,11 +39,12 @@ def feed_view(request):
     )[begin_index:end_index]
 
     participations_data = ParticipationFeedSerializer(participations, many=True).data
+    connect = not LolProfile.objects.filter(profile=request.user.profile).exists()
 
     return JsonResponse(
         {
             "detail": "{}'s feed".format(request.user.username),
-            "payload": {"feed": participations_data},
+            "payload": {"feed": participations_data, "connect": connect},
         },
         status=status.HTTP_200_OK,
     )

@@ -81,6 +81,9 @@ class LolProfile(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ["name"]
+
 
 class Team(models.Model):
     class Color(models.TextChoices):
