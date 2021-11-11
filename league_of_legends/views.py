@@ -90,34 +90,25 @@ def connect_view(request):
         )
 
     try:
-        LolProfile.objects.get(puuid=summoner["puuid"])
-        return JsonResponse(
-            {
-                "detail": "League Of Legends profile with {} summoner name already exists".format(
-                    summoner["name"]
-                )
-            }
-        )
-    except LolProfile.DoesNotExist:
-        try:
-            verify_profile = VerifyLolProfile.objects.get(user=request.user)
-        except VerifyLolProfile.DoesNotExist:
-            verify_profile = VerifyLolProfile.objects.create(user=request.user)
+        verify_profile = VerifyLolProfile.objects.get(user=request.user)
+    except VerifyLolProfile.DoesNotExist:
+        verify_profile = VerifyLolProfile.objects.create(user=request.user)
 
-        verify_profile.summoner_name = summoner["name"]
-        verify_profile.old_profile_icon = summoner["profileIconId"]
-        verify_profile.new_profile_icon = get_random_profile_icon(
-            str(summoner["profileIconId"])
-        )
-        verify_profile.platform = platform.upper()
-        verify_profile.save()
+    verify_profile.summoner_name = summoner["name"]
+    verify_profile.old_profile_icon = summoner["profileIconId"]
+    verify_profile.new_profile_icon = get_random_profile_icon(
+        str(summoner["profileIconId"])
+    )
+    verify_profile.platform = platform.upper()
+    verify_profile.save()
 
-        return JsonResponse(
-            {
-                "detail": "Verify by changing profile_icon",
-                "payload": VerifyLolProfileSerializer(verify_profile).data,
-            }
-        )
+    return JsonResponse(
+        {
+            "detail": "Verify by changing profile_icon",
+            "payload": VerifyLolProfileSerializer(verify_profile).data,
+        },
+        status=status.HTTP_200_OK,
+    )
 
 
 @api_view(["GET"])
