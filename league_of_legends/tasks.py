@@ -246,7 +246,7 @@ def check_new_matches(lol_profile_pk):
                         # update_match_history(lol_profile_pk)
 
             except Exception as e:
-                print("EXCEPTION def create_new_matches:", e)
+                print("EXCEPTION def check_new_matches:", e)
                 pass
 
     except LolProfile.DoesNotExist:
