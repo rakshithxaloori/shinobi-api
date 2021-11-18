@@ -1,4 +1,7 @@
+import pickle
+
 from django.http import JsonResponse
+from django.core.cache import cache
 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -22,6 +25,7 @@ from profiles.serializers import (
     MiniProfileSerializer,
     FollowersSerializer,
 )
+from profiles.tasks import update_profile_picture
 
 
 @api_view(["GET"])
@@ -182,17 +186,44 @@ def remove_follower_view(request, username):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def update_profile_view(request):
-    bio = request.data.get("bio", None)
+    bio = request.POST.get("bio", None)
+    picture_obj = request.FILES.get("picture", None)
     if bio is not None:
         if len(bio) > 150:
             return JsonResponse(
-                {"detail": "bio is too long"}, status=status.HTTP_403_FORBIDDEN
+                {"detail": "bio has to be less than 150 characters"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         else:
             profile = request.user.profile
             profile.bio = bio
             profile.save(update_fields=["bio"])
+
+    if picture_obj is not None:
+        # do your validation here e.g. file size/type check
+        if picture_obj.size > 5000000:
+            # Greater than 5 MB
+            return JsonResponse(
+                {"detail": "Image has to be less than 5 MB"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if picture_obj.content_type != "image/png":
+            return JsonResponse(
+                {"detail": "Image has to be a PNG file"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Cache the image
+        picture_cache_key = "picture:{username}".format(username=request.user.username)
+        cache.set(picture_cache_key, pickle.dumps(picture_obj), timeout=600)
+        update_profile_picture.delay(
+            request.user.pk,
+            picture_cache_key,
+            picture_obj.name,
+            picture_obj.content_type,
+        )
+
     return JsonResponse(
         {"detail": "{}'s profile updated".format(request.user.username)},
         status=status.HTTP_200_OK,
