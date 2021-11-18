@@ -15,6 +15,8 @@ Including another URLconf
 """
 import os
 from django.contrib import admin
+from django.conf import settings
+from django.conf.urls.static import static
 from django.urls import path, include
 
 admin_url = "admin"
@@ -33,3 +35,10 @@ urlpatterns = [
     path("lol/", include("league_of_legends.urls")),
     path("ht/", include("health_checks.urls")),
 ]
+
+if settings.DEBUG:
+    urlpatterns = (
+        urlpatterns
+        + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+        + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    )
