@@ -45,14 +45,19 @@ def after_unfollow(user_profile_pk):
 
 
 def get_picture_path(picture_url):
-    if picture_url is None or picture_url is "":
-        return None
+    try:
+        if picture_url is None or picture_url is "":
+            return None
 
-    if settings.CI_CD_STAGE == "development":
-        media_url = os.environ["BASE_URL"] + settings.MEDIA_URL
-        return picture_url.split(media_url)[1]
-    elif settings.CI_CD_STAGE == "testing" or settings.CI_CD_STAGE == "production":
-        return picture_url.split(settings.MEDIA_URL)[1]
+        if settings.CI_CD_STAGE == "development":
+            media_url = os.environ["BASE_URL"] + settings.MEDIA_URL
+            return picture_url.split(media_url)[1]
+        elif settings.CI_CD_STAGE == "testing" or settings.CI_CD_STAGE == "production":
+            return picture_url.split(settings.MEDIA_URL)[1]
+    except Exception:
+        # Happens by picture_url.split(settings.MEDIA_URL)[1],
+        # because there's the google picture link
+        return None
 
 
 def get_picture_url(picture_path):
