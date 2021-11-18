@@ -46,7 +46,7 @@ def after_unfollow(user_profile_pk):
 
 def get_picture_path(picture_url):
     try:
-        if picture_url is None or picture_url is "":
+        if picture_url == None or picture_url == "":
             return None
 
         if settings.CI_CD_STAGE == "development":
@@ -95,8 +95,8 @@ def update_profile_picture(user_pk, picture_cache_key, picture_name, picture_typ
     # Delete previous file
     ex_picture_path = get_picture_path(user.picture)
     if (
-        ex_picture_path is not None
-        and ex_picture_path is not ""
+        ex_picture_path != None
+        and ex_picture_path != ""
         and default_storage.exists(ex_picture_path)
     ):
         default_storage.delete(ex_picture_path)
