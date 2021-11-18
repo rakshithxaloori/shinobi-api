@@ -93,13 +93,9 @@ def update_profile_picture(user_pk, picture_cache_key, picture_name, picture_typ
     )
 
     # Delete previous file
-    ex_picture_path = get_picture_path(user.picture)
-    if (
-        ex_picture_path != None
-        and ex_picture_path != ""
-        and default_storage.exists(ex_picture_path)
-    ):
-        default_storage.delete(ex_picture_path)
+    for picture in default_storage.listdir(file_directory_within_bucket)[1]:
+        default_storage.delete(os.path.join(file_directory_within_bucket, picture))
+
     default_storage.save(new_picture_path, picture_obj)
 
     new_picture_url = get_picture_url(new_picture_path)
