@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "league_of_legends",
     "health_checks",
     "feed",
+    "clips",
 ]
 
 MIDDLEWARE = [

@@ -13,6 +13,7 @@ class User(AbstractUser):
         default=timezone.now
     )  # The last time the user closed the app
     online = models.BooleanField(default=False)
+    is_uploading_clip = models.BooleanField(default=False)
 
     def __str__(self):
         return "{} || {}".format(self.username, self.email)

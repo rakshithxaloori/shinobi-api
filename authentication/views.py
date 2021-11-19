@@ -1,7 +1,6 @@
 import os
 
 from django.http import JsonResponse
-from django.utils import timezone
 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
