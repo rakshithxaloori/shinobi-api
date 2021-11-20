@@ -80,7 +80,7 @@ def google_login_view(request):
 
     except User.DoesNotExist:
         return JsonResponse(
-            {"detail": "Account doesn't exist"},
+            {"detail": "Account doesn't exist. Signup to create an account!"},
             status=status.HTTP_405_METHOD_NOT_ALLOWED,
         )
 
