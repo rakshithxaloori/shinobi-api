@@ -1,9 +1,3 @@
-import os
-import uuid
-import pickle
-
-from django.core.cache import cache
-from django.conf import settings
 from django.core.files.storage import default_storage
 
 from shinobi.celery import app as celery_app
@@ -11,39 +5,42 @@ from shinobi.celery import app as celery_app
 
 from authentication.models import User
 from shinobi.utils import get_media_file_url
+from clips.models import Clip, ClipToUpload
 
 
 @celery_app.task(queue="celery")
-def upload_clip(user_pk, clip_cache_key, game_pk, clip_type):
-    try:
-        user = User.objects.get(pk=user_pk)
-    except User.DoesNotExist:
+def check_upload_successful_task(file_path, title):
+    # Check if the upload is successful in S3
+    if file_path is None:
         return
+    if default_storage.exists(file_path):
+        if default_storage.size(file_path) > 100000000:
+            # Greater than 100 MB
+            default_storage.delete(file_path)
 
-    clip_pickle = cache.get(clip_cache_key)
-    if clip_pickle is None:
-        return
+        # Delete intermediate ClipToUpload
+        file_url = get_media_file_url(file_path)
+        try:
+            clip_to_upload = ClipToUpload.objects.get(url=file_url)
+            new_clip = Clip.objects.create(
+                created_date=clip_to_upload.created_date,
+                created_datetime=clip_to_upload.created_datetime,
+                uploader=clip_to_upload.uploaded_by,
+                game=clip_to_upload.game,
+                title=title,
+                url=clip_to_upload.url,
+            )
+            print("SAVING CLIP")
+            print("DELETING CLIPTOSAVE")
+            new_clip.save()
+            clip_to_upload.delete()
+        except ClipToUpload.DoesNotExist:
+            default_storage.delete(file_path)
 
-    clip_obj = pickle.loads(clip_pickle)
 
-    # organize a path for the file in bucket
-    file_directory_within_bucket = "clips/{username}".format(username=user.username)
-
-    # synthesize a full file path; note that we included the filename
-    new_clip_path = os.path.join(
-        file_directory_within_bucket,
-        "{uuid}.{type}".format(uuid=uuid.uuid4(), type=clip_type.split("/")[1]),
-    )
-
-    try:
-        user.is_uploading_clip = True
-        user.save(update_fields=["is_uploading_clip"])
-        default_storage.save(new_clip_path, clip_obj)
-
-        new_clip_url = get_media_file_url(new_clip_path)
-        print("CLIP URL", new_clip_path)
-    except Exception:
-        pass
-    finally:
-        user.is_uploading_clip = False
-        user.save(update_fields=["is_uploading_clip"])
+@celery_app.task(queue="celery")
+def check_upload_failed_task(file_path):
+    # Invalidate the presigned url
+    # Check if the upload exists and if so delete
+    # Delete ClipToUpload
+    pass

@@ -4,6 +4,7 @@ from channels.auth import AuthMiddlewareStack
 from channels.db import database_sync_to_async
 
 from django.conf import settings
+from django.utils import timezone
 from django.core.files.storage import default_storage
 from django.contrib.auth.models import AnonymousUser
 
@@ -59,3 +60,7 @@ def get_media_file_url(file_path):
         )
     elif settings.CI_CD_STAGE == "testing" or settings.CI_CD_STAGE == "production":
         return default_storage.url(file_path)
+
+
+def now_date():
+    return timezone.now().date()

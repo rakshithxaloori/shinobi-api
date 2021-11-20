@@ -1,8 +1,11 @@
+import os
+import uuid
 import pickle
+import boto3
 
 from django.http import JsonResponse
+from django.conf import settings
 from django.utils import timezone
-from django.core.cache import cache
 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -17,24 +20,37 @@ from rest_framework_api_key.permissions import HasAPIKey
 from knox.auth import TokenAuthentication
 
 
-from clips.tasks import upload_clip
-from clips.models import Clip
+from profiles.models import Game
+from clips.models import Clip, ClipToUpload
+from clips.tasks import check_upload_successful_task, check_upload_failed_task
+from shinobi.utils import get_media_file_url
 
 
-@api_view(["POST"])
+if settings.CI_CD_STAGE == "testing" or settings.CI_CD_STAGE == "production":
+    s3_client = boto3.client(
+        service_name="s3",
+        aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
+        region_name=settings.AWS_S3_REGION_NAME,
+    )
+else:
+    s3_client = None
+
+
+@api_view(["GET"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def upload_check_view(request):
     clips_count = Clip.objects.filter(created_date=timezone.datetime.today()).count()
-    if clips_count < 5:
+    if clips_count < 3:
         return JsonResponse(
             {
                 "detail": "{} can upload {} more clips".format(
-                    request.user.username, 5 - clips_count
+                    request.user.username, 3 - clips_count
                 ),
                 "payload": {
-                    "uploading": request.user.is_uploading_clip,
-                    "quota": 5 - clips_count,
+                    "is_uploading": request.user.is_uploading_clip,
+                    "quota": 3 - clips_count,
                 },
             },
             status=status.HTTP_200_OK,
@@ -44,40 +60,116 @@ def upload_check_view(request):
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
-def upload_clip_view(request):
-    # Check for daily upload limit
+def generate_s3_presigned_url_view(request):
     if request.user.is_uploading_clip:
         return JsonResponse(
             {"detail": "uploading a clip, try again later"},
             status=status.HTTP_409_CONFLICT,
         )
+
     clips_count = Clip.objects.filter(
         created_date=timezone.datetime.today(), uploader=request.user
     ).count()
-    if clips_count >= 5:
+    if clips_count >= 3:
         return JsonResponse(
-            {"detail": "Daily limit of 5 clips"},
+            {"detail": "Daily limit of 3 clips"},
             status=status.HTTP_405_METHOD_NOT_ALLOWED,
         )
-    else:
-        # game_code = request.POST.get("game_code", None)
-        # # TODO Verify game code
-        # if game_code is None:
-        #     return JsonResponse(
-        #         {"detail": "game_code missing"}, status=status.HTTP_400_BAD_REQUEST
-        #     )
 
-        clip_obj = request.FILES.get("clip", None)
-        if clip_obj is None:
-            return JsonResponse(
-                {"detail": "clip missing"}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Cache the clip
-        clip_cache_key = "clip:{username}".format(username=request.user.username)
-        cache.set(clip_cache_key, pickle.dumps(clip_obj), timeout=3600)
-        upload_clip.delay(request.user.pk, clip_cache_key, "", clip_obj.content_type)
+    clip_size = request.data.get("clip_size", None)
+    clip_type = request.data.get("clip_type", None)
+    game_code = request.data.get("game_code", None)
+    if clip_size is None:
         return JsonResponse(
-            {"detail": "uploading {}'s clip".format(request.user.username)},
-            status=status.HTTP_200_OK,
+            {"detail": "clip_size is required"}, status=status.HTTP_400_BAD_REQUEST
         )
+    clip_size = int(clip_size)
+    if clip_size <= 10:
+        return JsonResponse(
+            {"detail": "Invalid clip_size"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    elif clip_size > 100000000:
+        # 100 MB
+        return JsonResponse(
+            {"detail": "clip_size has to be less than 100 MB"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if clip_type is None:
+        return JsonResponse(
+            {"detail": "clip_type is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    if game_code is None:
+        return JsonResponse(
+            {"detail": "game_code is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        game = Game.objects.get(id=game_code)
+    except Game.DoesNotExist:
+        return JsonResponse(
+            {"detail": "Invalid game_code"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    file_path = "clips/{username}/{filename}.{type}".format(
+        username=request.user.username, filename=uuid.uuid4(), type=clip_type
+    )
+    fields = {
+        "Content-Type": "multipart/form-data",
+    }
+
+    conditions = [
+        ["content-length-range", clip_size - 10, clip_size + 10],
+        {"content-type": "multipart/form-data"},
+    ]
+    expires_in = 3600
+    url = s3_client.generate_presigned_post(
+        Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+        Key=file_path,
+        Fields=fields,
+        Conditions=conditions,
+        ExpiresIn=expires_in,
+    )
+
+    file_url = get_media_file_url(file_path)
+    # Create ClipToUpload
+    new_cliptoupload = ClipToUpload.objects.create(
+        uploaded_by=request.user, game=game, url=file_url
+    )
+    new_cliptoupload.save()
+
+    return JsonResponse({"detail": "", "payload": url}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def upload_successful_view(request):
+    file_key = request.data.get("file_key", None)
+    title = request.data.get("title", None)
+    if file_key is None:
+        return JsonResponse(
+            {"detail": "file_key is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if title is None:
+        return JsonResponse(
+            {"detail": "title is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    check_upload_successful_task.delay(file_key, title)
+
+    return JsonResponse({"detail": ""}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def upload_failed_view(request):
+    file_key = request.data.get("file_key", None)
+    if file_key is None:
+        return JsonResponse(
+            {"detail": "file_key is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    check_upload_failed_task.delay(file_key)
+
+    return JsonResponse({"detail": ""}, status=status.HTTP_200_OK)
