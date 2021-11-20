@@ -1,4 +1,4 @@
-lol_logo = "https://ubuntuhandbook.org/wp-content/uploads/2018/09/lol-icon.png"
+lol_logo = "https://www.shinobi.cc/league_of_legends-256x256.png"
 
 
 def game_alias(profile_instance):
