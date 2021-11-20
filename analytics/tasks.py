@@ -17,13 +17,13 @@ def new_user_analytics():
 
 @celery_app.task(queue="celery")
 def update_active_user(last_open_str):
-    last_open_date = date.fromisoformat(last_open_str)
+    last_open_date = timezone.datetime.fromisoformat(last_open_str).date()
 
     # Daily Analytics
     da_instance = DailyAnalytics.objects.order_by("-date").first()
     if da_instance is None:
         # Happens when the db is first created
-        da_instance = DailyAnalytics.objects.create(date=date.today())
+        da_instance = DailyAnalytics.objects.create(date=timezone.now())
         da_instance.save()
 
     elif last_open_date < da_instance.date:

@@ -1,9 +1,10 @@
 from django.db import models
-from django.utils import timezone
+
+from shinobi.utils import now_date
 
 
 class DailyAnalytics(models.Model):
-    date = models.DateField(primary_key=True, default=timezone.now)
+    date = models.DateField(primary_key=True, default=now_date)
     new_users = models.PositiveBigIntegerField(default=0)
     active_users = models.PositiveBigIntegerField(default=0)
     total_users = models.PositiveBigIntegerField(default=0)
