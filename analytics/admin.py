@@ -1,7 +1,5 @@
 from django.contrib import admin
 
-from analytics.models import DailyAnalytics, WeeklyAnalytics, MonthlyAnalytics
+from analytics.models import DailyAnalytics
 
 admin.site.register(DailyAnalytics)
-admin.site.register(WeeklyAnalytics)
-admin.site.register(MonthlyAnalytics)
