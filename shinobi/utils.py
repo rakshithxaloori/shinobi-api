@@ -46,9 +46,9 @@ def get_media_file_path(file_url):
             media_url = os.environ["BASE_URL"] + settings.MEDIA_URL
             return file_url.split(media_url)[1]
         elif settings.CI_CD_STAGE == "testing" or settings.CI_CD_STAGE == "production":
-            return file_url.split(settings.MEDIA_URL)[1]
+            return file_url.split(settings.AWS_S3_CUSTOM_DOMAIN)[1]
     except Exception:
-        # Happens by picture_url.split(settings.MEDIA_URL)[1],
+        # Happens by picture_url.split(settings.AWS_S3_CUSTOM_DOMAIN)[1],
         # because there's the google picture link
         return None
 
