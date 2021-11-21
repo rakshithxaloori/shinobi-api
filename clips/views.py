@@ -1,11 +1,10 @@
-import os
 import uuid
-import pickle
 import boto3
 
 from django.http import JsonResponse
 from django.conf import settings
 from django.utils import timezone
+from django.utils import dateparse
 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -18,6 +17,7 @@ from rest_framework.decorators import (
 from rest_framework_api_key.permissions import HasAPIKey
 
 from knox.auth import TokenAuthentication
+from clips.serializers import ClipSerializer
 
 
 from profiles.models import Game
@@ -170,3 +170,33 @@ def upload_successful_view(request):
     check_upload_successful_task.delay(file_key)
 
     return JsonResponse({"detail": ""}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def get_clips_view(request):
+    # CAN ALSO USE ID?
+    datetime = request.data.get("datetime", None)
+    if datetime is None:
+        return JsonResponse(
+            {"detail": "datetime is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    print(datetime)
+    datetime = dateparse.parse_datetime(datetime)
+    if datetime is None:
+        return JsonResponse(
+            {"detail": "Invalid datetime"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    clips = Clip.objects.filter(
+        created_datetime__lt=datetime, upload_verified=True
+    ).order_by("-created_datetime")[:2]
+
+    clips_data = ClipSerializer(clips, many=True).data
+    print(clips_data)
+
+    return JsonResponse(
+        {"detail": "clips from {}".format(datetime), "payload": {"clips": clips_data}},
+        status=status.HTTP_200_OK,
+    )
