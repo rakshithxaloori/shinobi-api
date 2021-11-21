@@ -88,8 +88,8 @@ def generate_s3_presigned_url_view(request):
         return JsonResponse(
             {"detail": "Invalid clip_size"}, status=status.HTTP_400_BAD_REQUEST
         )
-    elif clip_size > 100000000:
-        # 100 MB
+    elif clip_size > 50000000:
+        # 50 MB
         return JsonResponse(
             {"detail": "clip_size has to be less than 100 MB"},
             status=status.HTTP_400_BAD_REQUEST,

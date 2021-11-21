@@ -14,8 +14,8 @@ def check_upload_successful_task(file_path, title):
     if file_path is None:
         return
     if default_storage.exists(file_path):
-        if default_storage.size(file_path) > 100000000:
-            # Greater than 100 MB
+        if default_storage.size(file_path) > 50000000:
+            # Greater than 50 MB
             default_storage.delete(file_path)
 
         # Delete intermediate ClipToUpload
