@@ -111,6 +111,11 @@ def generate_s3_presigned_url_view(request):
         return JsonResponse(
             {"detail": "title is required"}, status=status.HTTP_400_BAD_REQUEST
         )
+    if len(title) > 30:
+        return JsonResponse(
+            {"detail": "title has to be less than 30 characters"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     try:
         game = Game.objects.get(id=game_code)
