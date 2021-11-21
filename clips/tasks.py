@@ -1,3 +1,4 @@
+import celery
 from django.core.files.storage import default_storage
 
 from shinobi.celery import app as celery_app
@@ -47,3 +48,10 @@ def check_upload_successful_task(file_path):
         else:
             clip.upload_verified = True
             clip.save(update_fields=["upload_verified"])
+
+
+@celery_app.task(queue="celery")
+def delete_clip_task(url):
+    file_path = get_media_file_path(url)
+    if default_storage.exists(file_path):
+        default_storage.delete(file_path)
