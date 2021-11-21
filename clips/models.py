@@ -12,7 +12,7 @@ class Clip(models.Model):
     upload_verified = models.BooleanField(default=False)
     uploader = models.ForeignKey(User, related_name="clips", on_delete=models.PROTECT)
     game = models.ForeignKey(Game, related_name="game_clips", on_delete=models.PROTECT)
-    title = models.CharField(max_length=80, blank=False, null=False)
+    title = models.CharField(max_length=30, blank=False, null=False)
     url = models.URLField(null=False, blank=False, unique=True)
 
     def __str__(self) -> str:
