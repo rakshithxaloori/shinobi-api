@@ -21,8 +21,11 @@ from knox.auth import TokenAuthentication
 
 
 from profiles.models import Game
-from clips.models import Clip, ClipToUpload
-from clips.tasks import check_upload_successful_task, check_upload_failed_task
+from clips.models import Clip
+from clips.tasks import (
+    check_upload_after_delay,
+    check_upload_successful_task,
+)
 from shinobi.utils import get_media_file_url
 
 
@@ -79,6 +82,8 @@ def generate_s3_presigned_url_view(request):
     clip_size = request.data.get("clip_size", None)
     clip_type = request.data.get("clip_type", None)
     game_code = request.data.get("game_code", None)
+    title = request.data.get("title", None)
+
     if clip_size is None:
         return JsonResponse(
             {"detail": "clip_size is required"}, status=status.HTTP_400_BAD_REQUEST
@@ -101,6 +106,10 @@ def generate_s3_presigned_url_view(request):
     if game_code is None:
         return JsonResponse(
             {"detail": "game_code is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    if title is None:
+        return JsonResponse(
+            {"detail": "title is required"}, status=status.HTTP_400_BAD_REQUEST
         )
 
     try:
@@ -131,11 +140,14 @@ def generate_s3_presigned_url_view(request):
     )
 
     file_url = get_media_file_url(file_path)
-    # Create ClipToUpload
-    new_cliptoupload = ClipToUpload.objects.create(
-        uploaded_by=request.user, game=game, url=file_url
+    # Create Clip
+    new_clip = Clip.objects.create(
+        title=title, uploader=request.user, game=game, url=file_url
     )
-    new_cliptoupload.save()
+    new_clip.save()
+    check_upload_after_delay.apply_async(
+        args=[new_clip.pk], eta=timezone.now() + timezone.timedelta(hours=1, minutes=10)
+    )
 
     return JsonResponse({"detail": "", "payload": url}, status=status.HTTP_200_OK)
 
@@ -145,31 +157,11 @@ def generate_s3_presigned_url_view(request):
 @permission_classes([IsAuthenticated, HasAPIKey])
 def upload_successful_view(request):
     file_key = request.data.get("file_key", None)
-    title = request.data.get("title", None)
     if file_key is None:
         return JsonResponse(
             {"detail": "file_key is required"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    if title is None:
-        return JsonResponse(
-            {"detail": "title is required"}, status=status.HTTP_400_BAD_REQUEST
-        )
-
-    check_upload_successful_task.delay(file_key, title)
-
-    return JsonResponse({"detail": ""}, status=status.HTTP_200_OK)
-
-
-@api_view(["POST"])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated, HasAPIKey])
-def upload_failed_view(request):
-    file_key = request.data.get("file_key", None)
-    if file_key is None:
-        return JsonResponse(
-            {"detail": "file_key is required"}, status=status.HTTP_400_BAD_REQUEST
-        )
-    check_upload_failed_task.delay(file_key)
+    check_upload_successful_task.delay(file_key)
 
     return JsonResponse({"detail": ""}, status=status.HTTP_200_OK)
