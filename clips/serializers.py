@@ -11,5 +11,13 @@ class ClipSerializer(ModelSerializer):
 
     class Meta:
         model = Clip
-        fields = ["id", "created_datetime", "uploader", "game", "title", "url"]
+        fields = [
+            "id",
+            "created_datetime",
+            "uploader",
+            "game",
+            "title",
+            "height_to_width_ratio",
+            "url",
+        ]
         read_only_fields = fields

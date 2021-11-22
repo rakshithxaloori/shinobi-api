@@ -13,6 +13,7 @@ class Clip(models.Model):
     uploader = models.ForeignKey(User, related_name="clips", on_delete=models.PROTECT)
     game = models.ForeignKey(Game, related_name="game_clips", on_delete=models.PROTECT)
     title = models.CharField(max_length=30, blank=False, null=False)
+    height_to_width_ratio = models.FloatField(null=False, blank=False)
     url = models.URLField(null=False, blank=False, unique=True)
 
     def __str__(self) -> str:

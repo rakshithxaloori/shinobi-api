@@ -83,6 +83,7 @@ def generate_s3_presigned_url_view(request):
     clip_type = request.data.get("clip_type", None)
     game_code = request.data.get("game_code", None)
     title = request.data.get("title", None)
+    clip_height_to_width_ratio = request.data.get("clip_height_to_width_ratio", None)
 
     if clip_size is None:
         return JsonResponse(
@@ -116,12 +117,24 @@ def generate_s3_presigned_url_view(request):
             {"detail": "title has to be less than 30 characters"},
             status=status.HTTP_400_BAD_REQUEST,
         )
+    if clip_height_to_width_ratio is None or clip_height_to_width_ratio < 0:
+        return JsonResponse(
+            {"detail": "clip_height_to_width_ratio required or invalid"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     try:
         game = Game.objects.get(id=game_code)
     except Game.DoesNotExist:
         return JsonResponse(
             {"detail": "Invalid game_code"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        clip_height_to_width_ratio = float(clip_height_to_width_ratio)
+    except ValueError:
+        return JsonResponse(
+            {"detail": "clip_height_to_width_ratio invalid"},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     file_path = "clips/{username}/{filename}.{type}".format(
@@ -147,7 +160,11 @@ def generate_s3_presigned_url_view(request):
     file_url = get_media_file_url(file_path)
     # Create Clip
     new_clip = Clip.objects.create(
-        title=title, uploader=request.user, game=game, url=file_url
+        title=title,
+        uploader=request.user,
+        game=game,
+        url=file_url,
+        height_to_width_ratio=clip_height_to_width_ratio,
     )
     new_clip.save()
     check_upload_after_delay.apply_async(
@@ -204,7 +221,7 @@ def get_clips_view(request):
 
     refresh = Clip.objects.filter(upload_verified=True).order_by("-id").first()
 
-    if id_top == 0 or refresh.id == id_top:
+    if refresh is None or id_top == 0 or refresh.id == id_top:
         refresh = False
     else:
         refresh = True
