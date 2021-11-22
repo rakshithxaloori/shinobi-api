@@ -18,7 +18,7 @@ def check_upload_after_delay(clip_pk):
     if not clip.upload_verified:
         file_path = get_media_file_path(clip.url)
         if default_storage.exists(file_path):
-            if default_storage.size(file_path) > 50000010:
+            if default_storage.size(file_path) > 50 * 1000 * 1000:
                 # Greater than 50
                 default_storage.delete(file_path)
                 clip.delete()

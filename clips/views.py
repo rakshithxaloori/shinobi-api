@@ -94,7 +94,7 @@ def generate_s3_presigned_url_view(request):
         return JsonResponse(
             {"detail": "Invalid clip_size"}, status=status.HTTP_400_BAD_REQUEST
         )
-    elif clip_size > 50000000:
+    elif clip_size > 50 * 1000 * 1000:
         # 50 MB
         return JsonResponse(
             {"detail": "clip_size has to be less than 100 MB"},
@@ -137,7 +137,7 @@ def generate_s3_presigned_url_view(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    file_path = "clips/{username}/{filename}.{type}".format(
+    file_path = "clips/uploads/{username}/{filename}.{type}".format(
         username=request.user.username, filename=uuid.uuid4(), type=clip_type
     )
     fields = {
