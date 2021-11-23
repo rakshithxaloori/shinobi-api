@@ -176,7 +176,6 @@ def upload_successful_view(request):
 @permission_classes([IsAuthenticated, HasAPIKey])
 def get_clips_view(request):
     datetime = request.data.get("datetime", None)
-    print("DATETIME", datetime)
     if datetime is None:
         return JsonResponse(
             {"detail": "datetime is required"}, status=status.HTTP_400_BAD_REQUEST
@@ -191,10 +190,7 @@ def get_clips_view(request):
         created_datetime__lt=datetime, upload_verified=True
     ).order_by("-created_datetime")[:10]
 
-    print("CLIPS COUNT", clips.count())
-
     clips_data = ClipSerializer(clips, many=True).data
-    print("CLIPS DATA", clips_data)
 
     return JsonResponse(
         {"detail": "clips from {}".format(datetime), "payload": {"clips": clips_data}},
