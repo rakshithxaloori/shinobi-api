@@ -119,8 +119,8 @@ def generate_s3_presigned_url_view(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    file_path = "clips/uploads/{username}/{filename}.{type}".format(
-        username=request.user.username, filename=uuid.uuid4(), type=clip_type
+    file_path = "clips/uploads/{filename}.{type}".format(
+        filename=uuid.uuid4(), type=clip_type
     )
     fields = {
         "Content-Type": "multipart/form-data",
@@ -175,45 +175,28 @@ def upload_successful_view(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def get_clips_view(request):
-
-    id = request.data.get("id", 0)
-    id_top = request.data.get("id_top", 0)
-
-    if id_top is None:
+    datetime = request.data.get("datetime", None)
+    print("DATETIME", datetime)
+    if datetime is None:
         return JsonResponse(
-            {"detail": "id_top is required"}, status=status.HTTP_400_BAD_REQUEST
+            {"detail": "datetime is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    datetime = dateparse.parse_datetime(datetime)
+    if datetime is None:
+        return JsonResponse(
+            {"detail": "Invalid datetime"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    try:
-        id = int(id)
-        id_top = int(id_top)
-    except (ValueError, TypeError):
-        return JsonResponse(
-            {"detail": "invalid id or id_top"}, status=status.HTTP_400_BAD_REQUEST
-        )
+    clips = Clip.objects.filter(
+        created_datetime__lt=datetime, upload_verified=True
+    ).order_by("-created_datetime")[:10]
 
-    clip_count = 2
-
-    if id == 0:
-        clips = Clip.objects.filter(upload_verified=True).order_by("-id")[:clip_count]
-    else:
-        clips = Clip.objects.filter(id__lt=id, upload_verified=True).order_by("-id")[
-            :clip_count
-        ]
-
-    refresh = Clip.objects.filter(upload_verified=True).order_by("-id").first()
-
-    if refresh is None or id_top == 0 or refresh.id == id_top:
-        refresh = False
-    else:
-        refresh = True
+    print("CLIPS COUNT", clips.count())
 
     clips_data = ClipSerializer(clips, many=True).data
+    print("CLIPS DATA", clips_data)
 
     return JsonResponse(
-        {
-            "detail": "clips from {}".format(id),
-            "payload": {"clips": clips_data, "refresh": refresh},
-        },
+        {"detail": "clips from {}".format(datetime), "payload": {"clips": clips_data}},
         status=status.HTTP_200_OK,
     )
