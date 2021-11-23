@@ -45,31 +45,23 @@ else:
 @permission_classes([IsAuthenticated, HasAPIKey])
 def upload_check_view(request):
     clips_count = Clip.objects.filter(created_date=timezone.datetime.today()).count()
-    if clips_count < 3:
-        return JsonResponse(
-            {
-                "detail": "{} can upload {} more clips".format(
-                    request.user.username, 3 - clips_count
-                ),
-                "payload": {
-                    "is_uploading": request.user.is_uploading_clip,
-                    "quota": 3 - clips_count,
-                },
+    return JsonResponse(
+        {
+            "detail": "{} can upload {} more clips".format(
+                request.user.username, 3 - clips_count
+            ),
+            "payload": {
+                "quota": 3 - clips_count,
             },
-            status=status.HTTP_200_OK,
-        )
+        },
+        status=status.HTTP_200_OK,
+    )
 
 
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def generate_s3_presigned_url_view(request):
-    if request.user.is_uploading_clip:
-        return JsonResponse(
-            {"detail": "uploading a clip, try again later"},
-            status=status.HTTP_409_CONFLICT,
-        )
-
     clips_count = Clip.objects.filter(
         created_date=timezone.datetime.today(), uploader=request.user
     ).count()
@@ -147,6 +139,7 @@ def generate_s3_presigned_url_view(request):
     conditions = [
         ["content-length-range", clip_size - 10, clip_size + 10],
         {"content-type": "multipart/form-data"},
+        # {"content-length": clip_size},
     ]
     expires_in = 3600
     url = s3_client.generate_presigned_post(
