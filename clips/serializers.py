@@ -16,7 +16,6 @@ class ClipSerializer(ModelSerializer):
             "created_datetime",
             "uploader",
             "game",
-            "title",
             "height_to_width_ratio",
             "url",
         ]

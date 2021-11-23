@@ -74,7 +74,6 @@ def generate_s3_presigned_url_view(request):
     clip_size = request.data.get("clip_size", None)
     clip_type = request.data.get("clip_type", None)
     game_code = request.data.get("game_code", None)
-    title = request.data.get("title", None)
     clip_height_to_width_ratio = request.data.get("clip_height_to_width_ratio", None)
 
     if clip_size is None:
@@ -99,15 +98,6 @@ def generate_s3_presigned_url_view(request):
     if game_code is None:
         return JsonResponse(
             {"detail": "game_code is required"}, status=status.HTTP_400_BAD_REQUEST
-        )
-    if title is None:
-        return JsonResponse(
-            {"detail": "title is required"}, status=status.HTTP_400_BAD_REQUEST
-        )
-    if len(title) > 30:
-        return JsonResponse(
-            {"detail": "title has to be less than 30 characters"},
-            status=status.HTTP_400_BAD_REQUEST,
         )
     if clip_height_to_width_ratio is None or clip_height_to_width_ratio < 0:
         return JsonResponse(
@@ -153,7 +143,6 @@ def generate_s3_presigned_url_view(request):
     file_url = get_media_file_url(file_path)
     # Create Clip
     new_clip = Clip.objects.create(
-        title=title,
         uploader=request.user,
         game=game,
         url=file_url,
