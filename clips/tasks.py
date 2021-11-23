@@ -41,7 +41,7 @@ def check_upload_successful_task(file_path):
         return
 
     if default_storage.exists(file_path):
-        if default_storage.size(file_path) > 50000010:
+        if default_storage.size(file_path) > 50 * 1000 * 1000:
             # Greater than 50 MB
             default_storage.delete(file_path)
             clip.delete()
