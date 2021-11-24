@@ -17,15 +17,17 @@ from rest_framework.decorators import (
 from rest_framework_api_key.permissions import HasAPIKey
 
 from knox.auth import TokenAuthentication
+
+
 from clips.serializers import ClipSerializer
-
-
+from authentication.models import User
 from profiles.models import Game
-from clips.models import Clip
+from clips.models import Clip, Report
 from clips.tasks import (
     check_upload_after_delay,
     check_upload_successful_task,
 )
+from profiles.views import update_profile_view
 from shinobi.utils import get_media_file_url
 
 
@@ -45,13 +47,14 @@ else:
 @permission_classes([IsAuthenticated, HasAPIKey])
 def upload_check_view(request):
     clips_count = Clip.objects.filter(created_date=timezone.datetime.today()).count()
+    quota = 2 - clips_count
     return JsonResponse(
         {
             "detail": "{} can upload {} more clips".format(
-                request.user.username, 3 - clips_count
+                request.user.username, quota
             ),
             "payload": {
-                "quota": 3 - clips_count,
+                "quota": quota,
             },
         },
         status=status.HTTP_200_OK,
@@ -74,6 +77,8 @@ def generate_s3_presigned_url_view(request):
     clip_size = request.data.get("clip_size", None)
     clip_type = request.data.get("clip_type", None)
     game_code = request.data.get("game_code", None)
+    title = request.data.get("title", None)
+
     clip_height_to_width_ratio = request.data.get("clip_height_to_width_ratio", None)
 
     if clip_size is None:
@@ -85,8 +90,8 @@ def generate_s3_presigned_url_view(request):
         return JsonResponse(
             {"detail": "Invalid clip_size"}, status=status.HTTP_400_BAD_REQUEST
         )
-    elif clip_size > 50 * 1000 * 1000:
-        # 50 MB
+    elif clip_size > 100 * 1000 * 1000:
+        # 100 MB
         return JsonResponse(
             {"detail": "clip_size has to be less than 100 MB"},
             status=status.HTTP_400_BAD_REQUEST,
@@ -98,6 +103,15 @@ def generate_s3_presigned_url_view(request):
     if game_code is None:
         return JsonResponse(
             {"detail": "game_code is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    if title is None:
+        return JsonResponse(
+            {"detail": "title is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    if len(title) > 40:
+        return JsonResponse(
+            {"detail": "title has to be less than 30 characters"},
+            status=status.HTTP_400_BAD_REQUEST,
         )
     if clip_height_to_width_ratio is None or clip_height_to_width_ratio < 0:
         return JsonResponse(
@@ -145,6 +159,7 @@ def generate_s3_presigned_url_view(request):
     new_clip = Clip.objects.create(
         uploader=request.user,
         game=game,
+        title=title,
         url=file_url,
         height_to_width_ratio=clip_height_to_width_ratio,
     )
@@ -174,7 +189,7 @@ def upload_successful_view(request):
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
-def get_clips_view(request):
+def get_all_clips_view(request):
     datetime = request.data.get("datetime", None)
     if datetime is None:
         return JsonResponse(
@@ -196,3 +211,165 @@ def get_clips_view(request):
         {"detail": "clips from {}".format(datetime), "payload": {"clips": clips_data}},
         status=status.HTTP_200_OK,
     )
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def get_profile_clips_view(request):
+    datetime = request.data.get("datetime", None)
+    username = request.data.get("username", None)
+    if datetime is None:
+        return JsonResponse(
+            {"detail": "datetime is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    if username is None:
+        return JsonResponse(
+            {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    datetime = dateparse.parse_datetime(datetime)
+    if datetime is None:
+        return JsonResponse(
+            {"detail": "Invalid datetime"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return JsonResponse(
+            {"detail": "Invalid username"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    clips = Clip.objects.filter(
+        created_datetime__lt=datetime, uploader=user, upload_verified=True
+    ).order_by("-created_datetime")[:10]
+
+    clips_data = ClipSerializer(clips, many=True).data
+
+    return JsonResponse(
+        {"detail": "clips from {}".format(datetime), "payload": {"clips": clips_data}},
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def delete_clip_view(request):
+    clip_id = request.data.get("clip_id", None)
+    if clip_id is None:
+        return JsonResponse(
+            {"detail": "clip_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        clip = Clip.objects.get(id=clip_id)
+    except Clip.DoesNotExist:
+        return JsonResponse(
+            {"detail": "clip_id invalid"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if clip.uploader != request.user:
+        return JsonResponse({"detail": "Denied"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    clip.delete()
+    return JsonResponse({"detail": "clip deleted"}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def like_clip_view(request):
+    clip_id = request.data.get("clip_id", None)
+    if clip_id is None:
+        return JsonResponse(
+            {"detail": "clip_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        clip = Clip.objects.get(id=clip_id)
+    except Clip.DoesNotExist:
+        return JsonResponse(
+            {"detail": "clip_id invalid"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    clip.liked_by.add(request.user)
+    clip.save(update_fields=["liked_by"])
+    return JsonResponse({"detail": "clip liked"}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def unlike_clip_view(request):
+    clip_id = request.data.get("clip_id", None)
+    if clip_id is None:
+        return JsonResponse(
+            {"detail": "clip_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        clip = Clip.objects.get(id=clip_id)
+    except Clip.DoesNotExist:
+        return JsonResponse(
+            {"detail": "clip_id invalid"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    clip.liked_by.remove(request.user)
+    clip.save(update_fields=["liked_by"])
+    return JsonResponse({"detail": "clip unliked"}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def share_clip_view(request):
+    clip_id = request.data.get("clip_id", None)
+    if clip_id is None:
+        return JsonResponse(
+            {"detail": "clip_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        clip = Clip.objects.get(id=clip_id)
+    except Clip.DoesNotExist:
+        return JsonResponse(
+            {"detail": "clip_id invalid"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    clip.share_count += 1
+    clip.save(update_fields=["share_count"])
+    return JsonResponse({"detail": "clip share"}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def report_clip_view(request):
+    clip_id = request.data.get("clip_id", None)
+    is_not_playing = request.data.get("not_play", None)
+    is_not_game_clip = request.data.get("not_game", None)
+
+    if clip_id is None:
+        return JsonResponse(
+            {"detail": "clip_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    if is_not_playing is None or is_not_game_clip is None:
+        return JsonResponse(
+            {"detail": "values missing"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        clip = Clip.objects.get(id=clip_id)
+    except Clip.DoesNotExist:
+        return JsonResponse(
+            {"detail": "clip_id invalid"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    report = Report.objects.create(
+        reported_by=request.user,
+        clip=clip,
+        is_not_playing=is_not_playing,
+        is_not_game_clip=is_not_game_clip,
+    )
+    report.save()
+    return JsonResponse({"detail": "report received"}, status=status.HTTP_200_OK)
