@@ -27,7 +27,6 @@ from clips.tasks import (
     check_upload_after_delay,
     check_upload_successful_task,
 )
-from profiles.views import update_profile_view
 from shinobi.utils import get_media_file_url
 
 
@@ -48,14 +47,24 @@ else:
 def upload_check_view(request):
     clips_count = Clip.objects.filter(created_date=timezone.datetime.today()).count()
     quota = 2 - clips_count
+
+    datetime_now = timezone.now()
+    time = 24 - datetime_now.hour
+    if time == 0:
+        time = 60 - datetime_now.minute
+        if time == 0:
+            time = "{} seconds".format(60 - datetime_now.second)
+        else:
+            time = "{} minutes".format(time)
+    else:
+        time = "{} hours".format(time)
+
     return JsonResponse(
         {
             "detail": "{} can upload {} more clips".format(
                 request.user.username, quota
             ),
-            "payload": {
-                "quota": quota,
-            },
+            "payload": {"quota": quota, "time_left": time},
         },
         status=status.HTTP_200_OK,
     )
