@@ -214,7 +214,7 @@ def get_all_clips_view(request):
         created_datetime__lt=datetime, upload_verified=True
     ).order_by("-created_datetime")[:10]
 
-    clips_data = ClipSerializer(clips, many=True).data
+    clips_data = ClipSerializer(clips, many=True, context={"me": request.user}).data
 
     return JsonResponse(
         {"detail": "clips from {}".format(datetime), "payload": {"clips": clips_data}},
@@ -302,7 +302,7 @@ def like_clip_view(request):
         )
 
     clip.liked_by.add(request.user)
-    clip.save(update_fields=["liked_by"])
+    clip.save()
     return JsonResponse({"detail": "clip liked"}, status=status.HTTP_200_OK)
 
 
@@ -324,7 +324,7 @@ def unlike_clip_view(request):
         )
 
     clip.liked_by.remove(request.user)
-    clip.save(update_fields=["liked_by"])
+    clip.save()
     return JsonResponse({"detail": "clip unliked"}, status=status.HTTP_200_OK)
 
 
