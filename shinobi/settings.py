@@ -263,6 +263,16 @@ import rollbar
 
 rollbar.init(**ROLLBAR)
 
+
+################################################################################
+REST_FRAMEWORK = {
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.FormParser",
+        "rest_framework.parsers.MultiPartParser",
+    ]
+}
+
 ################################################################################
 # Only transmit HTTPS requests to Django
 # if CI_CD_STAGE == "production":
