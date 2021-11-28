@@ -390,6 +390,6 @@ def report_clip_view(request):
 # @permission_classes([IsAuthenticated, HasAPIKey])
 def mediaconvert_sns_view(request):
     print("REQUEST RECEIVED")
-    print("POST DATA", request.POST)
+    print("request", request)
     # print(request.data)
     return HttpResponse(status=status.HTTP_200_OK)
