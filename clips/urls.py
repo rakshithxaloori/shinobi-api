@@ -13,4 +13,7 @@ urlpatterns = [
     path("unlike/", views.unlike_clip_view, name="unlike clip"),
     path("share/", views.share_clip_view, name="share clip"),
     path("report/", views.report_clip_view, name="report clip"),
+    path(
+        "mediaconvert/callback/", views.mediaconvert_sns_view, name="mediaconvert sns"
+    ),
 ]
