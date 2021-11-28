@@ -3,6 +3,7 @@ import boto3
 
 from django.http import JsonResponse
 from django.conf import settings
+from django.http.response import HttpResponse
 from django.utils import timezone
 from django.utils import dateparse
 
@@ -389,6 +390,6 @@ def report_clip_view(request):
 # @permission_classes([IsAuthenticated, HasAPIKey])
 def mediaconvert_sns_view(request):
     print("REQUEST RECEIVED")
-    print(request.POST)
+    print("POST DATA", request.POST)
     # print(request.data)
-    return JsonResponse({"detail": ""}, status=status.HTTP_200_OK)
+    return HttpResponse(status=status.HTTP_200_OK)
