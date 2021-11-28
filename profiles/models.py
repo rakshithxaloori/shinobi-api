@@ -26,11 +26,6 @@ def random_bio():
 
 # Create your models here.
 class Game(models.Model):
-    # {
-    #     "id": "21779",
-    #     "name": "League of Legends",
-    #     "box_art_url": "https://static-cdn.jtvnw.net/ttv-boxart/League%20of%20Legends-{width}x{height}.jpg",
-    # }
     id = models.CharField(max_length=10, primary_key=True)
     name = models.CharField(max_length=50, blank=False, null=False)
     logo_url = models.URLField()
@@ -46,6 +41,9 @@ class Profile(models.Model):
     )
     bio = models.TextField(max_length=150, default=random_bio)
     follower_count = models.IntegerField(default=0)
+    games = models.ManyToManyField(
+        Game, related_name="played_by", blank=True, through="PlaysGame"
+    )
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
 
@@ -63,3 +61,12 @@ class Following(models.Model):
 
     def __str__(self) -> str:
         return "{} follows {}".format(self.profile.user.username, self.user.username)
+
+
+class PlaysGame(models.Model):
+    game = models.ForeignKey(Game, on_delete=models.PROTECT)
+    profile = models.ForeignKey(Profile, on_delete=models.PROTECT)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return "{} plays {}".format(self.profile.user.username, self.game.name)

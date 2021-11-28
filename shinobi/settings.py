@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "league_of_legends",
     "health_checks",
     "feed",
+    "clips",
 ]
 
 MIDDLEWARE = [
@@ -186,14 +187,11 @@ elif CI_CD_STAGE == "testing" or CI_CD_STAGE == "production":
     AWS_S3_SECRET_ACCESS_KEY = os.environ["AWS_S3_SECRET_ACCESS_KEY"]
     AWS_STORAGE_BUCKET_NAME = os.environ["AWS_STORAGE_BUCKET_NAME"]
     AWS_S3_REGION_NAME = os.environ["AWS_S3_REGION_NAME"]
+    AWS_S3_CUSTOM_DOMAIN = os.environ["AWS_S3_CUSTOM_DOMAIN"]
     AWS_QUERYSTRING_AUTH = False
 
-    STATIC_URL = "https://s3.{}.amazonaws.com/{}/static/".format(
-        AWS_S3_REGION_NAME, AWS_STORAGE_BUCKET_NAME
-    )
-    MEDIA_URL = "https://s3.{}.amazonaws.com/{}/media/".format(
-        AWS_S3_REGION_NAME, AWS_STORAGE_BUCKET_NAME
-    )
+    STATIC_URL = "https://{}/static/".format(AWS_S3_CUSTOM_DOMAIN)
+    MEDIA_URL = "https://{}/media/".format(AWS_S3_CUSTOM_DOMAIN)
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     STATICFILES_STORAGE = "storages.backends.s3boto3.S3StaticStorage"
 

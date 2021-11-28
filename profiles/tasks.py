@@ -3,13 +3,13 @@ import uuid
 import pickle
 
 from django.core.cache import cache
-from django.conf import settings
 from django.core.files.storage import default_storage
 
 from shinobi.celery import app as celery_app
 
 from authentication.models import User
 from profiles.models import Profile
+from shinobi.utils import get_media_file_url
 
 
 @celery_app.task(queue="celery")
@@ -44,31 +44,6 @@ def after_unfollow(user_profile_pk):
     user_profile.save(update_fields=["follower_count"])
 
 
-def get_picture_path(picture_url):
-    try:
-        if picture_url == None or picture_url == "":
-            return None
-
-        if settings.CI_CD_STAGE == "development":
-            media_url = os.environ["BASE_URL"] + settings.MEDIA_URL
-            return picture_url.split(media_url)[1]
-        elif settings.CI_CD_STAGE == "testing" or settings.CI_CD_STAGE == "production":
-            return picture_url.split(settings.MEDIA_URL)[1]
-    except Exception:
-        # Happens by picture_url.split(settings.MEDIA_URL)[1],
-        # because there's the google picture link
-        return None
-
-
-def get_picture_url(picture_path):
-    if settings.CI_CD_STAGE == "development":
-        return "{base_url}{path}".format(
-            base_url=os.environ["BASE_URL"], path=default_storage.url(picture_path)
-        )
-    elif settings.CI_CD_STAGE == "testing" or settings.CI_CD_STAGE == "production":
-        return default_storage.url(picture_path)
-
-
 @celery_app.task(queue="celery")
 def update_profile_picture(user_pk, picture_cache_key, picture_name, picture_type):
     try:
@@ -98,8 +73,7 @@ def update_profile_picture(user_pk, picture_cache_key, picture_name, picture_typ
 
     default_storage.save(new_picture_path, picture_obj)
 
-    new_picture_url = get_picture_url(new_picture_path)
-    print("URL", new_picture_url)
+    new_picture_url = get_media_file_url(new_picture_path)
     user.picture = new_picture_url
     user.save()
     cache.delete(picture_cache_key)
