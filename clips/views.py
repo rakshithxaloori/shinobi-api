@@ -388,5 +388,7 @@ def report_clip_view(request):
 # @authentication_classes([TokenAuthentication])
 # @permission_classes([IsAuthenticated, HasAPIKey])
 def mediaconvert_sns_view(request):
-    print(request.data)
+    print("REQUEST RECEIVED")
+    print(request.POST)
+    # print(request.data)
     return JsonResponse({"detail": ""}, status=status.HTTP_200_OK)
