@@ -265,13 +265,10 @@ rollbar.init(**ROLLBAR)
 
 
 ################################################################################
-REST_FRAMEWORK = {
-    "DEFAULT_PARSER_CLASSES": [
-        "rest_framework.parsers.JSONParser",
-        "rest_framework.parsers.FormParser",
-        "rest_framework.parsers.MultiPartParser",
-    ]
-}
+AWS_SNS_ACCESS_KEY_ID = os.environ["AWS_SNS_ACCESS_KEY_ID"]
+AWS_SNS_SECRET_ACCESS_KEY = os.environ["AWS_SNS_SECRET_ACCESS_KEY"]
+AWS_SNS_REGION_NAME = os.environ["AWS_SNS_REGION_NAME"]
+AWS_SNS_TOPIC_ARN = os.environ["AWS_SNS_TOPIC_ARN"]
 
 ################################################################################
 # Only transmit HTTPS requests to Django

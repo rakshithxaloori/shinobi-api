@@ -1,11 +1,13 @@
 import uuid
 import boto3
+import json
 
 from django.http import JsonResponse
 from django.conf import settings
 from django.http.response import HttpResponse
 from django.utils import timezone
 from django.utils import dateparse
+from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -40,6 +42,16 @@ if settings.CI_CD_STAGE == "testing" or settings.CI_CD_STAGE == "production":
     )
 else:
     s3_client = None
+
+if settings.CI_CD_STAGE == "testing" or settings.CI_CD_STAGE == "production":
+    sns_client = boto3.client(
+        service_name="sns",
+        aws_access_key_id=settings.AWS_SNS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SNS_SECRET_ACCESS_KEY,
+        region_name=settings.AWS_SNS_REGION_NAME,
+    )
+else:
+    sns_client = None
 
 
 @api_view(["GET"])
@@ -385,11 +397,18 @@ def report_clip_view(request):
     return JsonResponse({"detail": "report received"}, status=status.HTTP_200_OK)
 
 
-# @api_view(["POST"])
-# @authentication_classes([TokenAuthentication])
-# @permission_classes([IsAuthenticated, HasAPIKey])
+@csrf_exempt
 def mediaconvert_sns_view(request):
-    print("REQUEST RECEIVED")
-    print("request", request)
-    # print(request.data)
+    json_data = json.loads(request.body)
+    # TODO verify signature
+    if json_data["Type"] == "SubscriptionConfirmation":
+        response = sns_client.confirm_subscription(
+            TopicArn=settings.AWS_SNS_TOPIC_ARN, Token=json_data["Token"]
+        )
+        if response["ResponseMetadata"]["HTTPStatusCode"] != 200:
+            print(response)
+
+    else:
+        print(json_data["Message"])
+        # TODO fire a task that verifies the clip
     return HttpResponse(status=status.HTTP_200_OK)
