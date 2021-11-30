@@ -392,12 +392,13 @@ def mediaconvert_sns_view(request):
             print(response)
 
     else:
-        message = json_data["Message"]
-        print(message)
-        # "Status: COMPLETE. Input: s3://plx-dev-static/clips/uploads/test.mp4"
-        s3_url = re.search("(?P<url>s3?://[^\s]+)", message).group("url")
+        try:
+            message = json_data["Message"]
+            print(message)
 
-        # Fire a task that verifies the clip
-        check_compressed_successful_task.delay(s3_url)
+            # Fire a task that verifies the clip
+            check_compressed_successful_task.delay(message["s3_url"])
+        except Exception:
+            pass
 
     return HttpResponse(status=status.HTTP_200_OK)

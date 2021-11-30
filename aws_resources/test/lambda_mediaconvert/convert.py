@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 
-import glob
+
 import json
 import os
 import uuid
 import boto3
-import datetime
-import random
 from urllib.parse import urlparse
 import logging
 
-from botocore.client import ClientError
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
