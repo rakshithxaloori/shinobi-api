@@ -189,6 +189,8 @@ elif CI_CD_STAGE == "testing" or CI_CD_STAGE == "production":
     AWS_S3_REGION_NAME = os.environ["AWS_S3_REGION_NAME"]
     AWS_S3_CUSTOM_DOMAIN = os.environ["AWS_S3_CUSTOM_DOMAIN"]
     AWS_QUERYSTRING_AUTH = False
+    S3_FILE_UPLOAD_PATH_PREFIX = "clips/uploads"
+    S3_FILE_COMPRESSED_PATH_PREFIX = "clips/compressed"
 
     STATIC_URL = "https://{}/static/".format(AWS_S3_CUSTOM_DOMAIN)
     MEDIA_URL = "https://{}/media/".format(AWS_S3_CUSTOM_DOMAIN)

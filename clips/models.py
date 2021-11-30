@@ -25,6 +25,7 @@ class Clip(models.Model):
     created_date = models.DateField(default=now_date)
     created_datetime = models.DateTimeField(default=timezone.now)
     upload_verified = models.BooleanField(default=False)
+    compressed_verified = models.BooleanField(default=False)
     uploader = models.ForeignKey(User, related_name="clips", on_delete=models.PROTECT)
     game = models.ForeignKey(Game, related_name="game_clips", on_delete=models.PROTECT)
     title = models.CharField(max_length=40, blank=False, null=False)
