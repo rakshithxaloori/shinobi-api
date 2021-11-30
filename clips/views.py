@@ -398,6 +398,7 @@ def mediaconvert_sns_view(request):
 
             # Fire a task that verifies the clip
             check_compressed_successful_task.delay(message["s3_url"])
+            print("TASK QUEUED")
         except Exception:
             pass
 
