@@ -65,11 +65,6 @@ def check_compressed_successful_task(file_s3_url: str):
         filename=upload_filename,
     )
 
-    print(
-        "{upload_file_key}$$".format(upload_file_key=upload_file_key),
-        default_storage.exists(upload_file_key),
-    )
-
     if default_storage.exists(compressed_file_key):
         # Check if size is smaller
         if default_storage.size(upload_file_key) < default_storage.size(
