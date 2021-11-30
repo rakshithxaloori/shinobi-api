@@ -393,7 +393,7 @@ def mediaconvert_sns_view(request):
 
     else:
         try:
-            message = json_data["Message"]
+            message = json.loads(json_data["Message"])
             print(message)
             print("s3_url", message["s3_url"])
 
