@@ -189,6 +189,8 @@ elif CI_CD_STAGE == "testing" or CI_CD_STAGE == "production":
     AWS_S3_REGION_NAME = os.environ["AWS_S3_REGION_NAME"]
     AWS_S3_CUSTOM_DOMAIN = os.environ["AWS_S3_CUSTOM_DOMAIN"]
     AWS_QUERYSTRING_AUTH = False
+    S3_FILE_UPLOAD_PATH_PREFIX = "clips/uploads"
+    S3_FILE_COMPRESSED_PATH_PREFIX = "clips/compressed"
 
     STATIC_URL = "https://{}/static/".format(AWS_S3_CUSTOM_DOMAIN)
     MEDIA_URL = "https://{}/media/".format(AWS_S3_CUSTOM_DOMAIN)
@@ -265,13 +267,10 @@ rollbar.init(**ROLLBAR)
 
 
 ################################################################################
-REST_FRAMEWORK = {
-    "DEFAULT_PARSER_CLASSES": [
-        "rest_framework.parsers.JSONParser",
-        "rest_framework.parsers.FormParser",
-        "rest_framework.parsers.MultiPartParser",
-    ]
-}
+AWS_SNS_ACCESS_KEY_ID = os.environ["AWS_SNS_ACCESS_KEY_ID"]
+AWS_SNS_SECRET_ACCESS_KEY = os.environ["AWS_SNS_SECRET_ACCESS_KEY"]
+AWS_SNS_REGION_NAME = os.environ["AWS_SNS_REGION_NAME"]
+AWS_SNS_TOPIC_ARN = os.environ["AWS_SNS_TOPIC_ARN"]
 
 ################################################################################
 # Only transmit HTTPS requests to Django

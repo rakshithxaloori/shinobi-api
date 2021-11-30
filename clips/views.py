@@ -1,11 +1,13 @@
+import re
 import uuid
-import boto3
+import json
 
 from django.http import JsonResponse
 from django.conf import settings
 from django.http.response import HttpResponse
 from django.utils import timezone
 from django.utils import dateparse
+from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -25,21 +27,12 @@ from authentication.models import User
 from profiles.models import Game
 from clips.models import Clip, Report
 from clips.tasks import (
+    check_compressed_successful_task,
     check_upload_after_delay,
     check_upload_successful_task,
 )
+from clips.utils import s3_client, sns_client
 from shinobi.utils import get_media_file_url
-
-
-if settings.CI_CD_STAGE == "testing" or settings.CI_CD_STAGE == "production":
-    s3_client = boto3.client(
-        service_name="s3",
-        aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
-        region_name=settings.AWS_S3_REGION_NAME,
-    )
-else:
-    s3_client = None
 
 
 @api_view(["GET"])
@@ -143,8 +136,10 @@ def generate_s3_presigned_url_view(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    file_path = "clips/uploads/{filename}.{type}".format(
-        filename=uuid.uuid4(), type=clip_type
+    file_path = "{prefix}/{filename}.{type}".format(
+        prefix=settings.S3_FILE_UPLOAD_PATH_PREFIX,
+        filename=uuid.uuid4(),
+        type=clip_type,
     )
     fields = {
         "Content-Type": "multipart/form-data",
@@ -385,11 +380,24 @@ def report_clip_view(request):
     return JsonResponse({"detail": "report received"}, status=status.HTTP_200_OK)
 
 
-# @api_view(["POST"])
-# @authentication_classes([TokenAuthentication])
-# @permission_classes([IsAuthenticated, HasAPIKey])
+@csrf_exempt
 def mediaconvert_sns_view(request):
-    print("REQUEST RECEIVED")
-    print("request", request)
-    # print(request.data)
+    json_data = json.loads(request.body)
+    if json_data["Type"] == "SubscriptionConfirmation":
+        # Confirm subscription
+        response = sns_client.confirm_subscription(
+            TopicArn=settings.AWS_SNS_TOPIC_ARN, Token=json_data["Token"]
+        )
+        if response["ResponseMetadata"]["HTTPStatusCode"] != 200:
+            print(response)
+
+    else:
+        message = json_data["Message"]
+        print(message)
+        # "Status: COMPLETE. Input: s3://plx-dev-static/clips/uploads/test.mp4"
+        s3_url = re.search("(?P<url>s3?://[^\s]+)", message).group("url")
+
+        # Fire a task that verifies the clip
+        check_compressed_successful_task.delay(s3_url)
+
     return HttpResponse(status=status.HTTP_200_OK)
