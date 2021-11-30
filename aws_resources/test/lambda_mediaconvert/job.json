@@ -25,9 +25,11 @@
               "H264Settings": {
                 "RateControlMode": "QVBR",
                 "SceneChangeDetect": "TRANSITION_DETECTION",
-                "MaxBitrate": 15000000
+                "MaxBitrate": 7500000
               }
-            }
+            },
+            "Width": 1280,
+            "Height": 720
           },
           "AudioDescriptions": [
             {
