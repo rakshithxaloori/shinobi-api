@@ -31,9 +31,9 @@ def feed_view(request):
         end_index = 10
     following_users = request.user.profile.followings.all()
     following_users |= User.objects.filter(pk=request.user.pk)
-    clips = Clip.objects.filter(uploader__in=following_users).order_by(
-        "-created_datetime"
-    )[begin_index:end_index]
+    clips = Clip.objects.filter(
+        uploader__in=following_users, upload_verified=True
+    ).order_by("-created_datetime")[begin_index:end_index]
 
     clips_data = ClipSerializer(clips, many=True, context={"me": request.user}).data
 

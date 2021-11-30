@@ -394,12 +394,8 @@ def mediaconvert_sns_view(request):
     else:
         try:
             message = json.loads(json_data["Message"])
-            print(message)
-            print("s3_url", message["s3_url"])
-
             # Fire a task that verifies the clip
             check_compressed_successful_task.delay(message["s3_url"])
-            print("TASK QUEUED")
         except Exception as e:
             print(e)
 
