@@ -27,9 +27,7 @@
                 "SceneChangeDetect": "TRANSITION_DETECTION",
                 "MaxBitrate": 7500000
               }
-            },
-            "Width": 1280,
-            "Height": 720
+            }
           },
           "AudioDescriptions": [
             {
