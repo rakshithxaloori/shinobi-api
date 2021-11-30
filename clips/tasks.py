@@ -79,8 +79,8 @@ def check_compressed_successful_task(file_s3_url: str):
                 copy_source, settings.AWS_STORAGE_BUCKET_NAME, compressed_file_key
             )
 
-            # Delete the uploaded file
-            default_storage.delete(upload_file_key)
+        # Delete the uploaded file
+        default_storage.delete(upload_file_key)
 
         try:
             file_cdn_url = get_media_file_url(compressed_file_key)
