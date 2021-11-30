@@ -53,6 +53,7 @@ def check_upload_successful_task(file_path):
 @celery_app.task(queue="celery")
 def check_compressed_successful_task(file_s3_url: str):
     # s3://plx-dev-static/clips/uploads/test.mp4
+    print(file_s3_url)
     if file_s3_url is None:
         return
     upload_file_key = file_s3_url.split(
