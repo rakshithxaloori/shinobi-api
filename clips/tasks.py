@@ -88,6 +88,7 @@ def check_compressed_successful_task(file_s3_url: str):
             clip.compressed_verified = True
             clip.url = file_cdn_url
             clip.save(update_fields=["compressed_verified", "url"])
+            print("Clip saved", file_cdn_url)
         except Clip.DoesNotExist:
             print("Clip.DoesNotExist", upload_file_key)
             if default_storage.exists(compressed_file_key):
