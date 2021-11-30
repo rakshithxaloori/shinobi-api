@@ -1,12 +1,23 @@
+from copy import deepcopy
+
 from django.conf import settings
 from django.core.files.storage import default_storage
 
 from shinobi.celery import app as celery_app
 
 
-from clips.utils import s3_client
+from clips.utils import s3_client, default_mediaconvert_job_settings
 from shinobi.utils import get_media_file_url, get_media_file_path
 from clips.models import Clip
+
+
+@celery_app.task(queue="celery")
+def create_compression_job(clip_upload_file_path, clip_height, clip_width):
+    job_settings = deepcopy(default_mediaconvert_job_settings)
+    for output_group in job_settings["OutputGroups"]["Outputs"]:
+        output_group["VideoDescription"]["Height"] = clip_height
+        output_group["VideoDescription"]["Width"] = clip_width
+    pass
 
 
 @celery_app.task(queue="celery")
@@ -25,6 +36,7 @@ def check_upload_after_delay(clip_pk):
             else:
                 clip.upload_verified = True
                 clip.save(update_fields=["upload_verified"])
+                create_compression_job.delay(file_path, clip.height, clip.width)
         else:
             clip.delete()
 
@@ -48,6 +60,7 @@ def check_upload_successful_task(file_path):
         else:
             clip.upload_verified = True
             clip.save(update_fields=["upload_verified"])
+            create_compression_job.delay(file_path, clip.height, clip.width)
 
 
 @celery_app.task(queue="celery")

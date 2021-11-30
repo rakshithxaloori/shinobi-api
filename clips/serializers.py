@@ -21,7 +21,8 @@ class ClipSerializer(ModelSerializer):
             "title",
             "likes",
             "me_like",
-            "height_to_width_ratio",
+            "height",
+            "width",
             "url",
         ]
         read_only_fields = fields

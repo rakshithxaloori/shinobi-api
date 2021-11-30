@@ -82,7 +82,8 @@ def generate_s3_presigned_url_view(request):
     game_code = request.data.get("game_code", None)
     title = request.data.get("title", None)
 
-    clip_height_to_width_ratio = request.data.get("clip_height_to_width_ratio", None)
+    clip_height = request.data.get("clip_height", None)
+    clip_width = request.date.get("clip_width", None)
 
     if clip_size is None:
         return JsonResponse(
@@ -116,7 +117,7 @@ def generate_s3_presigned_url_view(request):
             {"detail": "title has to be less than 30 characters"},
             status=status.HTTP_400_BAD_REQUEST,
         )
-    if clip_height_to_width_ratio is None or clip_height_to_width_ratio < 0:
+    if clip_height is None or clip_height < 0 or clip_width is None or clip_width < 0:
         return JsonResponse(
             {"detail": "clip_height_to_width_ratio required or invalid"},
             status=status.HTTP_400_BAD_REQUEST,
@@ -129,10 +130,11 @@ def generate_s3_presigned_url_view(request):
             {"detail": "Invalid game_code"}, status=status.HTTP_400_BAD_REQUEST
         )
     try:
-        clip_height_to_width_ratio = float(clip_height_to_width_ratio)
+        clip_height = int(clip_height)
+        clip_width = int(clip_width)
     except ValueError:
         return JsonResponse(
-            {"detail": "clip_height_to_width_ratio invalid"},
+            {"detail": "clip height or width invalid"},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -166,7 +168,8 @@ def generate_s3_presigned_url_view(request):
         game=game,
         title=title,
         url=file_url,
-        height_to_width_ratio=clip_height_to_width_ratio,
+        height=clip_height,
+        width=clip_width,
     )
     new_clip.save()
     check_upload_after_delay.apply_async(

@@ -33,7 +33,8 @@ class Clip(models.Model):
         User, related_name="liked_clips", blank=True, through="Like"
     )
     share_count = models.PositiveIntegerField(default=0)
-    height_to_width_ratio = models.FloatField(null=False, blank=False)
+    height = models.PositiveSmallIntegerField(null=False, blank=False)
+    width = models.PositiveSmallIntegerField(null=False, blank=False)
     url = models.URLField(null=False, blank=False, unique=True)
 
     def __str__(self) -> str:
