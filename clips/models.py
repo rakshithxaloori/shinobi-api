@@ -28,14 +28,14 @@ class Clip(models.Model):
     compressed_verified = models.BooleanField(default=False)
     uploader = models.ForeignKey(User, related_name="clips", on_delete=models.PROTECT)
     game = models.ForeignKey(Game, related_name="game_clips", on_delete=models.PROTECT)
-    title = models.CharField(max_length=40, blank=False, null=False)
+    title = models.CharField(max_length=40)
     liked_by = models.ManyToManyField(
         User, related_name="liked_clips", blank=True, through="Like"
     )
     share_count = models.PositiveIntegerField(default=0)
-    height = models.PositiveSmallIntegerField(null=False, blank=False)
-    width = models.PositiveSmallIntegerField(null=False, blank=False)
-    url = models.URLField(null=False, blank=False, unique=True)
+    height = models.PositiveSmallIntegerField()
+    width = models.PositiveSmallIntegerField()
+    url = models.URLField(unique=True)
 
     def __str__(self) -> str:
         return "{} || {} || {}".format(self.created_datetime, self.uploader, self.game)

@@ -27,7 +27,7 @@ def random_bio():
 # Create your models here.
 class Game(models.Model):
     id = models.CharField(max_length=10, primary_key=True)
-    name = models.CharField(max_length=50, blank=False, null=False)
+    name = models.CharField(max_length=50, unique=True)
     logo_url = models.URLField()
 
     def __str__(self):
