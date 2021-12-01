@@ -83,7 +83,7 @@ def generate_s3_presigned_url_view(request):
     title = request.data.get("title", None)
 
     clip_height = request.data.get("clip_height", None)
-    clip_width = request.date.get("clip_width", None)
+    clip_width = request.data.get("clip_width", None)
 
     if clip_size is None:
         return JsonResponse(
