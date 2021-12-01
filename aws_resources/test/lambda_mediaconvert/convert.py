@@ -92,21 +92,6 @@ def handler(event, context):
             # Update the job settings with the source video from the S3 event
             jobSettings["Inputs"][0]["FileInput"] = sourceS3
 
-            # Update the job settings with the destination paths for converted videos.  We want to replace the
-            # destination bucket of the output paths in the job settings, but keep the rest of the
-            # path
-            destinationS3 = (
-                "s3://"
-                + os.environ["DestinationBucket"]
-                + "/"
-                + os.path.splitext(os.path.basename(sourceS3Key))[0]
-            )
-
-            logger.info(
-                "destinationS3 %s",
-                destinationS3,
-            )
-
             for outputGroup in jobSettings["OutputGroups"]:
 
                 logger.info(
