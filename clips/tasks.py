@@ -1,23 +1,18 @@
-from copy import deepcopy
-
 from django.conf import settings
 from django.core.files.storage import default_storage
 
 from shinobi.celery import app as celery_app
 
 
-from clips.utils import s3_client, default_mediaconvert_job_settings
+from clips.utils import s3_client
 from shinobi.utils import get_media_file_url, get_media_file_path
 from clips.models import Clip
 
 
-@celery_app.task(queue="celery")
-def create_compression_job(clip_upload_file_path, clip_height, clip_width):
-    job_settings = deepcopy(default_mediaconvert_job_settings)
-    for output_group in job_settings["OutputGroups"]["Outputs"]:
-        output_group["VideoDescription"]["Height"] = clip_height
-        output_group["VideoDescription"]["Width"] = clip_width
-    pass
+def delete_upload_file(file_path):
+    # Verify that it's uploads/
+    print("DELETING", file_path)
+    default_storage.delete(file_path)
 
 
 @celery_app.task(queue="celery")
@@ -31,12 +26,11 @@ def check_upload_after_delay(clip_pk):
         if default_storage.exists(file_path):
             if default_storage.size(file_path) > 100 * 1000 * 1000:
                 # Greater than 100 MB
-                default_storage.delete(file_path)
+                delete_upload_file(file_path)
                 clip.delete()
             else:
                 clip.upload_verified = True
                 clip.save(update_fields=["upload_verified"])
-                create_compression_job.delay(file_path, clip.height, clip.width)
         else:
             clip.delete()
 
@@ -55,12 +49,11 @@ def check_upload_successful_task(file_path):
     if default_storage.exists(file_path):
         if default_storage.size(file_path) > 100 * 1000 * 1000:
             # Greater than 100 MB
-            default_storage.delete(file_path)
+            delete_upload_file(file_path)
             clip.delete()
         else:
             clip.upload_verified = True
             clip.save(update_fields=["upload_verified"])
-            create_compression_job.delay(file_path, clip.height, clip.width)
 
 
 @celery_app.task(queue="celery")
@@ -93,7 +86,7 @@ def check_compressed_successful_task(file_s3_url: str):
             )
 
         # Delete the uploaded file
-        default_storage.delete(upload_file_key)
+        delete_upload_file(upload_file_key)
 
         try:
             file_cdn_url = get_media_file_url(compressed_file_key)
@@ -104,11 +97,11 @@ def check_compressed_successful_task(file_s3_url: str):
         except Clip.DoesNotExist:
             print("Clip.DoesNotExist", upload_file_key)
             if default_storage.exists(compressed_file_key):
-                default_storage.delete(compressed_file_key)
+                delete_upload_file(upload_file_key)
 
 
 @celery_app.task(queue="celery")
 def delete_clip_task(url):
     file_path = get_media_file_path(url)
     if default_storage.exists(file_path):
-        default_storage.delete(file_path)
+        delete_upload_file(file_path)
