@@ -54,24 +54,9 @@ def handler(event, context):
     jobMetadata["input"] = sourceS3
 
     try:
-
         # Build a list of jobs to run against the input.  Use the settings files in WatchFolder/jobs
         # if any exist.  Otherwise, use the default job.
-
         jobInput = {}
-        # Iterates through all the objects in jobs folder of the WatchFolder bucket, doing the pagination for you. Each obj
-        # contains a jobSettings JSON
-        bucket = S3.Bucket(sourceS3Bucket)
-        for obj in bucket.objects.filter(Prefix="jobs/"):
-            if obj.key != "jobs/":
-                jobInput = {}
-                jobInput["filename"] = obj.key
-                logger.info("jobInput: %s", jobInput["filename"])
-
-                jobInput["settings"] = json.loads(obj.get()["Body"].read())
-                logger.info(json.dumps(jobInput["settings"]))
-
-                jobs.append(jobInput)
 
         # Use Default job settings in the lambda zip file in the current working directory
         if not jobs:
@@ -130,80 +115,11 @@ def handler(event, context):
                 )
 
                 if outputGroup["OutputGroupSettings"]["Type"] == "FILE_GROUP_SETTINGS":
-                    # templateDestination = outputGroup["OutputGroupSettings"][
-                    #     "FileGroupSettings"
-                    # ]["Destination"]
-                    # templateDestinationKey = urlparse(templateDestination).path
-                    # logger.info("templateDestinationKey == %s", templateDestinationKey)
-                    # outputGroup["OutputGroupSettings"]["FileGroupSettings"][
-                    #     "Destination"
-                    # ] = (destinationS3 + templateDestinationKey)
-
                     # CUSTOM CODE
                     outputGroup["OutputGroupSettings"]["FileGroupSettings"][
                         "Destination"
                     ] = destinationS3
 
-                elif outputGroup["OutputGroupSettings"]["Type"] == "HLS_GROUP_SETTINGS":
-                    templateDestination = outputGroup["OutputGroupSettings"][
-                        "HlsGroupSettings"
-                    ]["Destination"]
-                    templateDestinationKey = urlparse(templateDestination).path
-                    logger.info("templateDestinationKey == %s", templateDestinationKey)
-                    outputGroup["OutputGroupSettings"]["HlsGroupSettings"][
-                        "Destination"
-                    ] = (destinationS3 + templateDestinationKey)
-
-                elif (
-                    outputGroup["OutputGroupSettings"]["Type"]
-                    == "DASH_ISO_GROUP_SETTINGS"
-                ):
-                    templateDestination = outputGroup["OutputGroupSettings"][
-                        "DashIsoGroupSettings"
-                    ]["Destination"]
-                    templateDestinationKey = urlparse(templateDestination).path
-                    logger.info("templateDestinationKey == %s", templateDestinationKey)
-                    outputGroup["OutputGroupSettings"]["DashIsoGroupSettings"][
-                        "Destination"
-                    ] = (destinationS3 + templateDestinationKey)
-
-                elif (
-                    outputGroup["OutputGroupSettings"]["Type"]
-                    == "DASH_ISO_GROUP_SETTINGS"
-                ):
-                    templateDestination = outputGroup["OutputGroupSettings"][
-                        "DashIsoGroupSettings"
-                    ]["Destination"]
-                    templateDestinationKey = urlparse(templateDestination).path
-                    logger.info("templateDestinationKey == %s", templateDestinationKey)
-                    outputGroup["OutputGroupSettings"]["DashIsoGroupSettings"][
-                        "Destination"
-                    ] = (destinationS3 + templateDestinationKey)
-
-                elif (
-                    outputGroup["OutputGroupSettings"]["Type"]
-                    == "MS_SMOOTH_GROUP_SETTINGS"
-                ):
-                    templateDestination = outputGroup["OutputGroupSettings"][
-                        "MsSmoothGroupSettings"
-                    ]["Destination"]
-                    templateDestinationKey = urlparse(templateDestination).path
-                    logger.info("templateDestinationKey == %s", templateDestinationKey)
-                    outputGroup["OutputGroupSettings"]["MsSmoothGroupSettings"][
-                        "Destination"
-                    ] = (destinationS3 + templateDestinationKey)
-
-                elif (
-                    outputGroup["OutputGroupSettings"]["Type"] == "CMAF_GROUP_SETTINGS"
-                ):
-                    templateDestination = outputGroup["OutputGroupSettings"][
-                        "CmafGroupSettings"
-                    ]["Destination"]
-                    templateDestinationKey = urlparse(templateDestination).path
-                    logger.info("templateDestinationKey == %s", templateDestinationKey)
-                    outputGroup["OutputGroupSettings"]["CmafGroupSettings"][
-                        "Destination"
-                    ] = (destinationS3 + templateDestinationKey)
                 else:
                     logger.error(
                         "Exception: Unknown Output Group Type %s",
