@@ -2,7 +2,9 @@
   "Inputs": [
     {
       "TimecodeSource": "ZEROBASED",
-      "VideoSelector": {},
+      "VideoSelector": {
+        "Rotate": "AUTO"
+      },
       "AudioSelectors": {
         "Audio Selector 1": {
           "DefaultSelection": "DEFAULT"
