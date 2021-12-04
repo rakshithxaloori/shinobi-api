@@ -25,4 +25,8 @@ urlpatterns = [
         views.following_list_view,
         name="following",
     ),
+    path("games/search/", views.search_games_view, name="serch games"),
+    path("games/get/", views.get_games_view, name="get games"),
+    path("games/remove/", views.remove_game_view, name="add game"),
+    path("games/add/", views.add_game_view, name="remove game"),
 ]

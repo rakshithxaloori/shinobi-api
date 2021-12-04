@@ -18,10 +18,11 @@ from knox.auth import TokenAuthentication
 
 from authentication.models import User
 from chat.models import Chat
-from profiles.models import Profile, Following
+from profiles.models import Profile, Following, Game
 from profiles.serializers import (
     FollowingSerializer,
     FullProfileSerializer,
+    GameSerializer,
     MiniProfileSerializer,
     FollowersSerializer,
 )
@@ -284,3 +285,89 @@ def following_list_view(request, username=None, begin_index=0, end_index=10):
         },
         status=status.HTTP_200_OK,
     )
+
+
+###########################################################
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def search_games_view(request):
+    search_text = request.data.get("search", None)
+    if search_text is None:
+        return JsonResponse(
+            {"detail": "search text is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    games = Game.objects.filter(name__startswith=search_text)[:2]
+    games_data = GameSerializer(games, many=True).data
+
+    return JsonResponse(
+        {
+            "detail": "games with {} prefix".format(search_text),
+            "payload": {"games": games_data},
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def get_games_view(request):
+    games_data = GameSerializer(request.user.profile.games, many=True).data
+    return JsonResponse(
+        {
+            "detail": "{} plays".format(request.user.username),
+            "payload": {"games": games_data},
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def add_game_view(request):
+    game_id = request.data.get("game_id", None)
+    if game_id is None:
+        return JsonResponse(
+            {"detail": "game_id required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        game = Game.objects.get(id=game_id)
+        profile = request.user.profile
+        profile.games.add(game)
+        profile.save()
+        return JsonResponse({"detail": "game added"}, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        print(e)
+        return JsonResponse(
+            {"detail": "game_id invalid"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def remove_game_view(request):
+    game_id = request.data.get("game_id", None)
+    if game_id is None:
+        return JsonResponse(
+            {"detail": "game_id required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        game = Game.objects.get(id=game_id)
+        profile = request.user.profile
+        profile.games.remove(game)
+        profile.save()
+        return JsonResponse({"detail": "game removed"}, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        print(e)
+        return JsonResponse(
+            {"detail": "game_id invalid"}, status=status.HTTP_400_BAD_REQUEST
+        )
