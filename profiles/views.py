@@ -311,14 +311,27 @@ def search_games_view(request):
     )
 
 
-@api_view(["GET"])
+@api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def get_games_view(request):
-    games_data = GameSerializer(request.user.profile.games, many=True).data
+    username = request.data.get("username", None)
+    if username is None:
+        return JsonResponse(
+            {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return JsonResponse(
+            {"detail": "username invalid"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    games_data = GameSerializer(user.profile.games, many=True).data
     return JsonResponse(
         {
-            "detail": "{} plays".format(request.user.username),
+            "detail": "{} plays".format(user.username),
             "payload": {"games": games_data},
         },
         status=status.HTTP_200_OK,
