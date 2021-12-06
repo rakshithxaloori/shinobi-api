@@ -16,7 +16,7 @@ def get_analytics_instance():
     except DailyAnalytics.DoesNotExist:
         # Update old analytics instance
         old_analytics = DailyAnalytics.objects.order_by("-date").first()
-        old_analytics.total_users = User.objects.all().count()
+        old_analytics.total_users = User.objects.filter(is_staff=False).count()
         old_analytics.total_clips = Clip.objects.filter(
             created_date=old_analytics.date
         ).count()
