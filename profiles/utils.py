@@ -87,4 +87,5 @@ games = [
         "ESV",
         "https://cdn.shinobi.cc/logos/esv-256x256.png",
     ),
+    ("Genshin Impact", "GI", "https://cdn.shinobi.cc/logos/gi-256x256.png"),
 ]

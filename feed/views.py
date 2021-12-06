@@ -24,7 +24,7 @@ from clips.serializers import ClipSerializer
 @permission_classes([IsAuthenticated, HasAPIKey])
 def following_feed_view(request):
     """Response contains the clips of all the followings."""
-    datetime = request.data.get("datatime", None)
+    datetime = request.data.get("datetime", None)
     if datetime is None:
         return JsonResponse(
             {"detail": "datetime is required"}, status=status.HTTP_400_BAD_REQUEST
@@ -61,7 +61,7 @@ def following_feed_view(request):
 @permission_classes([IsAuthenticated, HasAPIKey])
 def world_feed_view(request):
     """Returns clips from all users of the games that I play."""
-    datetime = request.data.get("datatime", None)
+    datetime = request.data.get("datetime", None)
     if datetime is None:
         return JsonResponse(
             {"detail": "datetime is required"}, status=status.HTTP_400_BAD_REQUEST
