@@ -11,6 +11,7 @@ urlpatterns = [
     path("delete/", views.delete_clip_view, name="delete clip"),
     path("like/", views.like_clip_view, name="like clip"),
     path("unlike/", views.unlike_clip_view, name="unlike clip"),
+    path("viewed/", views.viewed_clip_view, name="viewed clip"),
     path("share/", views.share_clip_view, name="share clip"),
     path("report/", views.report_clip_view, name="report clip"),
     path(

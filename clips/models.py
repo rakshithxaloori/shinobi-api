@@ -32,18 +32,35 @@ class Clip(models.Model):
     liked_by = models.ManyToManyField(
         User, related_name="liked_clips", blank=True, through="Like"
     )
+    viewed_by = models.ManyToManyField(
+        User, related_name="viewed_clips", blank=True, through="View"
+    )
     share_count = models.PositiveIntegerField(default=0)
     height = models.PositiveSmallIntegerField()
     width = models.PositiveSmallIntegerField()
     url = models.URLField(unique=True)
 
     def __str__(self) -> str:
-        return "{} || {} || {}".format(self.created_datetime, self.uploader, self.game)
+        return "{} || {} || {}".format(
+            self.id, self.uploader.username, self.game.game_code
+        )
+
+
+class View(models.Model):
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
+    clip = models.ForeignKey(Clip, on_delete=models.CASCADE)
+    created_date = models.DateField(default=now_date)
+    created_datetime = models.DateTimeField(default=timezone.now)
+
+    def __str__(self) -> str:
+        return "{} viewed {} || {}".format(
+            self.user.username, self.clip.id, self.clip.game.game_code
+        )
 
 
 class Like(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT)
-    clip = models.ForeignKey(Clip, on_delete=models.PROTECT)
+    clip = models.ForeignKey(Clip, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:

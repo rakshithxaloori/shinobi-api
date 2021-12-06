@@ -4,7 +4,7 @@ from celery.schedules import crontab
 from shinobi.celery import app as celery_app
 
 from authentication.models import User
-from clips.models import Clip
+from clips.models import Clip, View
 from analytics.models import DailyAnalytics
 from shinobi.utils import now_date
 
@@ -20,7 +20,10 @@ def get_analytics_instance():
         old_analytics.total_clips = Clip.objects.filter(
             created_date=old_analytics.date
         ).count()
-        old_analytics.save(update_fields=["total_users", "total_clips"])
+        old_analytics.total_views = View.objects.filter(
+            created_date=old_analytics.date
+        ).count()
+        old_analytics.save(update_fields=["total_users", "total_clips", "total_views"])
 
         # Create new analytics instance
         analytics = DailyAnalytics.objects.create()

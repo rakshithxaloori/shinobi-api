@@ -330,6 +330,28 @@ def unlike_clip_view(request):
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
+def viewed_clip_view(request):
+    clip_id = request.data.get("clip_id", None)
+    if clip_id is None:
+        return JsonResponse(
+            {"detail": "clip_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        clip = Clip.objects.get(id=clip_id)
+    except Clip.DoesNotExist:
+        return JsonResponse(
+            {"detail": "clip_id invalid"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    clip.viewed_by.add(request.user)
+    clip.save()
+    return JsonResponse({"detail": "clip viewed"}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def share_clip_view(request):
     clip_id = request.data.get("clip_id", None)
     if clip_id is None:
