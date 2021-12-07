@@ -30,7 +30,7 @@ from clips.tasks import (
     check_upload_after_delay,
     check_upload_successful_task,
 )
-from clips.utils import s3_client, sns_client
+from clips.utils import VIDEO_MAX_SIZE_IN_BYTES, s3_client, sns_client
 from shinobi.utils import get_media_file_url
 
 
@@ -93,10 +93,9 @@ def generate_s3_presigned_url_view(request):
         return JsonResponse(
             {"detail": "Invalid clip_size"}, status=status.HTTP_400_BAD_REQUEST
         )
-    elif clip_size > 100 * 1000 * 1000:
-        # 100 MB
+    elif clip_size > VIDEO_MAX_SIZE_IN_BYTES:
         return JsonResponse(
-            {"detail": "clip_size has to be less than 100 MB"},
+            {"detail": "clip_size has to be less than 500 MB"},
             status=status.HTTP_400_BAD_REQUEST,
         )
     if clip_type is None:

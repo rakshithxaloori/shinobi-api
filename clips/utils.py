@@ -4,6 +4,9 @@ import boto3
 from django.conf import settings
 
 
+VIDEO_MAX_SIZE_IN_BYTES = 500 * 1000 * 1000  # 500 MB
+
+
 if settings.CI_CD_STAGE == "testing" or settings.CI_CD_STAGE == "production":
     s3_client = boto3.client(
         service_name="s3",
