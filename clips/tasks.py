@@ -4,15 +4,15 @@ from django.core.files.storage import default_storage
 from shinobi.celery import app as celery_app
 
 
-from clips.utils import s3_client
+from clips.utils import VIDEO_MAX_SIZE_IN_BYTES
 from shinobi.utils import get_media_file_url, get_media_file_path
 from clips.models import Clip
 
 
 def delete_upload_file(file_path):
     # Verify that it's uploads/
-    print("DELETING", file_path)
-    default_storage.delete(file_path)
+    if default_storage.exists(file_path):
+        default_storage.delete(file_path)
 
 
 @celery_app.task(queue="celery")
@@ -24,8 +24,7 @@ def check_upload_after_delay(clip_pk):
     if not clip.upload_verified:
         file_path = get_media_file_path(clip.url)
         if default_storage.exists(file_path):
-            if default_storage.size(file_path) > 100 * 1000 * 1000:
-                # Greater than 100 MB
+            if default_storage.size(file_path) > VIDEO_MAX_SIZE_IN_BYTES:
                 delete_upload_file(file_path)
                 clip.delete()
             else:
@@ -47,8 +46,7 @@ def check_upload_successful_task(file_path):
         return
 
     if default_storage.exists(file_path):
-        if default_storage.size(file_path) > 100 * 1000 * 1000:
-            # Greater than 100 MB
+        if default_storage.size(file_path) > VIDEO_MAX_SIZE_IN_BYTES:
             delete_upload_file(file_path)
             clip.delete()
         else:
@@ -57,47 +55,44 @@ def check_upload_successful_task(file_path):
 
 
 @celery_app.task(queue="celery")
-def check_compressed_successful_task(file_s3_url: str):
-    # s3://plx-dev-static/clips/uploads/test.mp4
-    if file_s3_url is None:
+def check_compressed_successful_task(input_s3_url: str):
+    # s3://plx-dev-static/clips/uploads/20secs.mov
+    if input_s3_url is None:
         return
-    upload_file_key = file_s3_url.split(
-        "s3://{bucket_name}/".format(bucket_name=settings.AWS_STORAGE_BUCKET_NAME)
-    )[1]
-    upload_filename = file_s3_url.split(settings.S3_FILE_UPLOAD_PATH_PREFIX + "/")[1]
-    upload_filename = upload_filename.split(".mp4")[0] + "-compressed.mp4"
-    compressed_file_key = "{compressed_prefix}/{filename}".format(
+    bucket_url = "s3://{bucket_name}/".format(
+        bucket_name=settings.AWS_STORAGE_BUCKET_NAME
+    )
+    upload_file_key = input_s3_url.split(bucket_url)[1]
+
+    upload_filename = input_s3_url.split(settings.S3_FILE_UPLOAD_PATH_PREFIX + "/")[
+        1
+    ].split(".")[0]
+
+    compressed_file_key = "{compressed_prefix}/{filename}_720p_8.mp4".format(
         compressed_prefix=settings.S3_FILE_COMPRESSED_PATH_PREFIX,
         filename=upload_filename,
     )
 
     if default_storage.exists(compressed_file_key):
-        # Check if size is smaller
-        if default_storage.size(upload_file_key) < default_storage.size(
-            compressed_file_key
-        ):
-            # Mv uploaded file
-            copy_source = {
-                "Bucket": settings.AWS_STORAGE_BUCKET_NAME,
-                "Key": upload_file_key,
-            }
-            s3_client.copy(
-                copy_source, settings.AWS_STORAGE_BUCKET_NAME, compressed_file_key
-            )
-
         # Delete the uploaded file
         delete_upload_file(upload_file_key)
 
         try:
+            compressed_file_key = "{}/{}_{}_{}.mp4".format(
+                settings.S3_FILE_COMPRESSED_PATH_PREFIX, upload_filename, "{}p", "{}"
+            )
             file_cdn_url = get_media_file_url(compressed_file_key)
             clip = Clip.objects.get(url=get_media_file_url(upload_file_key))
             clip.compressed_verified = True
             clip.url = file_cdn_url
             clip.save(update_fields=["compressed_verified", "url"])
         except Clip.DoesNotExist:
-            print("Clip.DoesNotExist", upload_file_key)
-            if default_storage.exists(compressed_file_key):
-                delete_upload_file(upload_file_key)
+            print("Clip.DoesNotExist", upload_file_key, compressed_file_key)
+            fileargs = [(720, 8), (720, 7), (480, 7), (360, 7)]
+            for filearg in fileargs:
+                vid_file_key = compressed_file_key.format(filearg[0], filearg[1])
+                if default_storage.exists(vid_file_key):
+                    delete_upload_file(vid_file_key)
 
 
 @celery_app.task(queue="celery")
