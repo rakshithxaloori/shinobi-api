@@ -30,8 +30,8 @@
                 "RateControlMode": "QVBR",
                 "SceneChangeDetect": "TRANSITION_DETECTION",
                 "MaxBitrate": 4000000,
-                "QVBRSettings": {
-                  "QVBRQualityLevel": 8
+                "QvbrSettings": {
+                  "QvbrQualityLevel": 8
                 }
               }
             }
@@ -64,8 +64,8 @@
                 "RateControlMode": "QVBR",
                 "SceneChangeDetect": "TRANSITION_DETECTION",
                 "MaxBitrate": 2000000,
-                "QVBRSettings": {
-                  "QVBRQualityLevel": 7
+                "QvbrSettings": {
+                  "QvbrQualityLevel": 7
                 }
               }
             }
@@ -98,8 +98,8 @@
                 "RateControlMode": "QVBR",
                 "SceneChangeDetect": "TRANSITION_DETECTION",
                 "MaxBitrate": 1000000,
-                "QVBRSettings": {
-                  "QVBRQualityLevel": 7
+                "QvbrSettings": {
+                  "QvbrQualityLevel": 7
                 }
               }
             }
@@ -132,8 +132,8 @@
                 "RateControlMode": "QVBR",
                 "SceneChangeDetect": "TRANSITION_DETECTION",
                 "MaxBitrate": 700000,
-                "QVBRSettings": {
-                  "QVBRQualityLevel": 7
+                "QvbrSettings": {
+                  "QvbrQualityLevel": 7
                 }
               }
             }
