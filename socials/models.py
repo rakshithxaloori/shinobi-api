@@ -78,7 +78,6 @@ class YouTubeProfile(models.Model):
         Profile, related_name="youtube_profile", on_delete=models.PROTECT
     )
     channel_id = models.CharField(max_length=24)
-    channel_image_url = models.URLField(null=True, blank=True)
 
     def __str__(self):
         return "{} || {}".format(self.channel_id, self.profile.user.username)
