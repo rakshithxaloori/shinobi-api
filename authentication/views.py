@@ -40,7 +40,6 @@ def check_username_view(request):
 @api_view(["POST"])
 @permission_classes([HasAPIKey])
 def google_login_view(request):
-    print("DATA", request.data)
     google_access_token = request.data.get("access_token", None)
 
     if google_access_token is None:
