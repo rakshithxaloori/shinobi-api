@@ -1,5 +1,3 @@
-import os
-
 from django.http import JsonResponse
 
 from rest_framework import status
@@ -14,11 +12,8 @@ from rest_framework_api_key.permissions import HasAPIKey
 
 from knox.auth import TokenAuthentication
 
-from google.oauth2 import id_token
-from google.auth.transport import requests
 
-
-from authentication.utils import token_response, create_user
+from authentication.utils import get_info_from_access_token, token_response, create_user
 from authentication.models import User
 from notification.tasks import delete_push_token
 from authentication.tasks import user_offline, user_online
@@ -45,23 +40,22 @@ def check_username_view(request):
 @api_view(["POST"])
 @permission_classes([HasAPIKey])
 def google_login_view(request):
-    google_id_token = request.data.get("id_token", None)
+    print("DATA", request.data)
+    google_access_token = request.data.get("access_token", None)
 
-    if google_id_token is None:
+    if google_access_token is None:
         return JsonResponse(
-            {"detail": "id_token is required"}, status=status.HTTP_400_BAD_REQUEST
+            {"detail": "access_token are required"},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     try:
-        id_info = id_token.verify_oauth2_token(google_id_token, requests.Request())
-        if id_info["aud"] not in [
-            os.environ["GOOGLE_EXPO_GO_APP_CLIENT_ID"],
-            os.environ["GOOGLE_ANDROID_APP_CLIENT_ID"],
-        ]:
+        google_info = get_info_from_access_token(access_token=google_access_token)
+        if google_info is None:
             return JsonResponse(
                 {"detail": "Couldn't verify"}, status=status.HTTP_403_FORBIDDEN
             )
-        user = User.objects.get(email=id_info["email"])
+        user = User.objects.get(email=google_info["email"])
 
         if not user.is_active:
             # Account disabled
@@ -109,48 +103,39 @@ def logout_view(request):
 @api_view(["POST"])
 @permission_classes([HasAPIKey])
 def google_signup_view(request):
-    google_id_token = request.data.get("id_token", None)
+    google_access_token = request.data.get("access_token", None)
 
-    if google_id_token is None:
+    if google_access_token is None:
         return JsonResponse(
-            {"detail": "id_token is required"}, status=status.HTTP_400_BAD_REQUEST
+            {"detail": "access_token are required"},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     try:
-        id_info = id_token.verify_oauth2_token(google_id_token, requests.Request())
-        if id_info["aud"] not in [
-            os.environ["GOOGLE_EXPO_GO_APP_CLIENT_ID"],
-            os.environ["GOOGLE_ANDROID_APP_CLIENT_ID"],
-        ]:
+        google_info = get_info_from_access_token(access_token=google_access_token)
+        if google_info is None:
             return JsonResponse(
                 {"detail": "Couldn't verify"}, status=status.HTTP_403_FORBIDDEN
             )
 
-        email = id_info["email"]
-        user_already_exists = User.objects.get(email=email)
+        user_already_exists = User.objects.get(email=google_info["email"])
         return token_response(user_already_exists)
 
     except User.DoesNotExist:
         username = request.data.get("username", None)
         return create_user(
             username,
-            email,
-            id_info.get("given_name", ""),
-            id_info.get("family_name", ""),
-            id_info.get("picture", None),
-        )
-
-    except ValueError:
-        # Invalid token
-        return JsonResponse(
-            {"detail": "id_token invalid"}, status=status.HTTP_400_BAD_REQUEST
+            google_info["email"],
+            google_info.get("given_name", ""),
+            google_info.get("family_name", ""),
+            google_info.get("picture", None),
         )
 
     except Exception as e:
         print(e)
         # Send a mail to somebody
         return JsonResponse(
-            {"detail": "Invalid sign up form"}, status=status.HTTP_400_BAD_REQUEST
+            {"detail": "Invalid username or code"}, status=status.HTTP_400_BAD_REQUEST
         )
 
 
@@ -180,4 +165,20 @@ def offline_view(request):
     user_offline.delay(request.user.pk)
     return JsonResponse(
         {"detail": "Inactive status updated"}, status=status.HTTP_200_OK
+    )
+
+
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def valid_token_view(request):
+    return JsonResponse(
+        {
+            "detail": "token valid",
+            "payload": {
+                "username": request.user.username,
+                "picture": request.user.picture,
+            },
+        },
+        status=status.HTTP_200_OK,
     )
