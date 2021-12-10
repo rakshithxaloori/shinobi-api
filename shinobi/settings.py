@@ -273,6 +273,9 @@ AWS_SNS_REGION_NAME = os.environ["AWS_SNS_REGION_NAME"]
 AWS_SNS_TOPIC_ARN = os.environ["AWS_SNS_TOPIC_ARN"]
 
 ################################################################################
+GOOGLE_RECAPTCHA_SECRET_KEY=os.environ["GOOGLE_RECAPTCHA_SECRET_KEY"]
+
+################################################################################
 # Only transmit HTTPS requests to Django
 # if CI_CD_STAGE == "production":
 #     CSRF_COOKIE_SECURE = True

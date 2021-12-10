@@ -1,5 +1,8 @@
 import uuid
 import json
+from urllib.parse import urlencode
+from urllib.request import urlopen
+
 
 from django.http import JsonResponse
 from django.conf import settings
@@ -33,13 +36,16 @@ from clips.tasks import (
 from clips.utils import VIDEO_MAX_SIZE_IN_BYTES, s3_client, sns_client
 from shinobi.utils import get_media_file_url
 
+CLIP_DAILY_LIMIT = 2
+URI_RECAPTCHA = "https://www.google.com/recaptcha/api/siteverify"
+
 
 @api_view(["GET"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def upload_check_view(request):
     clips_count = Clip.objects.filter(created_date=timezone.datetime.today()).count()
-    quota = 2 - clips_count
+    quota = CLIP_DAILY_LIMIT - clips_count
 
     datetime_now = timezone.now()
     time = 24 - datetime_now.hour
@@ -67,12 +73,28 @@ def upload_check_view(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def generate_s3_presigned_url_view(request):
+    # Verify recaptcha
+    recaptcha_token = request.data.get("recaptcha_token", None)
+    if recaptcha_token is None:
+        content = {"detail": "Recaptcha token required"}
+        return JsonResponse(content, status=status.HTTP_400_BAD_REQUEST)
+
+    params = urlencode(
+        {"secret": settings.GOOGLE_RECAPTCHA_SECRET_KEY, "response": recaptcha_token}
+    )
+    data = urlopen(URI_RECAPTCHA, params.encode("utf-8")).read()
+    result = json.loads(data)
+    success = result.get("success", None)
+    if not success or success is None:
+        content = {"detail": "Recaptcha verification failed"}
+        return JsonResponse(content, status=status.HTTP_400_BAD_REQUEST)
+
     clips_count = Clip.objects.filter(
         created_date=timezone.datetime.today(), uploader=request.user
     ).count()
-    if clips_count >= 3:
+    if clips_count >= CLIP_DAILY_LIMIT:
         return JsonResponse(
-            {"detail": "Daily limit of 3 clips"},
+            {"detail": "Daily limit of {} clips".format(CLIP_DAILY_LIMIT)},
             status=status.HTTP_405_METHOD_NOT_ALLOWED,
         )
 
