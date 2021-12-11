@@ -26,3 +26,8 @@ if settings.CI_CD_STAGE == "testing" or settings.CI_CD_STAGE == "production":
     )
 else:
     sns_client = None
+
+print("\n----------------------\n")
+print("s3_client", s3_client is not None)
+print("sns_client", sns_client is not None)
+print("\n----------------------\n")

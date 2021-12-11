@@ -74,20 +74,24 @@ def upload_check_view(request):
 @permission_classes([IsAuthenticated, HasAPIKey])
 def generate_s3_presigned_url_view(request):
     # Verify recaptcha
-    recaptcha_token = request.data.get("recaptcha_token", None)
-    if recaptcha_token is None:
-        content = {"detail": "Recaptcha token required"}
-        return JsonResponse(content, status=status.HTTP_400_BAD_REQUEST)
+    if request.path == "/clips/presigned/web/":
+        recaptcha_token = request.data.get("recaptcha_token", None)
+        if recaptcha_token is None:
+            content = {"detail": "Recaptcha token required"}
+            return JsonResponse(content, status=status.HTTP_400_BAD_REQUEST)
 
-    params = urlencode(
-        {"secret": settings.GOOGLE_RECAPTCHA_SECRET_KEY, "response": recaptcha_token}
-    )
-    data = urlopen(URI_RECAPTCHA, params.encode("utf-8")).read()
-    result = json.loads(data)
-    success = result.get("success", None)
-    if not success or success is None:
-        content = {"detail": "Recaptcha verification failed"}
-        return JsonResponse(content, status=status.HTTP_400_BAD_REQUEST)
+        params = urlencode(
+            {
+                "secret": settings.GOOGLE_RECAPTCHA_SECRET_KEY,
+                "response": recaptcha_token,
+            }
+        )
+        data = urlopen(URI_RECAPTCHA, params.encode("utf-8")).read()
+        result = json.loads(data)
+        success = result.get("success", None)
+        if not success or success is None:
+            content = {"detail": "Recaptcha verification failed"}
+            return JsonResponse(content, status=status.HTTP_400_BAD_REQUEST)
 
     clips_count = Clip.objects.filter(
         created_date=timezone.datetime.today(), uploader=request.user
@@ -255,6 +259,28 @@ def get_profile_clips_view(request):
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
+def get_clip_view(request):
+    clip_id = request.data.get("clip_id", None)
+    if clip_id is None:
+        return JsonResponse(
+            {"detail": "clip_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        clip = Clip.objects.get(id=clip_id)
+        clip_data = ClipSerializer(clip).data
+        return JsonResponse(
+            {"detail": "clip {}".format(clip_id), "payload": {"clip": clip_data}},
+            status=status.HTTP_200_OK,
+        )
+    except Clip.DoesNotExist:
+        return JsonResponse(
+            {"detail": "invalid clip_id"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
 def delete_clip_view(request):
     clip_id = request.data.get("clip_id", None)
     if clip_id is None:
@@ -413,7 +439,7 @@ def mediaconvert_sns_view(request):
         try:
             message = json.loads(json_data["Message"])
             # Fire a task that verifies the clip
-            check_compressed_successful_task.delay(message["s3_url"])
+            check_compressed_successful_task.delay(message["input_url"])
         except Exception as e:
             print(e)
 

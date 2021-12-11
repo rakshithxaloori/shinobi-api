@@ -23,15 +23,12 @@ def check_upload_after_delay(clip_pk):
         return
     if not clip.upload_verified:
         file_path = get_media_file_path(clip.url)
-        if default_storage.exists(file_path):
-            if default_storage.size(file_path) > VIDEO_MAX_SIZE_IN_BYTES:
-                delete_upload_file(file_path)
-                clip.delete()
-            else:
-                clip.upload_verified = True
-                clip.save(update_fields=["upload_verified"])
-        else:
-            clip.delete()
+        bucket_url = "s3://{bucket_name}/".format(
+            bucket_name=settings.AWS_STORAGE_BUCKET_NAME
+        )
+        input_s3_url = bucket_url + file_path
+
+        check_compressed_successful_task(input_s3_url)
 
 
 @celery_app.task(queue="celery")
@@ -82,6 +79,10 @@ def check_compressed_successful_task(input_s3_url: str):
                 settings.S3_FILE_COMPRESSED_PATH_PREFIX, upload_filename, "{}p", "{}"
             )
             file_cdn_url = get_media_file_url(compressed_file_key)
+            # Replace hex symbols
+            file_cdn_url = file_cdn_url.replace("%7B", "{")
+            file_cdn_url = file_cdn_url.replace("%7D", "}")
+
             clip = Clip.objects.get(url=get_media_file_url(upload_file_key))
             clip.compressed_verified = True
             clip.url = file_cdn_url
@@ -92,11 +93,19 @@ def check_compressed_successful_task(input_s3_url: str):
             for filearg in fileargs:
                 vid_file_key = compressed_file_key.format(filearg[0], filearg[1])
                 if default_storage.exists(vid_file_key):
-                    delete_upload_file(vid_file_key)
+                    default_storage.delete(vid_file_key)
 
 
 @celery_app.task(queue="celery")
 def delete_clip_task(url):
     file_path = get_media_file_path(url)
     if default_storage.exists(file_path):
+        # Upload
         delete_upload_file(file_path)
+    else:
+        # Upload and compressed
+        fileargs = [(720, 8), (720, 7), (480, 7), (360, 7)]
+        for filearg in fileargs:
+            vid_file_key = file_path.format(filearg[0], filearg[1])
+            if default_storage.exists(vid_file_key):
+                default_storage.delete(vid_file_key)

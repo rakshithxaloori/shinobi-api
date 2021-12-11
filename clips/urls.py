@@ -4,9 +4,19 @@ from clips import views
 
 urlpatterns = [
     path("check/", views.upload_check_view, name="upload check"),
-    path("presigned/", views.generate_s3_presigned_url_view, name="presigned post url"),
+    path(
+        "presigned/web/",
+        views.generate_s3_presigned_url_view,
+        name="presigned post url",
+    ),
+    path(
+        "presigned/mobile/",
+        views.generate_s3_presigned_url_view,
+        name="presigned post url",
+    ),
     path("success/", views.upload_successful_view, name="check success upload"),
     path("clips/profile/", views.get_profile_clips_view, name="my clips"),
+    path("clip/", views.get_clip_view, name="get clip"),
     path("delete/", views.delete_clip_view, name="delete clip"),
     path("like/", views.like_clip_view, name="like clip"),
     path("unlike/", views.unlike_clip_view, name="unlike clip"),
