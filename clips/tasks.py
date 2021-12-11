@@ -102,10 +102,9 @@ def delete_clip_task(url):
     if default_storage.exists(file_path):
         # Upload
         delete_upload_file(file_path)
-    else:
-        # Upload and compressed
-        fileargs = [(720, 8), (720, 7), (480, 7), (360, 7)]
-        for filearg in fileargs:
-            vid_file_key = file_path.format(filearg[0], filearg[1])
-            if default_storage.exists(vid_file_key):
-                default_storage.delete(vid_file_key)
+    # Upload and compressed
+    fileargs = [(720, 8), (720, 7), (480, 7), (360, 7)]
+    for filearg in fileargs:
+        vid_file_key = file_path.format(filearg[0], filearg[1])
+        if default_storage.exists(vid_file_key):
+            default_storage.delete(vid_file_key)
