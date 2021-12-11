@@ -40,7 +40,7 @@ def following_feed_view(request):
     clips = Clip.objects.filter(
         created_datetime__lt=datetime,
         uploader__in=following_users,
-        upload_verified=True,
+        compressed_verified=True,
     ).order_by("-created_datetime")[:10]
 
     clips_data = ClipSerializer(clips, many=True, context={"me": request.user}).data

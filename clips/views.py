@@ -245,7 +245,7 @@ def get_profile_clips_view(request):
         )
 
     clips = Clip.objects.filter(
-        created_datetime__lt=datetime, uploader=user, upload_verified=True
+        created_datetime__lt=datetime, uploader=user, compressed_verified=True
     ).order_by("-created_datetime")[:10]
 
     clips_data = ClipSerializer(clips, many=True).data
