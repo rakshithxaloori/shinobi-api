@@ -4,7 +4,7 @@ from django.core.files.storage import default_storage
 from shinobi.celery import app as celery_app
 
 
-from clips.utils import VIDEO_MAX_SIZE_IN_BYTES
+from clips.utils import VIDEO_MAX_SIZE_IN_BYTES, create_job
 from shinobi.utils import get_media_file_url, get_media_file_path
 from clips.models import Clip
 
@@ -23,12 +23,15 @@ def check_upload_after_delay(clip_pk):
         return
     if not clip.upload_verified:
         file_path = get_media_file_path(clip.url)
-        bucket_url = "s3://{bucket_name}/".format(
-            bucket_name=settings.AWS_STORAGE_BUCKET_NAME
-        )
-        input_s3_url = bucket_url + file_path
 
-        check_compressed_successful_task(input_s3_url)
+    if default_storage.exists(file_path):
+        if default_storage.size(file_path) > VIDEO_MAX_SIZE_IN_BYTES:
+            delete_upload_file(file_path)
+            clip.delete()
+        else:
+            clip.upload_verified = True
+            clip.save(update_fields=["upload_verified"])
+            create_job(file_path=file_path, rotate=clip.height > clip.width)
 
 
 @celery_app.task(queue="celery")
@@ -49,6 +52,7 @@ def check_upload_successful_task(file_path):
         else:
             clip.upload_verified = True
             clip.save(update_fields=["upload_verified"])
+            create_job(file_path=file_path, rotate=clip.height > clip.width)
 
 
 @celery_app.task(queue="celery")
