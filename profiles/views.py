@@ -27,6 +27,7 @@ from profiles.serializers import (
     FollowersSerializer,
 )
 from profiles.tasks import update_profile_picture
+from profiles.utils import get_action_approve
 
 
 @api_view(["GET"])
@@ -115,6 +116,11 @@ def follow_user_view(request, username):
         return JsonResponse(
             {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST
         )
+    action_approved = get_action_approve(request.user)
+    if not action_approved:
+        return JsonResponse(
+            {"detail": "Too many actions"}, status=status.HTTP_406_NOT_ACCEPTABLE
+        )
     try:
         being_followed_user = User.objects.get(username=username)
         follower_profile = request.user.profile
@@ -137,6 +143,11 @@ def unfollow_user_view(request, username):
     if username is None:
         return JsonResponse(
             {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    action_approved = get_action_approve(request.user)
+    if not action_approved:
+        return JsonResponse(
+            {"detail": "Too many actions"}, status=status.HTTP_406_NOT_ACCEPTABLE
         )
     try:
         being_followed_user = User.objects.get(username=username)
@@ -166,6 +177,11 @@ def remove_follower_view(request, username):
     if username is None:
         return JsonResponse(
             {"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    action_approved = get_action_approve(request.user)
+    if not action_approved:
+        return JsonResponse(
+            {"detail": "Too many actions"}, status=status.HTTP_406_NOT_ACCEPTABLE
         )
     try:
         follower_user = User.objects.get(username=username)

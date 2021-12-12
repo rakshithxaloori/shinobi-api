@@ -1,9 +1,29 @@
+from django.utils import timezone
 from django.utils.crypto import get_random_string
 
 from profiles.models import Game
 
 
 lol_logo = "https://cdn.shinobi.cc/logos/league_of_legends-256x256.png"
+
+TOTAL_ACTION_COUNT = 1000
+
+
+def get_action_approve(user):
+    today_date = timezone.now().date()
+    if user.last_action_date != today_date:
+        user.last_action_date = today_date
+        user.action_count = 0
+        user.save(update_fields=["last_action_date", "action_count"])
+        return True
+    else:
+        # TODAY
+        if user.action_count >= TOTAL_ACTION_COUNT:
+            return False
+        else:
+            user.action_count += 1
+            user.save(update_fields=["action_count"])
+            return True
 
 
 def game_alias(profile_instance):

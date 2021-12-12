@@ -34,6 +34,7 @@ from clips.tasks import (
     check_upload_successful_task,
 )
 from clips.utils import VIDEO_MAX_SIZE_IN_BYTES, s3_client, sns_client
+from profiles.utils import get_action_approve
 from shinobi.utils import get_media_file_url
 
 CLIP_DAILY_LIMIT = 2
@@ -312,6 +313,12 @@ def like_clip_view(request):
             {"detail": "clip_id is required"}, status=status.HTTP_400_BAD_REQUEST
         )
 
+    action_approved = get_action_approve(request.user)
+    if not action_approved:
+        return JsonResponse(
+            {"detail": "Too many actions"}, status=status.HTTP_406_NOT_ACCEPTABLE
+        )
+
     try:
         clip = Clip.objects.get(id=clip_id)
     except Clip.DoesNotExist:
@@ -332,6 +339,12 @@ def unlike_clip_view(request):
     if clip_id is None:
         return JsonResponse(
             {"detail": "clip_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    action_approved = get_action_approve(request.user)
+    if not action_approved:
+        return JsonResponse(
+            {"detail": "Too many actions"}, status=status.HTTP_406_NOT_ACCEPTABLE
         )
 
     try:
@@ -397,6 +410,12 @@ def report_clip_view(request):
     clip_id = request.data.get("clip_id", None)
     is_not_playing = request.data.get("not_play", None)
     is_not_game_clip = request.data.get("not_game", None)
+
+    action_approved = get_action_approve(request.user)
+    if not action_approved:
+        return JsonResponse(
+            {"detail": "Too many actions"}, status=status.HTTP_406_NOT_ACCEPTABLE
+        )
 
     if clip_id is None:
         return JsonResponse(

@@ -36,6 +36,7 @@ class Game(models.Model):
 
 
 class Profile(models.Model):
+    # Stuff that you wanna show in user's profile
     user = models.OneToOneField(User, related_name="profile", on_delete=models.PROTECT)
     followings = models.ManyToManyField(
         User, related_name="follower", blank=True, through="Following"
