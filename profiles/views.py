@@ -299,7 +299,7 @@ def search_games_view(request):
         return JsonResponse(
             {"detail": "search text is required"}, status=status.HTTP_400_BAD_REQUEST
         )
-    games = Game.objects.filter(name__startswith=search_text)[:2]
+    games = Game.objects.filter(name__istartswith=search_text)[:2]
     games_data = GameSerializer(games, many=True).data
 
     return JsonResponse(
