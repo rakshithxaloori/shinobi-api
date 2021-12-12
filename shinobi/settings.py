@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     "health_checks",
     "feed",
     "clips",
+    "ux",
 ]
 
 MIDDLEWARE = [
