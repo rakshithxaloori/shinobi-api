@@ -33,7 +33,7 @@ class Clip(models.Model):
     uploader = models.ForeignKey(User, related_name="clips", on_delete=models.PROTECT)
     game = models.ForeignKey(Game, related_name="game_clips", on_delete=models.PROTECT)
     uploaded_from = models.CharField(max_length=1, choices=UPLOADED_FROM_CHOICES)
-    title = models.CharField(max_length=40)
+    title = models.CharField(max_length=80)
     liked_by = models.ManyToManyField(
         User, related_name="liked_clips", blank=True, through="Like"
     )
