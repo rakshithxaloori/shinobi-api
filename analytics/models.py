@@ -8,14 +8,16 @@ class DailyAnalytics(models.Model):
     new_users = models.PositiveIntegerField(default=0)
     active_users = models.PositiveIntegerField(default=0)
     total_users = models.PositiveIntegerField(default=0)
-    total_clips = models.PositiveIntegerField(default=0)
+    total_clips_m = models.PositiveIntegerField(default=0)
+    total_clips_w = models.PositiveIntegerField(default=0)
     total_views = models.PositiveBigIntegerField(default=0)
 
     def __str__(self):
-        return "{} || a: {} || n: {} || t: {} || c: {}".format(
+        return "{} || a: {} || n: {} || t: {} || cm: {} || cw: {}".format(
             self.date,
             self.active_users,
             self.new_users,
             self.total_users,
-            self.total_clips,
+            self.total_clips_m,
+            self.total_clips_w,
         )

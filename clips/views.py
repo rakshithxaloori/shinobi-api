@@ -75,6 +75,7 @@ def upload_check_view(request):
 @permission_classes([IsAuthenticated, HasAPIKey])
 def generate_s3_presigned_url_view(request):
     # Verify recaptcha
+    uploaded_from = Clip.MOBILE
     if request.path == "/clips/presigned/web/":
         recaptcha_token = request.data.get("recaptcha_token", None)
         if recaptcha_token is None:
@@ -93,6 +94,8 @@ def generate_s3_presigned_url_view(request):
         if not success or success is None:
             content = {"detail": "Recaptcha verification failed"}
             return JsonResponse(content, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            uploaded_from = Clip.WEB
 
     clips_count = Clip.objects.filter(
         created_date=timezone.datetime.today(), uploader=request.user
@@ -195,6 +198,7 @@ def generate_s3_presigned_url_view(request):
         url=file_url,
         height=clip_height,
         width=clip_width,
+        uploaded_from=uploaded_from,
     )
     new_clip.save()
     check_upload_after_delay.apply_async(

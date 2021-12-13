@@ -17,8 +17,11 @@ def get_analytics_instance():
         # Update old analytics instance
         old_analytics = DailyAnalytics.objects.order_by("-date").first()
         old_analytics.total_users = User.objects.filter(is_staff=False).count()
-        old_analytics.total_clips = Clip.objects.filter(
-            created_date=old_analytics.date
+        old_analytics.total_clips_m = Clip.objects.filter(
+            created_date=old_analytics.date, uploaded_from=Clip.MOBILE
+        ).count()
+        old_analytics.total_clips_w = Clip.objects.filter(
+            created_date=old_analytics.date, uploaded_from=Clip.WEB
         ).count()
         old_analytics.total_views = View.objects.filter(
             created_date=old_analytics.date

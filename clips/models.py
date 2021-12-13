@@ -16,6 +16,10 @@ def generate_random_id():
 
 
 class Clip(models.Model):
+    MOBILE = "M"
+    WEB = "W"
+    UPLOADED_FROM_CHOICES = [(MOBILE, "Mobile"), (WEB, "Web")]
+
     id = models.CharField(
         max_length=12,
         primary_key=True,
@@ -28,6 +32,7 @@ class Clip(models.Model):
     compressed_verified = models.BooleanField(default=False)
     uploader = models.ForeignKey(User, related_name="clips", on_delete=models.PROTECT)
     game = models.ForeignKey(Game, related_name="game_clips", on_delete=models.PROTECT)
+    uploaded_from = models.CharField(max_length=1, choices=UPLOADED_FROM_CHOICES)
     title = models.CharField(max_length=40)
     liked_by = models.ManyToManyField(
         User, related_name="liked_clips", blank=True, through="Like"
