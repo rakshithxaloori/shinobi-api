@@ -1,0 +1,165 @@
+{
+  "Inputs": [
+    {
+      "TimecodeSource": "ZEROBASED",
+      "VideoSelector": {
+        "Rotate": "AUTO"
+      },
+      "AudioSelectors": {
+        "Audio Selector 1": {
+          "DefaultSelection": "DEFAULT"
+        }
+      }
+    }
+  ],
+  "OutputGroups": [
+    {
+      "Name": "File Group",
+      "OutputGroupSettings": {
+        "Type": "FILE_GROUP_SETTINGS",
+        "FileGroupSettings": {}
+      },
+      "Outputs": [
+        {
+          "VideoDescription": {
+            "Width": 1280,
+            "Height": 720,
+            "CodecSettings": {
+              "Codec": "H_265",
+              "H265Settings": {
+                "RateControlMode": "QVBR",
+                "SceneChangeDetect": "TRANSITION_DETECTION",
+                "MaxBitrate": 4000000,
+                "QvbrSettings": {
+                  "QvbrQualityLevel": 8
+                }
+              }
+            }
+          },
+          "AudioDescriptions": [
+            {
+              "CodecSettings": {
+                "Codec": "AAC",
+                "AacSettings": {
+                  "Bitrate": 96000,
+                  "CodingMode": "CODING_MODE_2_0",
+                  "SampleRate": 48000
+                }
+              }
+            }
+          ],
+          "ContainerSettings": {
+            "Container": "MP4",
+            "Mp4Settings": {}
+          },
+          "NameModifier": "_720p_8"
+        },
+        {
+          "VideoDescription": {
+            "Width": 1280,
+            "Height": 720,
+            "CodecSettings": {
+              "Codec": "H_265",
+              "H265Settings": {
+                "RateControlMode": "QVBR",
+                "SceneChangeDetect": "TRANSITION_DETECTION",
+                "MaxBitrate": 2000000,
+                "QvbrSettings": {
+                  "QvbrQualityLevel": 7
+                }
+              }
+            }
+          },
+          "AudioDescriptions": [
+            {
+              "CodecSettings": {
+                "Codec": "AAC",
+                "AacSettings": {
+                  "Bitrate": 96000,
+                  "CodingMode": "CODING_MODE_2_0",
+                  "SampleRate": 48000
+                }
+              }
+            }
+          ],
+          "ContainerSettings": {
+            "Container": "MP4",
+            "Mp4Settings": {}
+          },
+          "NameModifier": "_720p_7"
+        },
+        {
+          "VideoDescription": {
+            "Width": 640,
+            "Height": 480,
+            "CodecSettings": {
+              "Codec": "H_265",
+              "H265Settings": {
+                "RateControlMode": "QVBR",
+                "SceneChangeDetect": "TRANSITION_DETECTION",
+                "MaxBitrate": 1000000,
+                "QvbrSettings": {
+                  "QvbrQualityLevel": 7
+                }
+              }
+            }
+          },
+          "AudioDescriptions": [
+            {
+              "CodecSettings": {
+                "Codec": "AAC",
+                "AacSettings": {
+                  "Bitrate": 96000,
+                  "CodingMode": "CODING_MODE_2_0",
+                  "SampleRate": 48000
+                }
+              }
+            }
+          ],
+          "ContainerSettings": {
+            "Container": "MP4",
+            "Mp4Settings": {}
+          },
+          "NameModifier": "_480p_7"
+        },
+        {
+          "VideoDescription": {
+            "Width": 480,
+            "Height": 360,
+            "CodecSettings": {
+              "Codec": "H_265",
+              "H265Settings": {
+                "RateControlMode": "QVBR",
+                "SceneChangeDetect": "TRANSITION_DETECTION",
+                "MaxBitrate": 700000,
+                "QvbrSettings": {
+                  "QvbrQualityLevel": 7
+                }
+              }
+            }
+          },
+          "AudioDescriptions": [
+            {
+              "CodecSettings": {
+                "Codec": "AAC",
+                "AacSettings": {
+                  "Bitrate": 96000,
+                  "CodingMode": "CODING_MODE_2_0",
+                  "SampleRate": 48000
+                }
+              }
+            }
+          ],
+          "ContainerSettings": {
+            "Container": "MP4",
+            "Mp4Settings": {}
+          },
+          "NameModifier": "_360p_7"
+        }
+      ]
+    }
+  ],
+  "TimecodeConfig": {
+    "Source": "ZEROBASED"
+  }
+}

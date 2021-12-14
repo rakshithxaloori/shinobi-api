@@ -27,14 +27,16 @@ def random_bio():
 # Create your models here.
 class Game(models.Model):
     id = models.CharField(max_length=10, primary_key=True)
-    name = models.CharField(max_length=50, blank=False, null=False)
+    name = models.CharField(max_length=50, unique=True)
+    game_code = models.CharField(max_length=5, unique=True)
     logo_url = models.URLField()
 
     def __str__(self):
-        return self.name
+        return "{} || {}".format(self.name, self.game_code)
 
 
 class Profile(models.Model):
+    # Stuff that you wanna show in user's profile
     user = models.OneToOneField(User, related_name="profile", on_delete=models.PROTECT)
     followings = models.ManyToManyField(
         User, related_name="follower", blank=True, through="Following"

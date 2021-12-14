@@ -2,6 +2,11 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
 
+
+def today_date():
+    return timezone.now().date()
+
+
 # Create your models here.
 class User(AbstractUser):
     is_banned = models.BooleanField(default=False)
@@ -13,6 +18,8 @@ class User(AbstractUser):
         default=timezone.now
     )  # The last time the user closed the app
     online = models.BooleanField(default=False)
+    last_action_date = models.DateField(default=today_date)
+    action_count = models.PositiveSmallIntegerField(default=0)
 
     def __str__(self):
         return "{} || {}".format(self.username, self.email)

@@ -221,14 +221,9 @@ def youtube_connect_view(request):
             # Create YouTubeProfile model with channel_id
             yt_channel = yt_channels[0]
 
-            image_url = yt_channel["snippet"]["thumbnails"].get("medium", None)
-            if image_url is None:
-                image_url = yt_channel["snippet"]["thumbnails"]["default"]
-            image_url = image_url["url"]
             new_youtube_profile = YouTubeProfile.objects.create(
                 profile=request.user.profile,
                 channel_id=yt_channel["id"],
-                channel_image_url=image_url,
             )
             new_youtube_profile.save()
             return JsonResponse(

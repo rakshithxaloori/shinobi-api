@@ -1,6 +1,8 @@
-import re
 import uuid
 import json
+from urllib.parse import urlencode
+from urllib.request import urlopen
+
 
 from django.http import JsonResponse
 from django.conf import settings
@@ -31,8 +33,12 @@ from clips.tasks import (
     check_upload_after_delay,
     check_upload_successful_task,
 )
-from clips.utils import s3_client, sns_client
+from clips.utils import VIDEO_MAX_SIZE_IN_BYTES, s3_client, sns_client
+from profiles.utils import get_action_approve
 from shinobi.utils import get_media_file_url
+
+CLIP_DAILY_LIMIT = 2
+URI_RECAPTCHA = "https://www.google.com/recaptcha/api/siteverify"
 
 
 @api_view(["GET"])
@@ -40,7 +46,7 @@ from shinobi.utils import get_media_file_url
 @permission_classes([IsAuthenticated, HasAPIKey])
 def upload_check_view(request):
     clips_count = Clip.objects.filter(created_date=timezone.datetime.today()).count()
-    quota = 2 - clips_count
+    quota = CLIP_DAILY_LIMIT - clips_count
 
     datetime_now = timezone.now()
     time = 24 - datetime_now.hour
@@ -68,12 +74,35 @@ def upload_check_view(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def generate_s3_presigned_url_view(request):
+    # Verify recaptcha
+    uploaded_from = Clip.MOBILE
+    if request.path == "/clips/presigned/web/":
+        recaptcha_token = request.data.get("recaptcha_token", None)
+        if recaptcha_token is None:
+            content = {"detail": "Recaptcha token required"}
+            return JsonResponse(content, status=status.HTTP_400_BAD_REQUEST)
+
+        params = urlencode(
+            {
+                "secret": settings.GOOGLE_RECAPTCHA_SECRET_KEY,
+                "response": recaptcha_token,
+            }
+        )
+        data = urlopen(URI_RECAPTCHA, params.encode("utf-8")).read()
+        result = json.loads(data)
+        success = result.get("success", None)
+        if not success or success is None:
+            content = {"detail": "Recaptcha verification failed"}
+            return JsonResponse(content, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            uploaded_from = Clip.WEB
+
     clips_count = Clip.objects.filter(
         created_date=timezone.datetime.today(), uploader=request.user
     ).count()
-    if clips_count >= 3:
+    if clips_count >= CLIP_DAILY_LIMIT:
         return JsonResponse(
-            {"detail": "Daily limit of 3 clips"},
+            {"detail": "Daily limit of {} clips".format(CLIP_DAILY_LIMIT)},
             status=status.HTTP_405_METHOD_NOT_ALLOWED,
         )
 
@@ -82,7 +111,8 @@ def generate_s3_presigned_url_view(request):
     game_code = request.data.get("game_code", None)
     title = request.data.get("title", None)
 
-    clip_height_to_width_ratio = request.data.get("clip_height_to_width_ratio", None)
+    clip_height = request.data.get("clip_height", None)
+    clip_width = request.data.get("clip_width", None)
 
     if clip_size is None:
         return JsonResponse(
@@ -93,10 +123,9 @@ def generate_s3_presigned_url_view(request):
         return JsonResponse(
             {"detail": "Invalid clip_size"}, status=status.HTTP_400_BAD_REQUEST
         )
-    elif clip_size > 100 * 1000 * 1000:
-        # 100 MB
+    elif clip_size > VIDEO_MAX_SIZE_IN_BYTES:
         return JsonResponse(
-            {"detail": "clip_size has to be less than 100 MB"},
+            {"detail": "clip_size has to be less than 500 MB"},
             status=status.HTTP_400_BAD_REQUEST,
         )
     if clip_type is None:
@@ -116,7 +145,7 @@ def generate_s3_presigned_url_view(request):
             {"detail": "title has to be less than 30 characters"},
             status=status.HTTP_400_BAD_REQUEST,
         )
-    if clip_height_to_width_ratio is None or clip_height_to_width_ratio < 0:
+    if clip_height is None or clip_height < 0 or clip_width is None or clip_width < 0:
         return JsonResponse(
             {"detail": "clip_height_to_width_ratio required or invalid"},
             status=status.HTTP_400_BAD_REQUEST,
@@ -129,10 +158,11 @@ def generate_s3_presigned_url_view(request):
             {"detail": "Invalid game_code"}, status=status.HTTP_400_BAD_REQUEST
         )
     try:
-        clip_height_to_width_ratio = float(clip_height_to_width_ratio)
+        clip_height = int(clip_height)
+        clip_width = int(clip_width)
     except ValueError:
         return JsonResponse(
-            {"detail": "clip_height_to_width_ratio invalid"},
+            {"detail": "clip height or width invalid"},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -166,7 +196,9 @@ def generate_s3_presigned_url_view(request):
         game=game,
         title=title,
         url=file_url,
-        height_to_width_ratio=clip_height_to_width_ratio,
+        height=clip_height,
+        width=clip_width,
+        uploaded_from=uploaded_from,
     )
     new_clip.save()
     check_upload_after_delay.apply_async(
@@ -189,33 +221,6 @@ def upload_successful_view(request):
     check_upload_successful_task.delay(file_key)
 
     return JsonResponse({"detail": ""}, status=status.HTTP_200_OK)
-
-
-@api_view(["POST"])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated, HasAPIKey])
-def get_all_clips_view(request):
-    datetime = request.data.get("datetime", None)
-    if datetime is None:
-        return JsonResponse(
-            {"detail": "datetime is required"}, status=status.HTTP_400_BAD_REQUEST
-        )
-    datetime = dateparse.parse_datetime(datetime)
-    if datetime is None:
-        return JsonResponse(
-            {"detail": "Invalid datetime"}, status=status.HTTP_400_BAD_REQUEST
-        )
-
-    clips = Clip.objects.filter(
-        created_datetime__lt=datetime, upload_verified=True
-    ).order_by("-created_datetime")[:10]
-
-    clips_data = ClipSerializer(clips, many=True, context={"me": request.user}).data
-
-    return JsonResponse(
-        {"detail": "clips from {}".format(datetime), "payload": {"clips": clips_data}},
-        status=status.HTTP_200_OK,
-    )
 
 
 @api_view(["POST"])
@@ -245,7 +250,7 @@ def get_profile_clips_view(request):
         )
 
     clips = Clip.objects.filter(
-        created_datetime__lt=datetime, uploader=user, upload_verified=True
+        created_datetime__lt=datetime, uploader=user, compressed_verified=True
     ).order_by("-created_datetime")[:10]
 
     clips_data = ClipSerializer(clips, many=True).data
@@ -254,6 +259,28 @@ def get_profile_clips_view(request):
         {"detail": "clips from {}".format(datetime), "payload": {"clips": clips_data}},
         status=status.HTTP_200_OK,
     )
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def get_clip_view(request):
+    clip_id = request.data.get("clip_id", None)
+    if clip_id is None:
+        return JsonResponse(
+            {"detail": "clip_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        clip = Clip.objects.get(id=clip_id)
+        clip_data = ClipSerializer(clip).data
+        return JsonResponse(
+            {"detail": "clip {}".format(clip_id), "payload": {"clip": clip_data}},
+            status=status.HTTP_200_OK,
+        )
+    except Clip.DoesNotExist:
+        return JsonResponse(
+            {"detail": "invalid clip_id"}, status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 @api_view(["POST"])
@@ -290,6 +317,12 @@ def like_clip_view(request):
             {"detail": "clip_id is required"}, status=status.HTTP_400_BAD_REQUEST
         )
 
+    action_approved = get_action_approve(request.user)
+    if not action_approved:
+        return JsonResponse(
+            {"detail": "Too many actions"}, status=status.HTTP_406_NOT_ACCEPTABLE
+        )
+
     try:
         clip = Clip.objects.get(id=clip_id)
     except Clip.DoesNotExist:
@@ -312,6 +345,12 @@ def unlike_clip_view(request):
             {"detail": "clip_id is required"}, status=status.HTTP_400_BAD_REQUEST
         )
 
+    action_approved = get_action_approve(request.user)
+    if not action_approved:
+        return JsonResponse(
+            {"detail": "Too many actions"}, status=status.HTTP_406_NOT_ACCEPTABLE
+        )
+
     try:
         clip = Clip.objects.get(id=clip_id)
     except Clip.DoesNotExist:
@@ -322,6 +361,28 @@ def unlike_clip_view(request):
     clip.liked_by.remove(request.user)
     clip.save()
     return JsonResponse({"detail": "clip unliked"}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def viewed_clip_view(request):
+    clip_id = request.data.get("clip_id", None)
+    if clip_id is None:
+        return JsonResponse(
+            {"detail": "clip_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        clip = Clip.objects.get(id=clip_id)
+    except Clip.DoesNotExist:
+        return JsonResponse(
+            {"detail": "clip_id invalid"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    clip.viewed_by.add(request.user)
+    clip.save()
+    return JsonResponse({"detail": "clip viewed"}, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
@@ -353,6 +414,12 @@ def report_clip_view(request):
     clip_id = request.data.get("clip_id", None)
     is_not_playing = request.data.get("not_play", None)
     is_not_game_clip = request.data.get("not_game", None)
+
+    action_approved = get_action_approve(request.user)
+    if not action_approved:
+        return JsonResponse(
+            {"detail": "Too many actions"}, status=status.HTTP_406_NOT_ACCEPTABLE
+        )
 
     if clip_id is None:
         return JsonResponse(
@@ -394,12 +461,8 @@ def mediaconvert_sns_view(request):
     else:
         try:
             message = json.loads(json_data["Message"])
-            print(message)
-            print("s3_url", message["s3_url"])
-
             # Fire a task that verifies the clip
-            check_compressed_successful_task.delay(message["s3_url"])
-            print("TASK QUEUED")
+            check_compressed_successful_task.delay(message["input_url"])
         except Exception as e:
             print(e)
 

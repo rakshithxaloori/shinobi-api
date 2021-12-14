@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     "health_checks",
     "feed",
     "clips",
+    "ux",
 ]
 
 MIDDLEWARE = [
@@ -271,6 +272,15 @@ AWS_SNS_ACCESS_KEY_ID = os.environ["AWS_SNS_ACCESS_KEY_ID"]
 AWS_SNS_SECRET_ACCESS_KEY = os.environ["AWS_SNS_SECRET_ACCESS_KEY"]
 AWS_SNS_REGION_NAME = os.environ["AWS_SNS_REGION_NAME"]
 AWS_SNS_TOPIC_ARN = os.environ["AWS_SNS_TOPIC_ARN"]
+
+################################################################################
+AWS_MEDIACONVERT_ACCESS_KEY_ID = os.environ["AWS_MEDIACONVERT_ACCESS_KEY_ID"]
+AWS_MEDIACONVERT_SECRET_ACCESS_KEY = os.environ["AWS_MEDIACONVERT_SECRET_ACCESS_KEY"]
+AWS_MEDIACONVERT_REGION_NAME = os.environ["AWS_MEDIACONVERT_REGION_NAME"]
+AWS_MEDIACONVERT_JOB_ROLE = os.environ["AWS_MEDIACONVERT_JOB_ROLE"]
+
+################################################################################
+GOOGLE_RECAPTCHA_SECRET_KEY = os.environ["GOOGLE_RECAPTCHA_SECRET_KEY"]
 
 ################################################################################
 # Only transmit HTTPS requests to Django
