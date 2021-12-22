@@ -50,6 +50,9 @@ class Clip(models.Model):
             self.id, self.uploader.username, self.game.game_code
         )
 
+    class Meta:
+        ordering = ["-created_datetime"]
+
 
 class View(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT)
