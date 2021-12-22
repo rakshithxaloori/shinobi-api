@@ -18,13 +18,7 @@ class Notification(models.Model):
     receiver = models.ForeignKey(
         User, related_name="notifications", on_delete=models.PROTECT
     )
-    type = models.CharField(
-        max_length=1,
-        choices=NOTIFICATION_CHOICES,
-        default=FOLLOW,
-        blank=False,
-        null=False,
-    )
+    type = models.CharField(max_length=1, choices=NOTIFICATION_CHOICES, default=FOLLOW)
     sent_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
@@ -44,7 +38,7 @@ class ExponentPushToken(models.Model):
     user = models.ForeignKey(
         User, related_name="exponent_push_tokens", on_delete=models.PROTECT
     )
-    token = models.TextField(blank=False, null=False)
+    token = models.TextField()
     is_active = models.BooleanField(default=True)
 
     def __str__(self):

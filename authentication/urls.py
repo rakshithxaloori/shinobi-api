@@ -9,4 +9,9 @@ urlpatterns = [
     path("check_username/", views.check_username_view, name="check username"),
     path("online/", views.online_view, name="online"),
     path("offline/", views.offline_view, name="offline"),
+    path(
+        "valid/",
+        views.valid_token_view,
+        name="valid token",
+    ),
 ]

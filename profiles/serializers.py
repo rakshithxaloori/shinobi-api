@@ -1,7 +1,7 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from authentication.models import User
-from profiles.models import Profile, Following
+from profiles.models import Game, Profile, Following
 from socials.serializers import SocialsSerializer
 from profiles.utils import game_alias
 
@@ -85,3 +85,10 @@ class FollowingSerializer(ModelSerializer):
 
     def get_game_alias(self, obj):
         return game_alias(obj.profile)
+
+
+##########################################
+class GameSerializer(ModelSerializer):
+    class Meta:
+        model = Game
+        fields = ["id", "game_code", "name", "logo_url"]

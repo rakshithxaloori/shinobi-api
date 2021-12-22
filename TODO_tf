@@ -24,6 +24,10 @@ REGION (resources to create in new regions)
             - Security Group
                 - Add My IP for ecs exec
                 - Add LB SG
+            - IAM Role
+                - Param store
+                - ECS Exec
+                - S3 env file read
 
         - Task Definition
             - Task execution role
@@ -56,3 +60,56 @@ REGION (resources to create in new regions)
     - S3 bucket for static files
         - IAM User
             - Inline policy
+
+    # https://github.com/aws-samples/aws-media-services-vod-automation/blob/master/MediaConvert-WorkflowWatchFolderAndNotification/README-tutorial.md
+    - SNS notification
+        - Create a programmatic user
+    - S3 CORS Website accept
+    - Set expiry in /uploads to 1 day
+    - Cloudtrail
+        - CMD
+        # aws cloudtrail put-event-selectors --trail-name clips-put-delete \
+        # --advanced-event-selectors '[
+        #   {
+        #     "Name": "Log PutObject and DeleteObject events for plx-dev-static/clips",
+        #     "FieldSelectors": [
+        #         { "Field": "eventCategory", "Equals": ["Data"] },
+        #       { "Field": "resources.type", "Equals": ["AWS::S3::Object"] },
+        #       { "Field": "eventName", "Equals": ["PutObject","DeleteObject"] },
+        #       { "Field": "resources.ARN", "StartsWith": ["arn:aws:s3:::plx-dev-static/clips"] }
+        #     ]
+        #   }
+        # ]'
+
+
+
+
+
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ecs:ExecuteCommand"
+            ],
+            "Condition": {
+                "StringEquals": {
+                    "ecs:container-name": "plx-api"
+                }
+            },
+            "Resource": "arn:aws:ecs:us-east-1:476691507110:cluster/plx-dev"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ssmmessages:CreateControlChannel",
+                "ssmmessages:CreateDataChannel",
+                "ssmmessages:OpenControlChannel",
+                "ssmmessages:OpenDataChannel"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

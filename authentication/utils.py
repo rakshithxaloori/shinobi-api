@@ -1,3 +1,5 @@
+import requests
+
 from django.http import JsonResponse
 from django.utils import timezone
 from django.utils.crypto import get_random_string
@@ -6,8 +8,26 @@ from rest_framework import status
 
 from knox.models import AuthToken
 
+
 from authentication.serializers import UserSignupSerializer
 from authentication.models import User
+
+
+def get_info_from_access_token(access_token: str = ""):
+    if access_token == "":
+        return None
+    endpoint = "https://www.googleapis.com/userinfo/v2/me"
+    headers = {"Authorization": "Bearer {}".format(access_token)}
+    try:
+        response = requests.get(url=endpoint, headers=headers)
+        if response.ok:
+            return response.json()
+        else:
+            print(response.reason)
+            return None
+    except Exception as e:
+        print("get_info_from_access_token EXCEPTION:", e)
+        return None
 
 
 def token_response(user):

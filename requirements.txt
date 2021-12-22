@@ -4,12 +4,10 @@ djangorestframework==3.12.4
 django-rest-knox==4.1.0
 djangorestframework-api-key==2.0.0
 django-cors-headers==3.7.0
-google-api-python-client==1.12.8
-google-auth==1.31.0
 channels==3.0.3
 exponent-server-sdk==2.0.0
 django-redis==5.0.0
-celery==5.1.2
+celery==5.2.1
 ratelimit==2.2.1
 rollbar==0.16.1
 psycopg2-binary==2.9

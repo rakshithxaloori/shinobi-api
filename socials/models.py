@@ -23,13 +23,9 @@ class InstagramProfile(models.Model):
         Profile, related_name="instagram_profile", on_delete=models.PROTECT
     )
     account_type = models.CharField(
-        max_length=1,
-        choices=ACCOUNT_TYPE_CHOICES,
-        default=PERSONAL,
-        blank=False,
-        null=False,
+        max_length=1, choices=ACCOUNT_TYPE_CHOICES, default=PERSONAL
     )
-    username = models.CharField(max_length=30, blank=False, null=False)
+    username = models.CharField(max_length=30)
 
     def __str__(self):
         return "{} || {}".format(self.username, self.account_type)
@@ -39,9 +35,9 @@ class TwitchProfile(models.Model):
     profile = models.OneToOneField(
         Profile, related_name="twitch_profile", on_delete=models.PROTECT
     )
-    user_id = models.CharField(max_length=20, blank=False, null=False)
-    login = models.CharField(max_length=25, blank=False, null=False)
-    display_name = models.CharField(max_length=25, blank=False, null=False)
+    user_id = models.CharField(max_length=20)
+    login = models.CharField(max_length=25)
+    display_name = models.CharField(max_length=25)
     # view_count = models.PositiveBigIntegerField(default=0)
     secret = models.CharField(max_length=10, default=random_twitch_secret)
     # stream_online_subscription_id = models.CharField(
@@ -64,7 +60,7 @@ class TwitchProfile(models.Model):
 #         related_name="twitch_streams",
 #         on_delete=models.PROTECT,
 #     )
-#     stream_id = models.CharField(max_length=100, blank=False, null=False)
+#     stream_id = models.CharField(max_length=100, )
 #     title = models.CharField(max_length=140, blank=True, null=True)
 #     thumbnail_url = models.URLField(null=True, blank=True)
 #     is_streaming = models.BooleanField(default=True)
@@ -81,8 +77,7 @@ class YouTubeProfile(models.Model):
     profile = models.OneToOneField(
         Profile, related_name="youtube_profile", on_delete=models.PROTECT
     )
-    channel_id = models.CharField(max_length=24, blank=False, null=False)
-    channel_image_url = models.URLField(null=True, blank=True)
+    channel_id = models.CharField(max_length=24)
 
     def __str__(self):
         return "{} || {}".format(self.channel_id, self.profile.user.username)

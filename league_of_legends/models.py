@@ -20,16 +20,10 @@ class VerifyLolProfile(models.Model):
     ]
 
     user = models.OneToOneField(
-        User,
-        related_name="verify_lol_profile",
-        on_delete=models.PROTECT,
-        null=False,
-        blank=False,
+        User, related_name="verify_lol_profile", on_delete=models.PROTECT
     )
     summoner_name = models.CharField(max_length=16)
-    platform = models.CharField(
-        max_length=5, null=False, blank=False, choices=PLATFORM_CHOICES
-    )
+    platform = models.CharField(max_length=5, choices=PLATFORM_CHOICES)
     old_profile_icon = models.PositiveSmallIntegerField(default=0)
     new_profile_icon = models.PositiveSmallIntegerField(default=0)
 
@@ -68,12 +62,10 @@ class LolProfile(models.Model):
         null=True,
         blank=True,
     )
-    name = models.CharField(max_length=16, null=False, blank=False)
+    name = models.CharField(max_length=16)
     profile_icon = models.PositiveSmallIntegerField(default=0)
     level = models.PositiveSmallIntegerField(default=0)
-    platform = models.CharField(
-        max_length=5, null=False, blank=False, choices=PLATFORM_CHOICES
-    )
+    platform = models.CharField(max_length=5, choices=PLATFORM_CHOICES)
     summoner_id = models.CharField(max_length=63)
     active = models.BooleanField(default=False)
     updating = models.BooleanField(default=False)
@@ -91,11 +83,9 @@ class Team(models.Model):
         red = "R"
 
     # creation is same as Match.creation
-    creation = models.DateTimeField(blank=False, null=False)
-    color = models.CharField(
-        max_length=1, choices=Color.choices, blank=False, null=False
-    )  # color.label
-    win = models.BooleanField(blank=False, null=False)
+    creation = models.DateTimeField()
+    color = models.CharField(max_length=1, choices=Color.choices)  # color.label
+    win = models.BooleanField()
 
     def __str__(self):
         win_str = "WIN" if self.win else "LOSE"
@@ -103,20 +93,20 @@ class Team(models.Model):
 
 
 class ParticipantStats(models.Model):
-    assists = models.PositiveSmallIntegerField(null=False, blank=False)
-    deaths = models.PositiveSmallIntegerField(null=False, blank=False)
-    kills = models.PositiveSmallIntegerField(null=False, blank=False)
-    total_damage_dealt = models.PositiveIntegerField(null=False, blank=False)
+    assists = models.PositiveSmallIntegerField()
+    deaths = models.PositiveSmallIntegerField()
+    kills = models.PositiveSmallIntegerField()
+    total_damage_dealt = models.PositiveIntegerField()
 
-    double_kills = models.PositiveSmallIntegerField(null=False, blank=False)
-    penta_kills = models.PositiveSmallIntegerField(null=False, blank=False)
-    quadra_kills = models.PositiveSmallIntegerField(null=False, blank=False)
-    triple_kills = models.PositiveSmallIntegerField(null=False, blank=False)
+    double_kills = models.PositiveSmallIntegerField()
+    penta_kills = models.PositiveSmallIntegerField()
+    quadra_kills = models.PositiveSmallIntegerField()
+    triple_kills = models.PositiveSmallIntegerField()
 
     # items is JSON string of [{"name", "image"}]
     # eg [{"name": "Sorcerer's Shoes", "image": "3020.png'"}, ...]
-    items = models.JSONField(null=False, blank=False)
-    spell_casts = models.JSONField(null=False, blank=False)
+    items = models.JSONField()
+    spell_casts = models.JSONField()
 
     def __str__(self):
         try:
@@ -142,8 +132,10 @@ class Participant(models.Model):
         ParticipantStats, related_name="participant", on_delete=models.PROTECT
     )
     # https://ddragon.leagueoflegends.com/cdn/11.23.1/img/champion/{}.png
-    champion_key = models.PositiveSmallIntegerField(null=False, blank=False)
-    role = models.CharField(max_length=15, null=False, blank=False)
+    champion_key = models.PositiveSmallIntegerField()
+    role = models.CharField(
+        max_length=15,
+    )
 
     def __str__(self):
         return "{} || {} || {}".format(
@@ -153,15 +145,15 @@ class Participant(models.Model):
 
 class Match(models.Model):
     id = models.CharField(primary_key=True, max_length=15)
-    creation = models.DateTimeField(blank=False, null=False)
+    creation = models.DateTimeField()
     blue_team = models.OneToOneField(
         Team, related_name="b_match", on_delete=models.PROTECT
     )
     red_team = models.OneToOneField(
         Team, related_name="r_match", on_delete=models.PROTECT
     )
-    mode = models.CharField(max_length=30, blank=False, null=False)
-    platform = models.CharField(max_length=5, blank=False, null=False)
+    mode = models.CharField(max_length=30)
+    platform = models.CharField(max_length=5)
 
     def __str__(self):
         return "{} || {}".format(self.creation, self.id)
