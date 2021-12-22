@@ -31,7 +31,7 @@ else:
 
 if settings.CI_CD_STAGE == "testing" or settings.CI_CD_STAGE == "production":
     mediaconvert_client = boto3.client(
-        "mediaconvert",
+        service_name="mediaconvert",
         aws_access_key_id=settings.AWS_MEDIACONVERT_ACCESS_KEY_ID,
         aws_secret_access_key=settings.AWS_MEDIACONVERT_SECRET_ACCESS_KEY,
         region_name=settings.AWS_MEDIACONVERT_REGION_NAME,

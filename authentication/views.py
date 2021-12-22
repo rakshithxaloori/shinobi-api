@@ -78,7 +78,7 @@ def google_login_view(request):
         )
 
 
-@api_view(["POST"])
+@api_view(["GET", "POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def logout_view(request):
