@@ -23,15 +23,14 @@ def check_upload_after_delay(clip_pk):
         return
     if not clip.upload_verified:
         file_path = get_media_file_path(clip.url)
-
-    if default_storage.exists(file_path):
-        if default_storage.size(file_path) > VIDEO_MAX_SIZE_IN_BYTES:
-            delete_upload_file(file_path)
-            clip.delete()
-        else:
-            clip.upload_verified = True
-            clip.save(update_fields=["upload_verified"])
-            create_job(file_path=file_path, rotate=clip.height > clip.width)
+        if default_storage.exists(file_path):
+            if default_storage.size(file_path) > VIDEO_MAX_SIZE_IN_BYTES:
+                delete_upload_file(file_path)
+                clip.delete()
+            else:
+                clip.upload_verified = True
+                clip.save(update_fields=["upload_verified"])
+                create_job(file_path=file_path, rotate=clip.height > clip.width)
 
 
 @celery_app.task(queue="celery")
