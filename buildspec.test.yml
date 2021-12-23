@@ -47,7 +47,6 @@ phases:
       - NGINX_URI_T=$REPOSITORY_URI:nginx_$DATE
       - CHAT_URI_T=$REPOSITORY_URI:chat_$DATE
       - CELERY_URI_T=$REPOSITORY_URI:celery_$DATE
-      - LOL_CELERY_URI_T=$REPOSITORY_URI:lol_celery_$DATE
       - SCHEDULER_CELERY_URI_T=$REPOSITORY_URI:scheduler_celery_$DATE
 
       - docker-compose -f docker-compose.prod.yml build
@@ -55,7 +54,6 @@ phases:
       - docker tag nginx:latest $NGINX_URI_T
       - docker tag chat:latest $CHAT_URI_T
       - docker tag celery:latest $CELERY_URI_T
-      - docker tag lol_celery:latest $LOL_CELERY_URI_T
       - docker tag scheduler_celery:latest $SCHEDULER_CELERY_URI_T
       # - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI/$IMAGE_REPO_NAME:$IMAGE_TAG
   post_build:
@@ -73,12 +71,10 @@ phases:
       - cat aws_resources/test/taskdef_main.json
 
       - printf '[{"name":"plx-api","imageUri":"%s"},{"name":"plx-chat","imageUri":"%s"},{"name":"plx-nginx","imageUri":"%s"},{"name":"plx-celery","imageUri":"%s"},{"name":"plx-scheduler-celery","imageUri":"%s"}]' $API_URI_T $CHAT_URI_T $NGINX_URI_T $CELERY_URI_T $SCHEDULER_CELERY_URI_T > imagedefinitions1.json
-      - printf '[{"name":"plx-lol-celery","imageUri":"%s"}]' $LOL_CELERY_URI_T  > imagedefinitions2.json
 
 artifacts:
   files:
     - imagedefinitions1.json
-    - imagedefinitions2.json
     - aws_resources/test/taskdef_main.json
     - appspec.yml
   name: buildartifacts
