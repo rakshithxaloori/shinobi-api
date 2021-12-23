@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "chat",
     "notification",
     "analytics",
+    "league_of_legends",
     "health_checks",
     "feed",
     "clips",
