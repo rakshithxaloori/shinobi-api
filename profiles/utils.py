@@ -4,8 +4,6 @@ from django.utils.crypto import get_random_string
 from profiles.models import Game
 
 
-lol_logo = "https://cdn.shinobi.cc/logos/league_of_legends-256x256.png"
-
 TOTAL_ACTION_COUNT = 1000
 
 
@@ -24,17 +22,6 @@ def get_action_approve(user):
             user.action_count += 1
             user.save(update_fields=["action_count"])
             return True
-
-
-def game_alias(profile_instance):
-    try:
-        # The currently supported formats are png, jpg, jpeg, bmp, gif, webp, psd (iOS only) - RN Image Component
-        return {
-            "alias": profile_instance.lol_profile.name,
-            "logo": lol_logo,
-        }
-    except Exception:
-        return {"alias": "", "logo": ""}
 
 
 def get_random_id():
