@@ -3,7 +3,6 @@ from rest_framework.serializers import ModelSerializer, SerializerMethodField
 from authentication.models import User
 from profiles.models import Game, Profile, Following
 from socials.serializers import SocialsSerializer
-from profiles.utils import game_alias
 
 ##########################################
 class UserSerializer(ModelSerializer):
