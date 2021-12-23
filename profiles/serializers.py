@@ -43,47 +43,34 @@ class FullProfileSerializer(ModelSerializer):
 ##########################################
 class MiniProfileSerializer(ModelSerializer):
     user = UserSerializer()
-    game_alias = SerializerMethodField()
 
     class Meta:
         model = Profile
-        fields = ["user", "game_alias", "follower_count"]
-
-    def get_game_alias(self, obj):
-        """Return the game that user plays the most."""
-        return game_alias(obj)
+        fields = ["user", "follower_count"]
 
 
 ##########################################
 class FollowersSerializer(ModelSerializer):
     user = SerializerMethodField()
-    game_alias = SerializerMethodField()
 
     class Meta:
         model = Following
-        fields = ["user", "game_alias"]
+        fields = ["user"]
 
     def get_user(self, obj):
         return UserSerializer(obj.profile.user).data
-
-    def get_game_alias(self, obj):
-        return game_alias(obj.profile)
 
 
 ##########################################
 class FollowingSerializer(ModelSerializer):
     user = SerializerMethodField()
-    game_alias = SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ["user", "game_alias"]
+        fields = ["user"]
 
     def get_user(self, obj):
         return UserSerializer(obj).data
-
-    def get_game_alias(self, obj):
-        return game_alias(obj.profile)
 
 
 ##########################################
