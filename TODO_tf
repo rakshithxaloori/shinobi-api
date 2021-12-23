@@ -64,6 +64,8 @@ REGION (resources to create in new regions)
     # https://github.com/aws-samples/aws-media-services-vod-automation/blob/master/MediaConvert-WorkflowWatchFolderAndNotification/README-tutorial.md
     - SNS notification
         - Create a programmatic user
+        - Create an SNS topic
+        - Create an Event Bridge rule
     - S3 CORS Website accept
     - Set expiry in /uploads to 1 day
     - Cloudtrail
