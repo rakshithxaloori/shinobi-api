@@ -38,7 +38,7 @@ class Post(models.Model):
     share_count = models.PositiveIntegerField(default=0)
 
     def __str__(self) -> str:
-        return "{} {}".format(self.uploader.username, self.id)
+        return "{}'s {} post".format(self.uploader.username, self.id)
 
 
 class Like(models.Model):
