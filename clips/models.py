@@ -3,8 +3,9 @@ from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.core.validators import MinLengthValidator
 
+
 from authentication.models import User
-from profiles.models import Game
+
 from shinobi.utils import now_date
 
 
@@ -30,13 +31,7 @@ class Clip(models.Model):
     created_datetime = models.DateTimeField(default=timezone.now)
     upload_verified = models.BooleanField(default=False)
     compressed_verified = models.BooleanField(default=False)
-    uploader = models.ForeignKey(User, related_name="clips", on_delete=models.PROTECT)
-    game = models.ForeignKey(Game, related_name="game_clips", on_delete=models.PROTECT)
     uploaded_from = models.CharField(max_length=1, choices=UPLOADED_FROM_CHOICES)
-    title = models.CharField(max_length=80)
-    liked_by = models.ManyToManyField(
-        User, related_name="liked_clips", blank=True, through="Like"
-    )
     viewed_by = models.ManyToManyField(
         User, related_name="viewed_clips", blank=True, through="View"
     )
@@ -64,21 +59,3 @@ class View(models.Model):
         return "{} viewed {} || {}".format(
             self.user.username, self.clip.id, self.clip.game.game_code
         )
-
-
-class Like(models.Model):
-    user = models.ForeignKey(User, on_delete=models.PROTECT)
-    clip = models.ForeignKey(Clip, on_delete=models.CASCADE)
-    created = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self) -> str:
-        return "{} liked {}".format(self.user.username, self.clip.id)
-
-
-class Report(models.Model):
-    reported_by = models.ForeignKey(
-        User, related_name="clip_reports", on_delete=models.PROTECT
-    )
-    clip = models.ForeignKey(Clip, related_name="reports", on_delete=models.CASCADE)
-    is_not_playing = models.BooleanField(default=False)
-    is_not_game_clip = models.BooleanField(default=False)

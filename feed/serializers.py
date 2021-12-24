@@ -1,18 +1,18 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
+from feed.models import Post
 from profiles.serializers import UserSerializer
-from clips.models import Clip
 from socials.serializers import GameSerializer
 
 ##########################################
-class ClipSerializer(ModelSerializer):
+class PostSerializer(ModelSerializer):
     uploader = UserSerializer()
     game = GameSerializer()
     likes = SerializerMethodField()
     me_like = SerializerMethodField()
 
     class Meta:
-        model = Clip
+        model = Post
         fields = [
             "id",
             "created_datetime",
@@ -35,6 +35,6 @@ class ClipSerializer(ModelSerializer):
         if me is None:
             return False
         try:
-            return me.liked_clips.filter(pk=obj.pk).exists()
+            return me.liked_posts.filter(pk=obj.pk).exists()
         except Exception:
             return False
