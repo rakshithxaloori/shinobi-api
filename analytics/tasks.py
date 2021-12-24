@@ -26,7 +26,14 @@ def get_analytics_instance():
         old_analytics.total_views = View.objects.filter(
             created_date=old_analytics.date
         ).count()
-        old_analytics.save(update_fields=["total_users", "total_clips", "total_views"])
+        old_analytics.save(
+            update_fields=[
+                "total_users",
+                "total_clips_m",
+                "total_clips_w",
+                "total_views",
+            ]
+        )
 
         # Create new analytics instance
         analytics = DailyAnalytics.objects.create()
