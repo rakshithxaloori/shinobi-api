@@ -96,7 +96,7 @@ def generate_s3_presigned_url_view(request):
             uploaded_from = Clip.WEB
 
     clips_count = Clip.objects.filter(
-        created_date=timezone.datetime.today(), uploader=request.user
+        created_date=timezone.datetime.today(), clip_post__uploader=request.user
     ).count()
     if clips_count >= CLIP_DAILY_LIMIT:
         return JsonResponse(

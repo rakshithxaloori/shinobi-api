@@ -15,7 +15,6 @@ from knox.auth import TokenAuthentication
 
 
 from authentication.models import User
-from clips.models import Clip
 from feed.serializers import PostSerializer
 from feed.models import Post, Report
 from profiles.utils import get_action_approve
@@ -25,7 +24,7 @@ from profiles.utils import get_action_approve
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def following_feed_view(request):
-    """Response contains the clips of all the followings."""
+    """Response contains the posts of all the followings."""
     datetime = request.data.get("datetime", None)
     if datetime is None:
         return JsonResponse(
@@ -39,19 +38,19 @@ def following_feed_view(request):
 
     following_users = request.user.profile.followings.all()
     following_users |= User.objects.filter(pk=request.user.pk)
-    clips = Clip.objects.filter(
+    posts = Post.objects.filter(
         created_datetime__lt=datetime,
         uploader__in=following_users,
-        compressed_verified=True,
+        clip__compressed_verified=True,
     ).order_by("-created_datetime")[:10]
 
-    clips_data = PostSerializer(clips, many=True, context={"me": request.user}).data
+    posts_data = PostSerializer(posts, many=True, context={"me": request.user}).data
 
     return JsonResponse(
         {
             "detail": "{}'s feed".format(request.user.username),
             "payload": {
-                "clips": clips_data,
+                "posts": posts_data,
             },
         },
         status=status.HTTP_200_OK,
@@ -62,7 +61,7 @@ def following_feed_view(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def world_feed_view(request):
-    """Returns clips from all users of the games that I play."""
+    """Returns posts from all users of the games that I play."""
     datetime = request.data.get("datetime", None)
     if datetime is None:
         return JsonResponse(
@@ -76,17 +75,19 @@ def world_feed_view(request):
 
     games = request.user.profile.games
 
-    clips = Clip.objects.filter(
-        created_datetime__lt=datetime, game__in=games, upload_verified=True
+    posts = Post.objects.filter(
+        created_datetime__lt=datetime,
+        game__in=games,
+        clip__compressed_verified=True,
     ).order_by("-created_datetime")[:10]
 
-    clips_data = PostSerializer(clips, many=True, context={"me": request.user}).data
+    posts_data = PostSerializer(posts, many=True, context={"me": request.user}).data
 
     return JsonResponse(
         {
             "detail": "{}'s feed".format(request.user.username),
             "payload": {
-                "clips": clips_data,
+                "posts": posts_data,
             },
         },
         status=status.HTTP_200_OK,
@@ -195,14 +196,11 @@ def delete_post_view(request):
         )
 
     try:
-        post = Post.objects.get(id=post_id)
+        post = Post.objects.get(id=post_id, uploader=request.user)
     except Post.DoesNotExist:
         return JsonResponse(
             {"detail": "Post doesn't exist"}, status=status.HTTP_400_BAD_REQUEST
         )
-
-    if post.uploader != request.user:
-        return JsonResponse({"detail": "Denied"}, status=status.HTTP_401_UNAUTHORIZED)
 
     post.clip.delete()
     post.delete()

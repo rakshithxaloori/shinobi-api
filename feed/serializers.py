@@ -1,4 +1,5 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from clips.serializers import ClipSerializer
 
 from feed.models import Post
 from profiles.serializers import UserSerializer
@@ -6,6 +7,7 @@ from socials.serializers import GameSerializer
 
 ##########################################
 class PostSerializer(ModelSerializer):
+    clip = ClipSerializer()
     uploader = UserSerializer()
     game = GameSerializer()
     likes = SerializerMethodField()
@@ -16,14 +18,12 @@ class PostSerializer(ModelSerializer):
         fields = [
             "id",
             "created_datetime",
+            "clip",
             "uploader",
             "game",
             "title",
             "likes",
             "me_like",
-            "height",
-            "width",
-            "url",
         ]
         read_only_fields = fields
 

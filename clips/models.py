@@ -42,7 +42,7 @@ class Clip(models.Model):
 
     def __str__(self) -> str:
         return "{} || {} || {}".format(
-            self.id, self.uploader.username, self.game.game_code
+            self.id, self.clip_post.uploader.username, self.clip_post.game.game_code
         )
 
     class Meta:
@@ -57,5 +57,5 @@ class View(models.Model):
 
     def __str__(self) -> str:
         return "{} viewed {} || {}".format(
-            self.user.username, self.clip.id, self.clip.game.game_code
+            self.user.username, self.clip.id, self.clip.clip_post.game.game_code
         )
