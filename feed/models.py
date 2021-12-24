@@ -44,7 +44,7 @@ class Like(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
-        return "{} liked {}".format(self.user.username, self.post.id)
+        return "{} liked {} post".format(self.user.username, self.post.id)
 
 
 class Report(models.Model):
@@ -54,3 +54,6 @@ class Report(models.Model):
     post = models.ForeignKey(Post, related_name="reports", on_delete=models.CASCADE)
     is_not_playing = models.BooleanField(default=False)
     is_not_game_clip = models.BooleanField(default=False)
+
+    def __str__(self) -> str:
+        return "{} reported {} post".format(self.reported_by.username, self.post.id)

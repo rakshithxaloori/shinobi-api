@@ -56,6 +56,6 @@ class View(models.Model):
     created_datetime = models.DateTimeField(default=timezone.now)
 
     def __str__(self) -> str:
-        return "{} viewed {} || {}".format(
+        return "{} viewed {} clip || {}".format(
             self.user.username, self.clip.id, self.clip.clip_post.game.game_code
         )
