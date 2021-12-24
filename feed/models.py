@@ -37,6 +37,9 @@ class Post(models.Model):
     )
     share_count = models.PositiveIntegerField(default=0)
 
+    def __str__(self) -> str:
+        return "{} {}".format(self.uploader.username, self.id)
+
 
 class Like(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT)
