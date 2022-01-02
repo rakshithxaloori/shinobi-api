@@ -4,7 +4,7 @@ from django.core.files.storage import default_storage
 from shinobi.celery import app as celery_app
 
 
-from clips.utils import VIDEO_MAX_SIZE_IN_BYTES, create_job
+from clips.utils import VIDEO_MAX_SIZE_IN_BYTES, VIDEO_FILE_ARGS, create_job
 from shinobi.utils import get_media_file_url, get_media_file_path
 from clips.models import Clip
 
@@ -92,7 +92,7 @@ def check_compressed_successful_task(input_s3_url: str):
             clip.save(update_fields=["compressed_verified", "url"])
         except Clip.DoesNotExist:
             print("Clip.DoesNotExist", upload_file_key, compressed_file_key)
-            fileargs = [(720, 8), (720, 7), (480, 7), (360, 7)]
+            fileargs = VIDEO_FILE_ARGS
             for filearg in fileargs:
                 vid_file_key = compressed_file_key.format(filearg[0], filearg[1])
                 if default_storage.exists(vid_file_key):
@@ -106,7 +106,7 @@ def delete_clip_task(url):
         # Upload
         delete_upload_file(file_path)
     # Upload and compressed
-    fileargs = [(720, 8), (720, 7), (480, 7), (360, 7)]
+    fileargs = VIDEO_FILE_ARGS
     for filearg in fileargs:
         vid_file_key = file_path.format(filearg[0], filearg[1])
         if default_storage.exists(vid_file_key):

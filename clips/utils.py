@@ -7,6 +7,7 @@ from django.conf import settings
 
 
 VIDEO_MAX_SIZE_IN_BYTES = 500 * 1000 * 1000  # 500 MB
+VIDEO_FILE_ARGS = [(720, 8), (720, 7), (480, 7), (360, 7)]
 
 
 if settings.CI_CD_STAGE == "testing" or settings.CI_CD_STAGE == "production":
