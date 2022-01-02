@@ -67,7 +67,9 @@ class Following(models.Model):
 
 class PlaysGame(models.Model):
     game = models.ForeignKey(Game, on_delete=models.PROTECT)
-    profile = models.ForeignKey(Profile, on_delete=models.PROTECT)
+    profile = models.ForeignKey(
+        Profile, related_name="plays_game", on_delete=models.PROTECT
+    )
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
