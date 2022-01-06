@@ -202,7 +202,6 @@ def delete_post_view(request):
             {"detail": "Post doesn't exist"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    post.clip.delete()
     post.delete()
     return JsonResponse({"detail": "post deleted"}, status=status.HTTP_200_OK)
 
