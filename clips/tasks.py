@@ -7,6 +7,10 @@ from shinobi.celery import app as celery_app
 from clips.utils import VIDEO_MAX_SIZE_IN_BYTES, VIDEO_FILE_ARGS, create_job
 from shinobi.utils import get_media_file_url, get_media_file_path
 from clips.models import Clip
+from notification.tasks import create_notification_task
+from authentication.models import User
+from profiles.models import Following
+from notification.models import Notification
 
 
 def delete_upload_file(file_path):
@@ -90,6 +94,11 @@ def check_compressed_successful_task(input_s3_url: str):
             clip.compressed_verified = True
             clip.url = file_cdn_url
             clip.save(update_fields=["compressed_verified", "url"])
+
+            clip_post = clip.clip_post
+            send_clip_notifications_task.delay(
+                clip_post.uploader.pk, clip_post.pk, clip_post.game.name
+            )
         except Clip.DoesNotExist:
             print("Clip.DoesNotExist", upload_file_key, compressed_file_key)
             fileargs = VIDEO_FILE_ARGS
@@ -111,3 +120,27 @@ def delete_clip_task(url):
         vid_file_key = file_path.format(filearg[0], filearg[1])
         if default_storage.exists(vid_file_key):
             default_storage.delete(vid_file_key)
+
+
+@celery_app.task(queue="celery")
+def send_clip_notifications_task(user_pk, post_id, game_name):
+    try:
+        sender = User.objects.get(pk=user_pk)
+        followers = Following.objects.filter(user=sender)
+        extra_data = {"post_id": post_id, "game_name": game_name}
+
+        create_notification_task(
+            type=Notification.CLIP,
+            sender_pk=user_pk,
+            receiver_pk=user_pk,
+            extra_data=extra_data,
+        )
+        for follower in followers:
+            create_notification_task(
+                type=Notification.CLIP,
+                sender_pk=user_pk,
+                receiver_pk=follower.profile.user.pk,
+                extra_data=extra_data,
+            )
+    except User.DoesNotExist:
+        return

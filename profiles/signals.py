@@ -12,7 +12,6 @@ from notification.models import Notification
 @receiver(m2m_changed, sender=Following)
 def post_change_follow_status(sender, instance, action, model, pk_set, **kwargs):
     try:
-        print("M2M_CHANGED", sender)
         follower_user_pk = instance.user.pk
         being_followed_user = User.objects.get(pk__in=pk_set)
         being_followed_user_pk = being_followed_user.pk
@@ -24,7 +23,7 @@ def post_change_follow_status(sender, instance, action, model, pk_set, **kwargs)
             p_tasks.after_follow.delay(being_followed_user.profile.pk)
 
             # Send a notification
-            n_tasks.create_notification.delay(
+            n_tasks.create_notification_task.delay(
                 Notification.FOLLOW, follower_user_pk, being_followed_user_pk
             )
 

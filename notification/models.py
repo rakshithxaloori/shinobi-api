@@ -9,8 +9,9 @@ from authentication.models import User
 
 class Notification(models.Model):
     FOLLOW = "f"
+    CLIP = "c"
 
-    NOTIFICATION_CHOICES = [(FOLLOW, "follow")]
+    NOTIFICATION_CHOICES = [(FOLLOW, "follow"), (CLIP, "clip")]
 
     sender = models.ForeignKey(
         User, on_delete=models.CASCADE

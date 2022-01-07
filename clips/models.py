@@ -41,9 +41,7 @@ class Clip(models.Model):
     url = models.URLField(unique=True)
 
     def __str__(self) -> str:
-        return "{} || {} || {}".format(
-            self.id, self.clip_post.uploader.username, self.clip_post.game.game_code
-        )
+        return "{}".format(self.id)
 
     class Meta:
         ordering = ["-created_datetime"]
@@ -59,3 +57,6 @@ class View(models.Model):
         return "{} viewed {} clip || {}".format(
             self.user.username, self.clip.id, self.clip.clip_post.game.game_code
         )
+
+    class Meta:
+        ordering = ["-created_datetime"]

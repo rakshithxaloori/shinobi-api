@@ -57,6 +57,7 @@ class Profile(models.Model):
 
 
 class Following(models.Model):
+    # profile follows user
     user = models.ForeignKey(User, on_delete=models.PROTECT)
     profile = models.ForeignKey(Profile, on_delete=models.PROTECT)
     created = models.DateTimeField(auto_now_add=True)
