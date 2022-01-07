@@ -17,7 +17,7 @@ from authentication.models import User
 from notification.models import Notification, ExponentPushToken
 
 
-def send_push_message(token, title, message, data=None):
+def _send_push_message(token, title, message, data=None):
     try:
         response = PushClient().publish(
             PushMessage(to=token, title=title, body=message, data=data)
@@ -72,11 +72,12 @@ def send_push_message(token, title, message, data=None):
             }
         )
         # TODO raise self.retry(exc=exc)
+    except Exception as e:
+        print(e)
 
 
-# TODO override Notification's create method?
 @celery_app.task(queue="celery")
-def create_notification(type, sender_pk, receiver_pk):
+def create_notification_task(type, sender_pk, receiver_pk, extra_data={}):
     try:
         sender = User.objects.get(pk=sender_pk)
         receiver = User.objects.get(pk=receiver_pk)
@@ -86,21 +87,33 @@ def create_notification(type, sender_pk, receiver_pk):
         new_notification.clean_fields()
         new_notification.save()
         expo_tokens = ExponentPushToken.objects.filter(user=receiver, is_active=True)
-        # TODO switch case, for each type
-        title = "New follower"
-        message = "{} follows you".format(sender.username)
-        for expo_token in expo_tokens:
-            # Send a push notification
-            send_push_message(
-                token=expo_token.token,
-                title=title,
-                message=message,
-                data={
-                    "type": type,
-                    "followee": receiver.username,
-                    "follower": sender.username,
-                },
-            )
+        title = ""
+        message = ""
+        payload = {}
+        if type == Notification.FOLLOW:
+            title = "New follower"
+            message = "{} follows you".format(sender.username)
+            payload = {"type": type}
+
+        elif type == Notification.CLIP:
+            if not "post_id" in extra_data or not "game_name" in extra_data:
+                return None
+
+            title = "New clip"
+            if sender_pk == receiver_pk:
+                message = "Your {} clip is ready".format(extra_data["game_name"])
+            else:
+                message = "{} uploaded a {} clip".format(
+                    sender.username, extra_data["game_name"]
+                )
+            payload = {"type": type, "post_id": extra_data["post_id"]}
+
+        if title != "":
+            for expo_token in expo_tokens:
+                # Send a push notification
+                _send_push_message(
+                    token=expo_token.token, title=title, message=message, data=payload
+                )
 
     except ValidationError:
         # Report the error
