@@ -40,8 +40,13 @@ class Post(models.Model):
     def __str__(self) -> str:
         return "{}'s {} post".format(self.uploader.username, self.id)
 
+    class Meta:
+        ordering = ["-created_datetime"]
+
 
 class Like(models.Model):
+    created_datetime = models.DateTimeField(default=timezone.now)
+
     user = models.ForeignKey(User, on_delete=models.PROTECT)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
@@ -51,6 +56,8 @@ class Like(models.Model):
 
 
 class Report(models.Model):
+    created_datetime = models.DateTimeField(default=timezone.now)
+
     reported_by = models.ForeignKey(
         User, related_name="post_reports", on_delete=models.PROTECT
     )
@@ -60,3 +67,6 @@ class Report(models.Model):
 
     def __str__(self) -> str:
         return "{} reported {} post".format(self.reported_by.username, self.post.id)
+
+    class Meta:
+        ordering = ["-created_datetime"]
