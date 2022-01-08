@@ -22,7 +22,8 @@ class User(AbstractUser):
     action_count = models.PositiveSmallIntegerField(default=0)
 
     def __str__(self):
-        return "{} || {}".format(self.username, self.email)
+        days_diff = (timezone.now() - self.last_open).days
+        return "{} || {} || {} days ago".format(self.username, self.email, days_diff)
 
     class Meta:
         ordering = ["username"]
