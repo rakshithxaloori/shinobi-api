@@ -72,7 +72,7 @@ def check_compressed_successful_task(input_s3_url: str):
         1
     ].split(".")[0]
 
-    compressed_file_key = "{compressed_prefix}/{filename}_720p_8.mp4".format(
+    compressed_file_key = "{compressed_prefix}/{filename}_4.mp4".format(
         compressed_prefix=settings.S3_FILE_COMPRESSED_PATH_PREFIX,
         filename=upload_filename,
     )
@@ -82,8 +82,8 @@ def check_compressed_successful_task(input_s3_url: str):
         delete_upload_file(upload_file_key)
 
         try:
-            compressed_file_key = "{}/{}_{}_{}.mp4".format(
-                settings.S3_FILE_COMPRESSED_PATH_PREFIX, upload_filename, "{}p", "{}"
+            compressed_file_key = "{}/{}_{}.mp4".format(
+                settings.S3_FILE_COMPRESSED_PATH_PREFIX, upload_filename, "{}"
             )
             file_cdn_url = get_media_file_url(compressed_file_key)
             # Replace hex symbols
@@ -103,7 +103,7 @@ def check_compressed_successful_task(input_s3_url: str):
             print("Clip.DoesNotExist", upload_file_key, compressed_file_key)
             fileargs = VIDEO_FILE_ARGS
             for filearg in fileargs:
-                vid_file_key = compressed_file_key.format(filearg[0], filearg[1])
+                vid_file_key = compressed_file_key.format(filearg)
                 if default_storage.exists(vid_file_key):
                     default_storage.delete(vid_file_key)
 
@@ -117,7 +117,7 @@ def delete_clip_task(url):
     # Upload and compressed
     fileargs = VIDEO_FILE_ARGS
     for filearg in fileargs:
-        vid_file_key = file_path.format(filearg[0], filearg[1])
+        vid_file_key = file_path.format(filearg)
         if default_storage.exists(vid_file_key):
             default_storage.delete(vid_file_key)
 

@@ -52,7 +52,7 @@
             "Container": "MP4",
             "Mp4Settings": {}
           },
-          "NameModifier": "_720p_8"
+          "NameModifier": "_4"
         },
         {
           "VideoDescription": {
@@ -86,12 +86,12 @@
             "Container": "MP4",
             "Mp4Settings": {}
           },
-          "NameModifier": "_720p_7"
+          "NameModifier": "_3"
         },
         {
           "VideoDescription": {
             "Width": 640,
-            "Height": 480,
+            "Height": 360,
             "CodecSettings": {
               "Codec": "H_265",
               "H265Settings": {
@@ -120,11 +120,11 @@
             "Container": "MP4",
             "Mp4Settings": {}
           },
-          "NameModifier": "_480p_7"
+          "NameModifier": "_2"
         },
         {
           "VideoDescription": {
-            "Width": 480,
+            "Width": 640,
             "Height": 360,
             "CodecSettings": {
               "Codec": "H_265",
@@ -154,7 +154,7 @@
             "Container": "MP4",
             "Mp4Settings": {}
           },
-          "NameModifier": "_360p_7"
+          "NameModifier": "_1"
         }
       ]
     }

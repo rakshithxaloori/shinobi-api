@@ -164,6 +164,13 @@ def generate_s3_presigned_url_view(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    if clip_height > clip_width:
+        clip_height = 16
+        clip_width = 9
+    else:
+        clip_height = 9
+        clip_width = 16
+
     file_path = "{prefix}/{filename}.{type}".format(
         prefix=settings.S3_FILE_UPLOAD_PATH_PREFIX,
         filename=uuid.uuid4(),
