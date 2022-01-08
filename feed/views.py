@@ -40,8 +40,7 @@ def following_feed_view(request):
     following_users |= User.objects.filter(pk=request.user.pk)
     posts = Post.objects.filter(
         created_datetime__lt=datetime,
-        uploader__in=following_users,
-        clip__compressed_verified=True,
+        posted_by__in=following_users,
     ).order_by("-created_datetime")[:10]
 
     posts_data = PostSerializer(posts, many=True, context={"me": request.user}).data
@@ -120,7 +119,7 @@ def get_profile_posts_view(request):
             {"detail": "Invalid username"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    posts = Post.objects.filter(created_datetime__lt=datetime, uploader=user).order_by(
+    posts = Post.objects.filter(created_datetime__lt=datetime, posted_by=user).order_by(
         "-created_datetime"
     )[:10]
 
@@ -174,7 +173,7 @@ def like_post_view(request):
         )
 
     try:
-        post = Post.objects.get(id=post_id)
+        post = Post.objects.get(id=post_id, is_repost=False)
     except Post.DoesNotExist:
         return JsonResponse(
             {"detail": "Post doesn't exist"}, status=status.HTTP_400_BAD_REQUEST
@@ -196,7 +195,7 @@ def delete_post_view(request):
         )
 
     try:
-        post = Post.objects.get(id=post_id, uploader=request.user)
+        post = Post.objects.get(id=post_id, posted_by=request.user)
     except Post.DoesNotExist:
         return JsonResponse(
             {"detail": "Post doesn't exist"}, status=status.HTTP_400_BAD_REQUEST
@@ -223,7 +222,7 @@ def unlike_post_view(request):
         )
 
     try:
-        post = Post.objects.get(id=post_id)
+        post = Post.objects.get(id=post_id, is_repost=False)
     except Post.DoesNotExist:
         return JsonResponse(
             {"detail": "Post doesn't exist"}, status=status.HTTP_400_BAD_REQUEST
@@ -245,7 +244,7 @@ def share_post_view(request):
         )
 
     try:
-        post = Post.objects.get(id=post_id)
+        post = Post.objects.get(id=post_id, is_repost=False)
     except Post.DoesNotExist:
         return JsonResponse(
             {"detail": "post_id invalid"}, status=status.HTTP_400_BAD_REQUEST
@@ -280,10 +279,10 @@ def report_post_view(request):
         )
 
     try:
-        post = Post.objects.get(id=post_id)
+        post = Post.objects.get(id=post_id, is_repost=False)
     except Post.DoesNotExist:
         return JsonResponse(
-            {"detail": "post_id invalid"}, status=status.HTTP_400_BAD_REQUEST
+            {"detail": "Post doesn't exist"}, status=status.HTTP_400_BAD_REQUEST
         )
 
     report = Report.objects.create(
@@ -294,3 +293,23 @@ def report_post_view(request):
     )
     report.save()
     return JsonResponse({"detail": "report received"}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def repost_view(request):
+    post_id = request.data.get("post_id", None)
+    if post_id is None:
+        return JsonResponse(
+            {"detail": "post_id required"}, stauts=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        # Repost only pure posts
+        post = Post.objects.get(id=post_id, is_repost=False)
+    except Post.DoesNotExist:
+        return JsonResponse({"detail": "Post doesn't exist"})
+
+    repost = Post.objects.create(posted_by=request.user, is_repost=True, repost=post)
+    repost.save()
+    return JsonResponse({"detail": "Reposted!"}, status=status.HTTP_200_OK)
