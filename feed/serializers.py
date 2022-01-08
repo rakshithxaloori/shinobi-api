@@ -7,10 +7,11 @@ from socials.serializers import GameSerializer
 
 ##########################################
 class PostSerializer(ModelSerializer):
-    clip = ClipSerializer()
-    uploader = UserSerializer()
-    game = GameSerializer()
+    clip = SerializerMethodField()
+    posted_by = SerializerMethodField()
+    game = SerializerMethodField()
     likes = SerializerMethodField()
+    shares = SerializerMethodField()
     me_like = SerializerMethodField()
 
     class Meta:
@@ -19,22 +20,60 @@ class PostSerializer(ModelSerializer):
             "id",
             "created_datetime",
             "clip",
-            "uploader",
+            "posted_by",
             "game",
             "title",
             "likes",
+            "shares",
+            "is_repost",
             "me_like",
         ]
         read_only_fields = fields
 
+    def get_clip(self, obj):
+        if obj.is_repost:
+            if obj.repost is None:
+                return None
+            return ClipSerializer(obj.repost.clip).data
+        return ClipSerializer(obj.clip).data
+
+    def get_posted_by(self, obj):
+        if obj.is_repost:
+            if obj.repost is None:
+                return None
+            return UserSerializer(obj.repost.posted_by).data
+        return UserSerializer(obj.posted_by).data
+
+    def get_game(self, obj):
+        if obj.is_repost:
+            if obj.repost is None:
+                return None
+            return GameSerializer(obj.repost.game).data
+        return GameSerializer(obj.game).data
+
     def get_likes(self, obj):
+        if obj.is_repost:
+            if obj.repost is None:
+                return None
+            return obj.repost.liked_by.count()
         return obj.liked_by.count()
+
+    def get_shares(self, obj):
+        if obj.is_repost:
+            if obj.repost is None:
+                return None
+            return obj.repost.share_count
+        return obj.share_count
 
     def get_me_like(self, obj):
         me = self.context.get("me", None)
         if me is None:
             return False
         try:
-            return me.liked_posts.filter(pk=obj.pk).exists()
+            if obj.is_repost:
+                obj_pk = obj.repost.pk
+            else:
+                obj_pk = obj.pk
+            return me.liked_posts.filter(pk=obj_pk).exists()
         except Exception:
             return False

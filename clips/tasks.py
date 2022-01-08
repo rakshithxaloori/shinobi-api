@@ -97,7 +97,7 @@ def check_compressed_successful_task(input_s3_url: str):
 
             clip_post = clip.clip_post
             send_clip_notifications_task.delay(
-                clip_post.uploader.pk, clip_post.pk, clip_post.game.name
+                clip_post.posted_by.pk, clip_post.pk, clip_post.game.name
             )
         except Clip.DoesNotExist:
             print("Clip.DoesNotExist", upload_file_key, compressed_file_key)

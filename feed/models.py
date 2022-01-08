@@ -27,18 +27,28 @@ class Post(models.Model):
     created_datetime = models.DateTimeField(default=timezone.now)
 
     clip = models.OneToOneField(
-        Clip, related_name="clip_post", on_delete=models.CASCADE
+        Clip, related_name="clip_post", blank=True, null=True, on_delete=models.CASCADE
     )
-    uploader = models.ForeignKey(User, related_name="posts", on_delete=models.PROTECT)
-    game = models.ForeignKey(Game, related_name="game_posts", on_delete=models.PROTECT)
-    title = models.CharField(max_length=80)
+    posted_by = models.ForeignKey(User, related_name="posts", on_delete=models.PROTECT)
+    game = models.ForeignKey(
+        Game, related_name="game_posts", blank=True, null=True, on_delete=models.PROTECT
+    )
+    title = models.CharField(max_length=80, blank=True, null=True)
     liked_by = models.ManyToManyField(
         User, related_name="liked_posts", blank=True, through="Like"
     )
     share_count = models.PositiveIntegerField(default=0)
 
+    # REPOST
+    is_repost = models.BooleanField(default=False)
+    repost = models.ForeignKey(
+        "Post", related_name="reposts", blank=True, null=True, on_delete=models.SET_NULL
+    )
+
     def __str__(self) -> str:
-        return "{}'s {} post".format(self.uploader.username, self.id)
+        return "{}'s {} {}".format(
+            self.posted_by.username, self.id, "repost" if self.is_repost else "post"
+        )
 
     class Meta:
         ordering = ["-created_datetime"]
