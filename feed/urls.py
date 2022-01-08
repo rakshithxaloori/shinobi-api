@@ -16,4 +16,5 @@ urlpatterns = [
     path("post/unlike/", views.unlike_post_view, name="unlike post"),
     path("post/share/", views.share_post_view, name="share post"),
     path("post/report/", views.report_post_view, name="report post"),
+    path("post/repost/", views.repost_view, name="repost"),
 ]

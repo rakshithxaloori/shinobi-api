@@ -96,7 +96,7 @@ def generate_s3_presigned_url_view(request):
             uploaded_from = Clip.WEB
 
     clips_count = Clip.objects.filter(
-        created_date=timezone.datetime.today(), clip_post__uploader=request.user
+        created_date=timezone.datetime.today(), clip_post__posted_by=request.user
     ).count()
     if clips_count >= CLIP_DAILY_LIMIT:
         return JsonResponse(
@@ -164,6 +164,13 @@ def generate_s3_presigned_url_view(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    if clip_height > clip_width:
+        clip_height = 16
+        clip_width = 9
+    else:
+        clip_height = 9
+        clip_width = 16
+
     file_path = "{prefix}/{filename}.{type}".format(
         prefix=settings.S3_FILE_UPLOAD_PATH_PREFIX,
         filename=uuid.uuid4(),
@@ -199,7 +206,7 @@ def generate_s3_presigned_url_view(request):
     new_clip.save()
     new_post = Post.objects.create(
         clip=new_clip,
-        uploader=request.user,
+        posted_by=request.user,
         game=game,
         title=title,
     )
