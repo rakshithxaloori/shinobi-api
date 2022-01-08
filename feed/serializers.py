@@ -10,9 +10,11 @@ class PostSerializer(ModelSerializer):
     clip = SerializerMethodField()
     posted_by = SerializerMethodField()
     game = SerializerMethodField()
+    title = SerializerMethodField()
     likes = SerializerMethodField()
     reposts = SerializerMethodField()
     shares = SerializerMethodField()
+    reposted_by = SerializerMethodField()
     me_like = SerializerMethodField()
 
     class Meta:
@@ -28,6 +30,7 @@ class PostSerializer(ModelSerializer):
             "reposts",
             "shares",
             "is_repost",
+            "reposted_by",
             "me_like",
         ]
         read_only_fields = fields
@@ -53,6 +56,13 @@ class PostSerializer(ModelSerializer):
             return GameSerializer(obj.repost.game).data
         return GameSerializer(obj.game).data
 
+    def get_title(self, obj):
+        if obj.is_repost:
+            if obj.repost is None:
+                return None
+            return obj.repost.title
+        return obj.title
+
     def get_likes(self, obj):
         if obj.is_repost:
             if obj.repost is None:
@@ -62,7 +72,9 @@ class PostSerializer(ModelSerializer):
 
     def get_reposts(self, obj):
         if obj.is_repost:
-            return None
+            if obj.repost is None:
+                return None
+            return Post.objects.filter(repost=obj.repost).count()
         return Post.objects.filter(repost=obj).count()
 
     def get_shares(self, obj):
@@ -71,6 +83,11 @@ class PostSerializer(ModelSerializer):
                 return None
             return obj.repost.share_count
         return obj.share_count
+
+    def get_reposted_by(self, obj):
+        if obj.is_repost:
+            return UserSerializer(obj.posted_by).data
+        return None
 
     def get_me_like(self, obj):
         me = self.context.get("me", None)

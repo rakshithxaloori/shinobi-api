@@ -42,7 +42,7 @@ class Post(models.Model):
     # REPOST
     is_repost = models.BooleanField(default=False)
     repost = models.ForeignKey(
-        "Post", related_name="reposts", blank=True, null=True, on_delete=models.SET_NULL
+        "Post", related_name="reposts", blank=True, null=True, on_delete=models.CASCADE
     )
 
     def __str__(self) -> str:

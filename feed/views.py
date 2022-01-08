@@ -41,7 +41,6 @@ def following_feed_view(request):
     posts = Post.objects.filter(
         created_datetime__lt=datetime,
         posted_by__in=following_users,
-        clip__compressed_verified=True,
     ).order_by("-created_datetime")[:10]
 
     posts_data = PostSerializer(posts, many=True, context={"me": request.user}).data
