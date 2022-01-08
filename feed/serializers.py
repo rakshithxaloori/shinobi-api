@@ -11,6 +11,7 @@ class PostSerializer(ModelSerializer):
     posted_by = SerializerMethodField()
     game = SerializerMethodField()
     likes = SerializerMethodField()
+    reposts = SerializerMethodField()
     shares = SerializerMethodField()
     me_like = SerializerMethodField()
 
@@ -24,6 +25,7 @@ class PostSerializer(ModelSerializer):
             "game",
             "title",
             "likes",
+            "reposts",
             "shares",
             "is_repost",
             "me_like",
@@ -57,6 +59,11 @@ class PostSerializer(ModelSerializer):
                 return None
             return obj.repost.liked_by.count()
         return obj.liked_by.count()
+
+    def get_reposts(self, obj):
+        if obj.is_repost:
+            return None
+        return Post.objects.filter(repost=obj).count()
 
     def get_shares(self, obj):
         if obj.is_repost:
