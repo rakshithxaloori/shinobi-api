@@ -22,6 +22,7 @@ from rest_framework.decorators import (
 from rest_framework_api_key.permissions import HasAPIKey
 
 from knox.auth import TokenAuthentication
+from analytics.tasks import add_view_analytics_task
 
 
 from feed.models import Post
@@ -252,6 +253,7 @@ def viewed_clip_view(request):
 
     clip.viewed_by.add(request.user)
     clip.save()
+    add_view_analytics_task.delay()
     return JsonResponse({"detail": "clip viewed"}, status=status.HTTP_200_OK)
 
 

@@ -23,9 +23,9 @@ def get_analytics_instance():
         old_analytics.total_clips_w = Clip.objects.filter(
             created_date=old_analytics.date, uploaded_from=Clip.WEB
         ).count()
-        old_analytics.total_views = View.objects.filter(
-            created_date=old_analytics.date
-        ).count()
+        # old_analytics.total_views = View.objects.filter(
+        #     created_date=old_analytics.date
+        # ).count()
         old_analytics.save(
             update_fields=[
                 "total_users",
@@ -65,3 +65,10 @@ def update_active_user(last_open_str):
         # If last opened before today
         da_instance.active_users += 1
         da_instance.save(update_fields=["active_users"])
+
+
+@celery_app.task(queue="celery")
+def add_view_analytics_task():
+    analytics = get_analytics_instance()
+    analytics.total_views += 1
+    analytics.save()
