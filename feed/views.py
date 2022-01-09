@@ -72,13 +72,16 @@ def world_feed_view(request):
             {"detail": "Invalid datetime"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    games = request.user.profile.games
+    # games = request.user.profile.games
 
-    posts = Post.objects.filter(
-        created_datetime__lt=datetime,
-        game__in=games,
-        clip__compressed_verified=True,
-    ).order_by("-created_datetime")[:10]
+    # posts = Post.objects.filter(
+    #     created_datetime__lt=datetime,
+    #     game__in=games,
+    # ).order_by("-created_datetime")[:10]
+
+    posts = Post.objects.filter(created_datetime__lt=datetime).order_by(
+        "-created_datetime"
+    )[:10]
 
     posts_data = PostSerializer(posts, many=True, context={"me": request.user}).data
 
