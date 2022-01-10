@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from django.utils import dateparse
+from django.db.models import Q
 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -39,8 +40,9 @@ def following_feed_view(request):
     following_users = request.user.profile.followings.all()
     following_users |= User.objects.filter(pk=request.user.pk)
     posts = Post.objects.filter(
-        created_datetime__lt=datetime,
-        posted_by__in=following_users,
+        Q(created_datetime__lt=datetime, posted_by__in=following_users),
+        Q(is_repost=True, repost__clip__compressed_verified=True)
+        | Q(is_repost=False, clip__compressed_verified=True),
     ).order_by("-created_datetime")[:10]
 
     posts_data = PostSerializer(posts, many=True, context={"me": request.user}).data
@@ -79,9 +81,11 @@ def world_feed_view(request):
     #     game__in=games,
     # ).order_by("-created_datetime")[:10]
 
-    posts = Post.objects.filter(created_datetime__lt=datetime).order_by(
-        "-created_datetime"
-    )[:10]
+    posts = Post.objects.filter(
+        Q(created_datetime__lt=datetime),
+        Q(is_repost=True, repost__clip__compressed_verified=True)
+        | Q(is_repost=False, clip__compressed_verified=True),
+    ).order_by("-created_datetime")[:10]
 
     posts_data = PostSerializer(posts, many=True, context={"me": request.user}).data
 
