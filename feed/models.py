@@ -6,6 +6,7 @@ from django.core.validators import MinLengthValidator
 
 from authentication.models import User
 from clips.models import Clip
+from feed.utils import POST_TITLE_LENGTH
 from profiles.models import Game
 
 
@@ -33,7 +34,7 @@ class Post(models.Model):
     game = models.ForeignKey(
         Game, related_name="game_posts", blank=True, null=True, on_delete=models.PROTECT
     )
-    title = models.CharField(max_length=80, blank=True, null=True)
+    title = models.CharField(max_length=POST_TITLE_LENGTH, blank=True, null=True)
     liked_by = models.ManyToManyField(
         User, related_name="liked_posts", blank=True, through="Like"
     )

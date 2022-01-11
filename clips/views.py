@@ -8,7 +8,6 @@ from django.http import JsonResponse
 from django.conf import settings
 from django.http.response import HttpResponse
 from django.utils import timezone
-from django.utils import dateparse
 from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework import status
@@ -26,6 +25,7 @@ from analytics.tasks import add_view_analytics_task
 
 
 from feed.models import Post
+from feed.utils import POST_TITLE_LENGTH
 from profiles.models import Game
 from clips.models import Clip
 from clips.tasks import (
@@ -139,9 +139,13 @@ def generate_s3_presigned_url_view(request):
         return JsonResponse(
             {"detail": "title is required"}, status=status.HTTP_400_BAD_REQUEST
         )
-    if len(title) > 40:
+    if len(title) > POST_TITLE_LENGTH:
         return JsonResponse(
-            {"detail": "title has to be less than 30 characters"},
+            {
+                "detail": "title has to be less than {} characters".format(
+                    POST_TITLE_LENGTH
+                )
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
     if clip_height is None or clip_height < 0 or clip_width is None or clip_width < 0:
