@@ -18,6 +18,8 @@ from knox.auth import TokenAuthentication
 from authentication.models import User
 from feed.serializers import PostSerializer
 from feed.models import Post, Report
+from notification.models import Notification
+from notification.tasks import create_notification_task
 from profiles.utils import get_action_approve
 
 
@@ -188,6 +190,9 @@ def like_post_view(request):
 
     post.liked_by.add(request.user)
     post.save()
+    create_notification_task.delay(
+        Notification.LIKE, request.user.pk, post.posted_by.pk
+    )
     return JsonResponse({"detail": "post liked"}, status=status.HTTP_200_OK)
 
 
@@ -319,4 +324,7 @@ def repost_view(request):
 
     repost = Post.objects.create(posted_by=request.user, is_repost=True, repost=post)
     repost.save()
+    create_notification_task.delay(
+        Notification.REPOST, request.user.pk, post.posted_by.pk
+    )
     return JsonResponse({"detail": "Reposted!"}, status=status.HTTP_200_OK)
