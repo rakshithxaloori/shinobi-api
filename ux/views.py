@@ -30,10 +30,16 @@ def get_updates_view(request):
     try:
         app_update = AppUpdate.objects.get(version=version)
         app_update_data = AppUpdateSerializer(app_update).data
+        update_available = AppUpdate.objects.filter(
+            created__gt=app_update.created
+        ).exists()
         return JsonResponse(
             {
                 "detail": "{}'s updates".format(version),
-                "payload": {"updates": app_update_data},
+                "payload": {
+                    "updates": app_update_data["updates"],
+                    "update_available": update_available,
+                },
             },
             status=status.HTTP_200_OK,
         )
