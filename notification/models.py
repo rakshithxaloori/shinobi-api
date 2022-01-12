@@ -10,8 +10,15 @@ from authentication.models import User
 class Notification(models.Model):
     FOLLOW = "f"
     CLIP = "c"
+    LIKE = "l"
+    REPOST = "rp"
 
-    NOTIFICATION_CHOICES = [(FOLLOW, "follow"), (CLIP, "clip")]
+    NOTIFICATION_CHOICES = [
+        (FOLLOW, "follow"),
+        (CLIP, "clip"),
+        (LIKE, "like"),
+        (REPOST, "repost"),
+    ]
 
     sender = models.ForeignKey(
         User, on_delete=models.CASCADE
@@ -19,7 +26,7 @@ class Notification(models.Model):
     receiver = models.ForeignKey(
         User, related_name="notifications", on_delete=models.PROTECT
     )
-    type = models.CharField(max_length=1, choices=NOTIFICATION_CHOICES, default=FOLLOW)
+    type = models.CharField(max_length=2, choices=NOTIFICATION_CHOICES)
     sent_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
