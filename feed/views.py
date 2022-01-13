@@ -132,7 +132,7 @@ def get_profile_posts_view(request):
         "-created_datetime"
     )[:10]
 
-    posts_data = PostSerializer(posts, many=True).data
+    posts_data = PostSerializer(posts, many=True, context={"me": request.user}).data
 
     return JsonResponse(
         {"detail": "posts from {}".format(datetime), "payload": {"posts": posts_data}},
@@ -151,7 +151,7 @@ def get_post_view(request):
         )
     try:
         post = Post.objects.get(id=post_id)
-        post_data = PostSerializer(post).data
+        post_data = PostSerializer(post, context={"me": request.user}).data
         return JsonResponse(
             {"detail": "post {}".format(post_id), "payload": {"post": post_data}},
             status=status.HTTP_200_OK,
