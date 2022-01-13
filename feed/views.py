@@ -261,7 +261,7 @@ def share_post_view(request):
         )
 
     try:
-        post = Post.objects.get(id=post_id, is_repost=False)
+        post = Post.objects.get(id=post_id)
     except Post.DoesNotExist:
         return JsonResponse(
             {"detail": "post_id invalid"}, status=status.HTTP_400_BAD_REQUEST
