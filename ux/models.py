@@ -6,6 +6,7 @@ from django.contrib.postgres.fields import ArrayField
 class AppUpdate(models.Model):
     created = models.DateTimeField(default=timezone.now)
     version = models.CharField(max_length=10)
+    is_active = models.BooleanField(default=False)
     updates = ArrayField(models.CharField(max_length=200), blank=True)
 
     def __str__(self) -> str:
