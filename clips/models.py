@@ -35,6 +35,7 @@ class Clip(models.Model):
     viewed_by = models.ManyToManyField(
         User, related_name="viewed_clips", blank=True, through="View"
     )
+    view_count = models.PositiveIntegerField(default=0)
     share_count = models.PositiveIntegerField(default=0)
     height = models.PositiveSmallIntegerField()
     width = models.PositiveSmallIntegerField()
