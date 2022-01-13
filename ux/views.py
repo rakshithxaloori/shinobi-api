@@ -31,7 +31,7 @@ def get_updates_view(request):
         app_update = AppUpdate.objects.get(version=version)
         app_update_data = AppUpdateSerializer(app_update).data
         update_available = AppUpdate.objects.filter(
-            created__gt=app_update.created
+            created__gt=app_update.created, is_active=True
         ).exists()
         return JsonResponse(
             {
