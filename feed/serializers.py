@@ -36,11 +36,12 @@ class PostSerializer(ModelSerializer):
         read_only_fields = fields
 
     def get_clip(self, obj):
+        context = {"me": self.context.get("me", None)}
         if obj.is_repost:
             if obj.repost is None:
                 return None
-            return ClipSerializer(obj.repost.clip).data
-        return ClipSerializer(obj.clip).data
+            return ClipSerializer(obj.repost.clip, context=context).data
+        return ClipSerializer(obj.clip, context=context).data
 
     def get_posted_by(self, obj):
         if obj.is_repost:

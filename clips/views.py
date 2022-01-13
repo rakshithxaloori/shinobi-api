@@ -256,7 +256,11 @@ def viewed_clip_view(request):
         )
 
     clip.viewed_by.add(request.user)
-    clip.save()
+
+    if request.user != clip.clip_post.posted_by:
+        clip.view_count += 1
+        clip.save(update_fields=["view_count"])
+
     add_view_analytics_task.delay()
     return JsonResponse({"detail": "clip viewed"}, status=status.HTTP_200_OK)
 
