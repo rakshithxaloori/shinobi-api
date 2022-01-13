@@ -182,7 +182,10 @@ def like_post_view(request):
         )
 
     try:
-        post = Post.objects.get(id=post_id, is_repost=False)
+        post = Post.objects.get(id=post_id)
+        if post.is_repost:
+            post = post.repost
+
     except Post.DoesNotExist:
         return JsonResponse(
             {"detail": "Post doesn't exist"}, status=status.HTTP_400_BAD_REQUEST
@@ -234,7 +237,9 @@ def unlike_post_view(request):
         )
 
     try:
-        post = Post.objects.get(id=post_id, is_repost=False)
+        post = Post.objects.get(id=post_id)
+        if post.is_repost:
+            post = post.repost
     except Post.DoesNotExist:
         return JsonResponse(
             {"detail": "Post doesn't exist"}, status=status.HTTP_400_BAD_REQUEST
@@ -264,6 +269,9 @@ def share_post_view(request):
 
     post.share_count += 1
     post.save(update_fields=["share_count"])
+    if post.is_repost:
+        post.repost.share_count += 1
+        post.repost.save(update_fields=["share_count"])
     return JsonResponse({"detail": "post share"}, status=status.HTTP_200_OK)
 
 
@@ -291,7 +299,9 @@ def report_post_view(request):
         )
 
     try:
-        post = Post.objects.get(id=post_id, is_repost=False)
+        post = Post.objects.get(id=post_id)
+        if post.is_repost:
+            post = post.repost
     except Post.DoesNotExist:
         return JsonResponse(
             {"detail": "Post doesn't exist"}, status=status.HTTP_400_BAD_REQUEST
