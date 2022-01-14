@@ -29,7 +29,6 @@ urlpatterns = [
     path("auth/", include("authentication.urls")),
     path("profile/", include("profiles.urls")),
     path("socials/", include("socials.urls")),
-    path("chat/", include("chat.urls")),
     path("notification/", include("notification.urls")),
     path("feed/", include("feed.urls")),
     path("clips/", include("clips.urls")),
