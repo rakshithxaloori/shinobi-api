@@ -78,7 +78,5 @@ phases:
 artifacts:
   files:
     - imagedefinitions1.json
-    - imagedefinitions2.json
     - aws_resources/prod/taskdef_main.json
-    - appspec.yml
   name: buildartifacts
