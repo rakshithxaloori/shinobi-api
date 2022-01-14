@@ -45,14 +45,12 @@ phases:
       - echo Building the Docker images...
       - API_URI_T=$REPOSITORY_URI:api_$DATE
       - NGINX_URI_T=$REPOSITORY_URI:nginx_$DATE
-      - CHAT_URI_T=$REPOSITORY_URI:chat_$DATE
       - CELERY_URI_T=$REPOSITORY_URI:celery_$DATE
       - SCHEDULER_CELERY_URI_T=$REPOSITORY_URI:scheduler_celery_$DATE
 
       - docker-compose -f docker-compose.prod.yml build
       - docker tag api:latest $API_URI_T
       - docker tag nginx:latest $NGINX_URI_T
-      - docker tag chat:latest $CHAT_URI_T
       - docker tag celery:latest $CELERY_URI_T
       - docker tag scheduler_celery:latest $SCHEDULER_CELERY_URI_T
       # - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI/$IMAGE_REPO_NAME:$IMAGE_TAG
@@ -65,7 +63,6 @@ phases:
       # Replace tags in taskdef files
       - sed -i 's@<NGINX_IMAGE>@'"$NGINX_URI_T"'@' aws_resources/prod/taskdef_main.json
       - sed -i 's@<API_IMAGE>@'"$API_URI_T"'@' aws_resources/prod/taskdef_main.json
-      - sed -i 's@<CHAT_IMAGE>@'"$CHAT_URI_T"'@' aws_resources/prod/taskdef_main.json
       - sed -i 's@<CELERY_IMAGE>@'"$CELERY_URI_T"'@' aws_resources/prod/taskdef_main.json
       - sed -i 's@<SCHEDULER_CELERY_IMAGE>@'"$SCHEDULER_CELERY_URI_T"'@' aws_resources/prod/taskdef_main.json
 
@@ -76,7 +73,7 @@ phases:
       - cat aws_resources/prod/taskdef_main.json
 
       # Create imagedefinitions files
-      - printf '[{"name":"shn-api","imageUri":"%s"},{"name":"shn-chat","imageUri":"%s"},{"name":"shn-nginx","imageUri":"%s"},{"name":"shn-celery","imageUri":"%s"},{"name":"shn-scheduler-celery","imageUri":"%s"}]' $API_URI_T $CHAT_URI_T $NGINX_URI_T $CELERY_URI_T $SCHEDULER_CELERY_URI_T > imagedefinitions1.json
+      - printf '[{"name":"shn-api","imageUri":"%s"},{"name":"shn-nginx","imageUri":"%s"},{"name":"shn-celery","imageUri":"%s"},{"name":"shn-scheduler-celery","imageUri":"%s"}]' $API_URI_T $NGINX_URI_T $CELERY_URI_T $SCHEDULER_CELERY_URI_T > imagedefinitions1.json
 
 artifacts:
   files:
