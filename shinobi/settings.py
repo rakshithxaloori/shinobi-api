@@ -61,7 +61,6 @@ INSTALLED_APPS = [
     "authentication",
     "profiles",
     "socials",
-    "chat",
     "notification",
     "analytics",
     "health_checks",
