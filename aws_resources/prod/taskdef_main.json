@@ -56,34 +56,6 @@
       }
     },
     {
-      "name": "shn-chat",
-      "image": "<CHAT_IMAGE>",
-      "essential": true,
-      "environmentFiles": [
-        {
-          "value": "arn:aws:s3:::shinobi-api/prod.env",
-          "type": "s3"
-        }
-      ],
-      "pseudoTerminal": true,
-      "logConfiguration": {
-        "logDriver": "awslogs",
-        "secretOptions": [],
-        "options": {
-          "awslogs-group": "/ecs/shn-main",
-          "awslogs-region": "us-east-1",
-          "awslogs-stream-prefix": "ecs"
-        }
-      },
-      "secrets": [],
-      "dependsOn": [
-        {
-          "containerName": "shn-api",
-          "condition": "HEALTHY"
-        }
-      ]
-    },
-    {
       "name": "shn-celery",
       "image": "<CELERY_IMAGE>",
       "essential": true,
