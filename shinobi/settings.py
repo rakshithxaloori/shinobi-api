@@ -234,6 +234,9 @@ REST_KNOX = {
 
 
 ################################################################################
+ASGI_APPLICATION = "shinobi.asgi.application"
+
+################################################################################
 
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
