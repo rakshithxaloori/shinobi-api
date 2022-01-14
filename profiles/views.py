@@ -17,7 +17,6 @@ from knox.auth import TokenAuthentication
 
 
 from authentication.models import User
-from chat.models import Chat
 from profiles.models import Profile, Following, Game
 from profiles.serializers import (
     FollowingSerializer,
@@ -163,10 +162,6 @@ def unfollow_user_view(request, username):
             {"detail": "Invalid username"}, status=status.HTTP_404_NOT_FOUND
         )
 
-    except Chat.DoesNotExist:
-        return JsonResponse(
-            {"detail": "Unfollowed {}".format(username)}, status=status.HTTP_200_OK
-        )
 
 
 @api_view(["GET"])
