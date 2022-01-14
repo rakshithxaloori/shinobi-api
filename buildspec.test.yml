@@ -73,5 +73,4 @@ artifacts:
   files:
     - imagedefinitions1.json
     - aws_resources/test/taskdef_main.json
-    - appspec.yml
   name: buildartifacts
