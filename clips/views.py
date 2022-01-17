@@ -37,6 +37,8 @@ from clips.utils import VIDEO_MAX_SIZE_IN_BYTES, s3_client, sns_client
 from shinobi.utils import get_media_file_url
 
 CLIP_DAILY_LIMIT = 20
+MIN_CLIP_DURATION = 5
+MAX_CLIP_DURATION = 61
 URI_RECAPTCHA = "https://www.google.com/recaptcha/api/siteverify"
 
 
@@ -110,6 +112,7 @@ def generate_s3_presigned_url_view(request):
     game_code = request.data.get("game_code", None)
     title = request.data.get("title", None)
 
+    duration = request.data.get("duration", None)
     clip_height = request.data.get("clip_height", None)
     clip_width = request.data.get("clip_width", None)
 
@@ -148,11 +151,6 @@ def generate_s3_presigned_url_view(request):
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
-    if clip_height is None or clip_height < 0 or clip_width is None or clip_width < 0:
-        return JsonResponse(
-            {"detail": "clip_height_to_width_ratio required or invalid"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
 
     try:
         game = Game.objects.get(id=game_code)
@@ -160,12 +158,42 @@ def generate_s3_presigned_url_view(request):
         return JsonResponse(
             {"detail": "Invalid game_code"}, status=status.HTTP_400_BAD_REQUEST
         )
+
+    if duration is None:
+        return JsonResponse(
+            {"detail": "Duration required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if clip_height is None or clip_width is None:
+        return JsonResponse(
+            {"detail": "clip_height, clip_width required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        duration = int(duration)
+    except ValueError:
+        return JsonResponse(
+            {"detail": "duration invalid"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     try:
         clip_height = int(clip_height)
         clip_width = int(clip_width)
     except ValueError:
         return JsonResponse(
             {"detail": "clip height or width invalid"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if duration < MIN_CLIP_DURATION or duration > MAX_CLIP_DURATION:
+        return JsonResponse(
+            {"detail": "Duration invalid"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    if clip_height < 0 or clip_width < 0:
+        return JsonResponse(
+            {"detail": "clip_height, clip_width invalid"},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -204,6 +232,7 @@ def generate_s3_presigned_url_view(request):
 
     new_clip = Clip.objects.create(
         url=file_url,
+        duration=duration,
         height=clip_height,
         width=clip_width,
         uploaded_from=uploaded_from,

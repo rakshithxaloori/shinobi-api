@@ -39,6 +39,7 @@ class Clip(models.Model):
     share_count = models.PositiveIntegerField(default=0)
     height = models.PositiveSmallIntegerField()
     width = models.PositiveSmallIntegerField()
+    duration = models.PositiveSmallIntegerField(default=0)
     url = models.URLField(unique=True)
 
     def __str__(self) -> str:

@@ -3,6 +3,7 @@ from random import choice
 from django.db import models
 
 from authentication.models import User
+from socials.models import Socials
 
 
 def random_bio():
@@ -38,6 +39,9 @@ class Game(models.Model):
 class Profile(models.Model):
     # Stuff that you wanna show in user's profile
     user = models.OneToOneField(User, related_name="profile", on_delete=models.PROTECT)
+    socials = models.OneToOneField(
+        Socials, related_name="profile", on_delete=models.PROTECT, null=True, blank=True
+    )
     followings = models.ManyToManyField(
         User, related_name="follower", blank=True, through="Following"
     )

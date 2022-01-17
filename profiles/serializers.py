@@ -17,7 +17,7 @@ class FullProfileSerializer(ModelSerializer):
     followers = SerializerMethodField()
     following = SerializerMethodField()
     me_following = SerializerMethodField()
-    socials = SerializerMethodField()
+    socials = SocialsSerializer()
 
     class Meta:
         model = Profile
@@ -35,9 +35,6 @@ class FullProfileSerializer(ModelSerializer):
             return False
         user_pk = self.context.get("user_pk")
         return me.profile.followings.filter(pk=user_pk).exists()
-
-    def get_socials(self, obj):
-        return SocialsSerializer(obj).data
 
 
 ##########################################
@@ -77,4 +74,4 @@ class FollowingSerializer(ModelSerializer):
 class GameSerializer(ModelSerializer):
     class Meta:
         model = Game
-        fields = ["id", "game_code", "name", "logo_url"]
+        fields = ["id", "name", "logo_url"]
