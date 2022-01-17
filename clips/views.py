@@ -158,6 +158,18 @@ def generate_s3_presigned_url_view(request):
         return JsonResponse(
             {"detail": "Invalid game_code"}, status=status.HTTP_400_BAD_REQUEST
         )
+
+    if duration is None:
+        return JsonResponse(
+            {"detail": "Duration required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if clip_height is None or clip_width is None:
+        return JsonResponse(
+            {"detail": "clip_height, clip_width required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     try:
         duration = int(duration)
     except ValueError:
@@ -175,13 +187,13 @@ def generate_s3_presigned_url_view(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    if duration is None or duration < MIN_CLIP_DURATION or duration > MAX_CLIP_DURATION:
+    if duration < MIN_CLIP_DURATION or duration > MAX_CLIP_DURATION:
         return JsonResponse(
             {"detail": "Duration invalid"}, status=status.HTTP_400_BAD_REQUEST
         )
-    if clip_height is None or clip_height < 0 or clip_width is None or clip_width < 0:
+    if clip_height < 0 or clip_width < 0:
         return JsonResponse(
-            {"detail": "clip_height_to_width_ratio required or invalid"},
+            {"detail": "clip_height, clip_width invalid"},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
