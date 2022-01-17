@@ -2,8 +2,7 @@ from rest_framework.serializers import ModelSerializer, SerializerMethodField
 from clips.serializers import ClipSerializer
 
 from feed.models import Post
-from profiles.serializers import UserSerializer
-from socials.serializers import GameSerializer
+from profiles.serializers import UserSerializer, GameSerializer
 
 ##########################################
 class PostSerializer(ModelSerializer):

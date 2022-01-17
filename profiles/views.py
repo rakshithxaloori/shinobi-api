@@ -53,6 +53,7 @@ def trending_profiles_view(request):
 @permission_classes([IsAuthenticated, HasAPIKey])
 def my_profile_view(request):
     profile_data = FullProfileSerializer(request.user.profile).data
+    print(profile_data)
     return JsonResponse(
         {
             "detail": "My profile data",
@@ -161,7 +162,6 @@ def unfollow_user_view(request, username):
         return JsonResponse(
             {"detail": "Invalid username"}, status=status.HTTP_404_NOT_FOUND
         )
-
 
 
 @api_view(["GET"])
