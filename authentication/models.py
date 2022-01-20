@@ -11,6 +11,8 @@ def today_date():
 class User(AbstractUser):
     is_banned = models.BooleanField(default=False)
     picture = models.URLField(null=True, blank=True)
+    # ISO alpha_2 code
+    country_code = models.CharField(max_length=2, null=True, blank=True)
     last_open = models.DateTimeField(
         default=timezone.now
     )  # The last time the user opened the app

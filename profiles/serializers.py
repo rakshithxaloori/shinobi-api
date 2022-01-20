@@ -8,7 +8,7 @@ from socials.serializers import SocialsSerializer
 class UserSerializer(ModelSerializer):
     class Meta:
         model = User
-        fields = ["username", "picture"]
+        fields = ["username", "picture", "country_code"]
         read_only_fields = fields
 
 
