@@ -42,6 +42,16 @@ def get_analytics_instance():
     return analytics
 
 
+@celery_app.on_after_finalize.connect
+def setup_periodic_tasks(sender, **kwargs):
+    sender.add_periodic_task(crontab(), create_new_analytics.s())
+
+
+@celery_app.task(queue="celery")
+def create_new_analytics():
+    print("HEYA HOTTIE")
+
+
 @celery_app.task(queue="celery")
 def new_user_joined():
     analytics = get_analytics_instance()
