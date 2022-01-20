@@ -1,3 +1,5 @@
+from iso3166 import countries
+
 from django.http import JsonResponse
 
 from rest_framework import status
@@ -181,3 +183,24 @@ def valid_token_view(request):
         },
         status=status.HTTP_200_OK,
     )
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def update_country_view(request):
+    country_code = request.data.get("country_code", None)
+    if country_code is None:
+        return JsonResponse(
+            {"detail": "country_code required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        country = countries.get(country_code)
+        request.user.country_code = country.alpha2
+        request.user.save(update_fields=["country_code"])
+        return JsonResponse({"detail": "country updated!"}, status=status.HTTP_200_OK)
+    except KeyError:
+        return JsonResponse(
+            {"detail": "country_code invalid"}, status=status.HTTP_400_BAD_REQUEST
+        )

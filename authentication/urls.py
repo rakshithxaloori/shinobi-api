@@ -14,4 +14,5 @@ urlpatterns = [
         views.valid_token_view,
         name="valid token",
     ),
+    path("update/country/", views.update_country_view, name="update country"),
 ]
