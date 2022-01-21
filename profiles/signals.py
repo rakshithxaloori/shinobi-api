@@ -19,7 +19,7 @@ def post_change_follow_status(sender, instance, action, model, pk_set, **kwargs)
             p_tasks.after_follow.delay(being_followed_user.profile.pk)
 
             # Send a notification
-            n_tasks.create_notification_task.delay(
+            n_tasks.create_inotif_task.delay(
                 Notification.FOLLOW, follower_user_pk, being_followed_user_pk
             )
 

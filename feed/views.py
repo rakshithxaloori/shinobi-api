@@ -19,7 +19,7 @@ from authentication.models import User
 from feed.serializers import PostSerializer
 from feed.models import Post, Report
 from notification.models import Notification
-from notification.tasks import create_notification_task
+from notification.tasks import create_inotif_task
 from profiles.utils import get_action_approve
 
 
@@ -52,9 +52,7 @@ def following_feed_view(request):
     return JsonResponse(
         {
             "detail": "{}'s feed".format(request.user.username),
-            "payload": {
-                "posts": posts_data,
-            },
+            "payload": {"posts": posts_data, "upload": request.user.posts.count()},
         },
         status=status.HTTP_200_OK,
     )
@@ -94,9 +92,7 @@ def world_feed_view(request):
     return JsonResponse(
         {
             "detail": "{}'s feed".format(request.user.username),
-            "payload": {
-                "posts": posts_data,
-            },
+            "payload": {"posts": posts_data, "upload": request.user.posts.count() == 0},
         },
         status=status.HTTP_200_OK,
     )
@@ -193,9 +189,7 @@ def like_post_view(request):
 
     post.liked_by.add(request.user)
     post.save()
-    create_notification_task.delay(
-        Notification.LIKE, request.user.pk, post.posted_by.pk
-    )
+    create_inotif_task.delay(Notification.LIKE, request.user.pk, post.posted_by.pk)
     return JsonResponse({"detail": "post liked"}, status=status.HTTP_200_OK)
 
 
@@ -334,7 +328,5 @@ def repost_view(request):
 
     repost = Post.objects.create(posted_by=request.user, is_repost=True, repost=post)
     repost.save()
-    create_notification_task.delay(
-        Notification.REPOST, request.user.pk, post.posted_by.pk
-    )
+    create_inotif_task.delay(Notification.REPOST, request.user.pk, post.posted_by.pk)
     return JsonResponse({"detail": "Reposted!"}, status=status.HTTP_200_OK)
