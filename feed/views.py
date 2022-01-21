@@ -21,6 +21,7 @@ from feed.models import Post, Report
 from notification.models import Notification
 from notification.tasks import create_inotif_task
 from profiles.utils import get_action_approve
+from feed.utils import should_upload
 
 
 @api_view(["POST"])
@@ -52,7 +53,7 @@ def following_feed_view(request):
     return JsonResponse(
         {
             "detail": "{}'s feed".format(request.user.username),
-            "payload": {"posts": posts_data, "upload": request.user.posts.count()},
+            "payload": {"posts": posts_data, "upload": should_upload(request.user)},
         },
         status=status.HTTP_200_OK,
     )
@@ -92,7 +93,7 @@ def world_feed_view(request):
     return JsonResponse(
         {
             "detail": "{}'s feed".format(request.user.username),
-            "payload": {"posts": posts_data, "upload": request.user.posts.count() == 0},
+            "payload": {"posts": posts_data, "upload": should_upload(request.user)},
         },
         status=status.HTTP_200_OK,
     )
@@ -129,9 +130,12 @@ def get_profile_posts_view(request):
     )[:10]
 
     posts_data = PostSerializer(posts, many=True, context={"me": request.user}).data
+    payload = {"posts": posts_data}
+    if username == request.user.username:
+        payload["upload"] = should_upload(request.user)
 
     return JsonResponse(
-        {"detail": "posts from {}".format(datetime), "payload": {"posts": posts_data}},
+        {"detail": "posts from {}".format(datetime), "payload": payload},
         status=status.HTTP_200_OK,
     )
 
