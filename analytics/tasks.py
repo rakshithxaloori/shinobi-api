@@ -22,7 +22,7 @@ def get_da_instance():
 @celery_app.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(
-        crontab(), create_new_da.s(), name="create daily analytics"
+        crontab(minute=0, hour=0), create_new_da.s(), name="create daily analytics"
     )
 
 
