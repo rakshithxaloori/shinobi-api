@@ -9,52 +9,51 @@ from analytics.models import DailyAnalytics
 from shinobi.utils import now_date
 
 
-def get_analytics_instance():
+def get_da_instance():
     try:
         analytics = DailyAnalytics.objects.get(date=now_date())
 
     except DailyAnalytics.DoesNotExist:
-        # Update old analytics instance
-        old_analytics = DailyAnalytics.objects.order_by("-date").first()
-        old_analytics.total_users = User.objects.filter(is_staff=False).count()
-        old_analytics.total_clips_m = Clip.objects.filter(
-            created_date=old_analytics.date, uploaded_from=Clip.MOBILE
-        ).count()
-        old_analytics.total_clips_w = Clip.objects.filter(
-            created_date=old_analytics.date, uploaded_from=Clip.WEB
-        ).count()
-        # old_analytics.total_views = View.objects.filter(
-        #     created_date=old_analytics.date
-        # ).count()
-        old_analytics.save(
-            update_fields=[
-                "total_users",
-                "total_clips_m",
-                "total_clips_w",
-                "total_views",
-            ]
-        )
-
-        # Create new analytics instance
-        analytics = DailyAnalytics.objects.create()
-        analytics.save()
+        analytics = create_new_da()
 
     return analytics
 
 
 @celery_app.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(crontab(), create_new_analytics.s())
+    sender.add_periodic_task(
+        crontab(), create_new_da.s(), name="create daily analytics"
+    )
 
 
 @celery_app.task(queue="celery")
-def create_new_analytics():
-    print("HEYA HOTTIE")
+def create_new_da():
+    # Update old analytics instance
+    old_analytics = DailyAnalytics.objects.order_by("-date").first()
+    old_analytics.total_users = User.objects.filter(is_staff=False).count()
+    old_analytics.total_clips_m = Clip.objects.filter(
+        created_date=old_analytics.date, uploaded_from=Clip.MOBILE
+    ).count()
+    old_analytics.total_clips_w = Clip.objects.filter(
+        created_date=old_analytics.date, uploaded_from=Clip.WEB
+    ).count()
+    old_analytics.save(
+        update_fields=[
+            "total_users",
+            "total_clips_m",
+            "total_clips_w",
+        ]
+    )
+
+    # Create new analytics instance
+    analytics = DailyAnalytics.objects.create()
+    analytics.save()
+    return analytics
 
 
 @celery_app.task(queue="celery")
 def new_user_joined():
-    analytics = get_analytics_instance()
+    analytics = get_da_instance()
     analytics.active_users += 1
     analytics.new_users += 1
     analytics.save(update_fields=["active_users", "new_users"])
@@ -65,7 +64,7 @@ def update_active_user(last_open_str):
     last_open_date = timezone.datetime.fromisoformat(last_open_str).date()
 
     # Daily Analytics
-    da_instance = get_analytics_instance()
+    da_instance = get_da_instance()
     if da_instance is None:
         # Happens when the db is first created
         da_instance = DailyAnalytics.objects.create(date=timezone.now())
@@ -79,6 +78,6 @@ def update_active_user(last_open_str):
 
 @celery_app.task(queue="celery")
 def add_view_analytics_task():
-    analytics = get_analytics_instance()
+    analytics = get_da_instance()
     analytics.total_views += 1
     analytics.save()
