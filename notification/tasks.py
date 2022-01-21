@@ -1,4 +1,5 @@
 import rollbar
+from celery.schedules import crontab
 
 from django.core.exceptions import ValidationError
 
@@ -14,7 +15,18 @@ from requests.exceptions import ConnectionError, HTTPError
 from shinobi.celery import app as celery_app
 
 from authentication.models import User
+from profiles.models import Profile
 from notification.models import Notification, ExponentPushToken
+
+
+# @celery_app.on_after_finalize.connect
+# def setup_periodic_tasks(sender, **kwargs):
+#     # Saturday at 7pm
+#     sender.add_periodic_task(
+#         crontab(minute=0, hour=19, day_of_week="sat"),
+#         send_weekend_notifications.s(),
+#         name="weekend notifications",
+#     )
 
 
 def _send_push_message(token, title, message, data=None):
@@ -77,7 +89,8 @@ def _send_push_message(token, title, message, data=None):
 
 
 @celery_app.task(queue="celery")
-def create_notification_task(type, sender_pk, receiver_pk, extra_data={}):
+def create_inotif_task(type, sender_pk, receiver_pk, extra_data={}):
+    # Inter-user notification - to notify activity of other users to a user
     try:
         sender = User.objects.get(pk=sender_pk)
         receiver = User.objects.get(pk=receiver_pk)
@@ -86,6 +99,7 @@ def create_notification_task(type, sender_pk, receiver_pk, extra_data={}):
         )
         new_notification.clean_fields()
         new_notification.save()
+
         expo_tokens = ExponentPushToken.objects.filter(user=receiver, is_active=True)
         title = ""
         message = ""
@@ -146,6 +160,37 @@ def create_notification_task(type, sender_pk, receiver_pk, extra_data={}):
 
     except User.DoesNotExist:
         return
+
+
+def create_nnotif_task(receiver_pk, type, extra_data={}):
+    # Non inter-user notification
+    try:
+        receiver = User.objects.get(pk=receiver_pk)
+
+        expo_tokens = ExponentPushToken.objects.filter(user=receiver, is_active=True)
+        title = ""
+        message = ""
+        payload = {}
+
+        if type == Notification.WEEKEND:
+            title = "The Weekend is here 🥳"
+            message = "Can't wait to see which clips you share 🔥"
+
+        if title != "":
+            for expo_token in expo_tokens:
+                # Send a push notification
+                _send_push_message(
+                    token=expo_token.token, title=title, message=message, data=payload
+                )
+
+    except User.DoesNotExist:
+        pass
+
+
+@celery_app.task(queue="celery")
+def send_weekend_notifications():
+    for profile in Profile.objects.all():
+        create_nnotif_task(profile.user.pk, Notification.WEEKEND)
 
 
 @celery_app.task(queue="celery")
