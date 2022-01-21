@@ -7,7 +7,7 @@ from shinobi.celery import app as celery_app
 from clips.utils import VIDEO_MAX_SIZE_IN_BYTES, VIDEO_FILE_ARGS, create_job
 from shinobi.utils import get_media_file_url, get_media_file_path
 from clips.models import Clip
-from notification.tasks import create_notification_task
+from notification.tasks import create_inotif_task
 from authentication.models import User
 from profiles.models import Following
 from notification.models import Notification
@@ -129,14 +129,14 @@ def send_clip_notifications_task(user_pk, post_id, game_name):
         followers = Following.objects.filter(user=sender)
         extra_data = {"post_id": post_id, "game_name": game_name}
 
-        create_notification_task(
+        create_inotif_task(
             type=Notification.CLIP,
             sender_pk=user_pk,
             receiver_pk=user_pk,
             extra_data=extra_data,
         )
         for follower in followers:
-            create_notification_task(
+            create_inotif_task(
                 type=Notification.CLIP,
                 sender_pk=user_pk,
                 receiver_pk=follower.profile.user.pk,
