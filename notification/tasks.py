@@ -19,14 +19,14 @@ from profiles.models import Profile
 from notification.models import Notification, ExponentPushToken
 
 
-# @celery_app.on_after_finalize.connect
-# def setup_periodic_tasks(sender, **kwargs):
-#     # Saturday at 7pm
-#     sender.add_periodic_task(
-#         crontab(minute=0, hour=19, day_of_week="sat"),
-#         send_weekend_notifications.s(),
-#         name="weekend notifications",
-#     )
+@celery_app.on_after_finalize.connect
+def setup_periodic_tasks(sender, **kwargs):
+    # Saturday at 7pm
+    sender.add_periodic_task(
+        crontab(minute=0, hour=19, day_of_week="sat"),
+        send_weekend_notifications.s(),
+        name="weekend notifications",
+    )
 
 
 def _send_push_message(token, title, message, data=None):
