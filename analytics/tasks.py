@@ -14,7 +14,7 @@ def get_da_instance():
         analytics = DailyAnalytics.objects.get(date=now_date())
 
     except DailyAnalytics.DoesNotExist:
-        analytics = create_new_da()
+        analytics = DailyAnalytics.objects.get(pk=create_new_da())
 
     return analytics
 
@@ -48,7 +48,7 @@ def create_new_da():
     # Create new analytics instance
     analytics = DailyAnalytics.objects.create()
     analytics.save()
-    return analytics
+    return analytics.pk
 
 
 @celery_app.task(queue="celery")
