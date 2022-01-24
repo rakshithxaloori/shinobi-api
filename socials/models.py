@@ -11,4 +11,6 @@ class Socials(models.Model):
     twitch = models.CharField(null=True, blank=True, max_length=15)
 
     def __str__(self) -> str:
-        return "{}".format(self.profile.user.username)
+        return "{} || YT: {} || IG: {} || TW: {}".format(
+            self.profile.user.username, self.youtube, self.instagram, self.instagram
+        )
