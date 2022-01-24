@@ -12,5 +12,5 @@ class Socials(models.Model):
 
     def __str__(self) -> str:
         return "{} || YT: {} || IG: {} || TW: {}".format(
-            self.profile.user.username, self.youtube, self.instagram, self.instagram
+            self.profile.user.username, self.youtube, self.instagram, self.twitch
         )
