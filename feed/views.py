@@ -18,10 +18,11 @@ from knox.auth import TokenAuthentication
 from authentication.models import User
 from feed.serializers import PostSerializer
 from feed.models import Post, Report
+from profiles.models import Game
 from notification.models import Notification
 from notification.tasks import create_inotif_task
 from profiles.utils import get_action_approve
-from feed.utils import should_upload
+from feed.utils import POST_TITLE_LENGTH, is_upload_count_zero
 
 
 @api_view(["POST"])
@@ -53,7 +54,10 @@ def following_feed_view(request):
     return JsonResponse(
         {
             "detail": "{}'s feed".format(request.user.username),
-            "payload": {"posts": posts_data, "upload": should_upload(request.user)},
+            "payload": {
+                "posts": posts_data,
+                "upload": is_upload_count_zero(request.user),
+            },
         },
         status=status.HTTP_200_OK,
     )
@@ -93,7 +97,10 @@ def world_feed_view(request):
     return JsonResponse(
         {
             "detail": "{}'s feed".format(request.user.username),
-            "payload": {"posts": posts_data, "upload": should_upload(request.user)},
+            "payload": {
+                "posts": posts_data,
+                "upload": is_upload_count_zero(request.user),
+            },
         },
         status=status.HTTP_200_OK,
     )
@@ -132,7 +139,7 @@ def get_profile_posts_view(request):
     posts_data = PostSerializer(posts, many=True, context={"me": request.user}).data
     payload = {"posts": posts_data}
     if username == request.user.username:
-        payload["upload"] = should_upload(request.user)
+        payload["upload"] = is_upload_count_zero(request.user)
 
     return JsonResponse(
         {"detail": "posts from {}".format(datetime), "payload": payload},
@@ -163,6 +170,68 @@ def get_post_view(request):
 
 
 ################################################
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def update_post_view(request):
+    post_id = request.data.get("post_id", None)
+    game_id = request.data.get("game_id", None)
+    title = request.data.get("title", None)
+    if post_id is None:
+        return JsonResponse(
+            {"detail": "post_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    if game_id is None and title is None:
+        return JsonResponse(
+            {"detail": "Post not changed"}, status=status.HTTP_202_ACCEPTED
+        )
+    if title is None or type(title) != str:
+        return JsonResponse(
+            {"detail": "title is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    if len(title) > POST_TITLE_LENGTH:
+        return JsonResponse(
+            {
+                "detail": "title has to be less than {} characters".format(
+                    POST_TITLE_LENGTH
+                )
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    action_approved = get_action_approve(request.user)
+    if not action_approved:
+        return JsonResponse(
+            {"detail": "Too many actions"}, status=status.HTTP_406_NOT_ACCEPTABLE
+        )
+
+    try:
+        post = Post.objects.get(id=post_id)
+        if post.is_repost:
+            return JsonResponse(
+                {"detail": "Repost cannot be edited"}, status=status.HTTP_403_FORBIDDEN
+            )
+
+    except Post.DoesNotExist:
+        return JsonResponse(
+            {"detail": "Post doesn't exist"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if game_id is not None:
+        try:
+            game = Game.objects.get(id=game_id)
+            post.game = game
+        except Game.DoesNotExist:
+            return JsonResponse(
+                {"detail": "Game doesn't exist"}, status=status.HTTP_400_BAD_REQUEST
+            )
+    if title is not None:
+        post.title = title
+    post.save(update_fields=["game", "title"])
+
+    return JsonResponse({"detail": "Post updated!"}, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])

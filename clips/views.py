@@ -109,7 +109,7 @@ def generate_s3_presigned_url_view(request):
 
     clip_size = request.data.get("clip_size", None)
     clip_type = request.data.get("clip_type", None)
-    game_code = request.data.get("game_code", None)
+    game_id = request.data.get("game_code", None)
     title = request.data.get("title", None)
 
     duration = request.data.get("duration", None)
@@ -134,11 +134,11 @@ def generate_s3_presigned_url_view(request):
         return JsonResponse(
             {"detail": "clip_type is required"}, status=status.HTTP_400_BAD_REQUEST
         )
-    if game_code is None:
+    if game_id is None:
         return JsonResponse(
             {"detail": "game_code is required"}, status=status.HTTP_400_BAD_REQUEST
         )
-    if title is None:
+    if title is None or type(title) != str:
         return JsonResponse(
             {"detail": "title is required"}, status=status.HTTP_400_BAD_REQUEST
         )
@@ -153,7 +153,7 @@ def generate_s3_presigned_url_view(request):
         )
 
     try:
-        game = Game.objects.get(id=game_code)
+        game = Game.objects.get(id=game_id)
     except Game.DoesNotExist:
         return JsonResponse(
             {"detail": "Invalid game_code"}, status=status.HTTP_400_BAD_REQUEST
