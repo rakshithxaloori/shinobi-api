@@ -1,5 +1,5 @@
 POST_TITLE_LENGTH = 80
 
 
-def should_upload(user):
+def is_upload_count_zero(user):
     return user.posts.count() == 0

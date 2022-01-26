@@ -11,6 +11,7 @@ urlpatterns = [
     ),
     path("posts/profile/", views.get_profile_posts_view, name="my posts"),
     path("post/", views.get_post_view, name="get post"),
+    path("post/update/", views.update_post_view, name="update post"),
     path("post/delete/", views.delete_post_view, name="delete post"),
     path("post/like/", views.like_post_view, name="like post"),
     path("post/unlike/", views.unlike_post_view, name="unlike post"),
