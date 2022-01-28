@@ -33,6 +33,7 @@ urlpatterns = [
     path("feed/", include("feed.urls")),
     path("clips/", include("clips.urls")),
     path("ux/", include("ux.urls")),
+    path("settings/", include("settings.urls")),
     path("ht/", include("health_checks.urls")),
 ]
 

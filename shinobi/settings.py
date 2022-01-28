@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "feed",
     "clips",
     "ux",
+    "settings",
 ]
 
 MIDDLEWARE = [
