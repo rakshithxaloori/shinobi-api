@@ -105,7 +105,7 @@ def create_inotif_task(type, sender_pk, receiver_pk, extra_data={}):
         message = ""
         payload = {}
         if type == Notification.FOLLOW:
-            title = "New follower! 💥"
+            title = "💥 New follower!"
             message = "{} follows you".format(sender.username)
             payload = {"type": type}
 
@@ -113,17 +113,17 @@ def create_inotif_task(type, sender_pk, receiver_pk, extra_data={}):
             if not "post_id" in extra_data or not "game_name" in extra_data:
                 return None
 
-            title = "New clip! 📺"
             if sender_pk == receiver_pk:
-                message = "Your {} clip is ready".format(extra_data["game_name"])
+                title = "📺 Your {} clip is ready".format(extra_data["game_name"])
             else:
-                message = "{} uploaded a {} clip".format(
+                title = "📺 {} uploaded a {} clip".format(
                     sender.username, extra_data["game_name"]
                 )
+            message = "{}".format(extra_data["title"])
             payload = {"type": type, "post_id": extra_data["post_id"]}
 
         elif type == Notification.LIKE:
-            title = "New like! ❤️"
+            title = "❤️ New like!"
             if sender_pk == receiver_pk:
                 message = "Hold on, did you just like your own post? 😝"
             else:
@@ -131,7 +131,7 @@ def create_inotif_task(type, sender_pk, receiver_pk, extra_data={}):
             payload = {"type": type}
 
         elif type == Notification.REPOST:
-            title = "Reposted! 🤘"
+            title = "🤘 Reposted!"
             if sender_pk == receiver_pk:
                 message = "Hold on, did you just repost your own post? 😝"
             else:
