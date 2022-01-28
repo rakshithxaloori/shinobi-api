@@ -97,7 +97,10 @@ def check_compressed_successful_task(input_s3_url: str):
 
             clip_post = clip.clip_post
             send_clip_notifications_task.delay(
-                clip_post.posted_by.pk, clip_post.pk, clip_post.game.name
+                clip_post.posted_by.pk,
+                clip_post.pk,
+                clip_post.game.name,
+                clip_post.title,
             )
         except Clip.DoesNotExist:
             print("Clip.DoesNotExist", upload_file_key, compressed_file_key)
@@ -123,11 +126,11 @@ def delete_clip_task(url):
 
 
 @celery_app.task(queue="celery")
-def send_clip_notifications_task(user_pk, post_id, game_name):
+def send_clip_notifications_task(user_pk, post_id, game_name, title):
     try:
         sender = User.objects.get(pk=user_pk)
         followers = Following.objects.filter(user=sender)
-        extra_data = {"post_id": post_id, "game_name": game_name}
+        extra_data = {"post_id": post_id, "game_name": game_name, "title": title}
 
         create_inotif_task(
             type=Notification.CLIP,
