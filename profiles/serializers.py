@@ -6,10 +6,18 @@ from socials.serializers import SocialsSerializer
 
 ##########################################
 class UserSerializer(ModelSerializer):
+    country_code = SerializerMethodField()
+
     class Meta:
         model = User
         fields = ["username", "picture", "country_code"]
         read_only_fields = fields
+
+    def get_country_code(self, obj):
+        if obj.profile.privacy_settings.show_flag:
+            return obj.country_code
+        else:
+            return None
 
 
 class FullProfileSerializer(ModelSerializer):
