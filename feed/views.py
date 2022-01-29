@@ -69,6 +69,8 @@ def following_feed_view(request):
 def world_feed_view(request):
     """Returns posts from all users of the games that I play."""
     datetime = request.data.get("datetime", None)
+    game_id = request.data.get("game_id", None)
+    game = None
     if datetime is None:
         return JsonResponse(
             {"detail": "datetime is required"}, status=status.HTTP_400_BAD_REQUEST
@@ -79,18 +81,25 @@ def world_feed_view(request):
             {"detail": "Invalid datetime"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    # games = request.user.profile.games
+    if game_id is not None:
+        try:
+            game = Game.objects.get(pk=game_id)
+        except Game.DoesNotExist:
+            game = None
 
-    # posts = Post.objects.filter(
-    #     created_datetime__lt=datetime,
-    #     game__in=games,
-    # ).order_by("-created_datetime")[:10]
-
-    posts = Post.objects.filter(
-        Q(created_datetime__lt=datetime),
-        Q(is_repost=True, repost__clip__compressed_verified=True)
-        | Q(is_repost=False, clip__compressed_verified=True),
-    ).order_by("-created_datetime")[:10]
+    if game is None:
+        posts = Post.objects.filter(
+            Q(created_datetime__lt=datetime),
+            Q(is_repost=True, repost__clip__compressed_verified=True)
+            | Q(is_repost=False, clip__compressed_verified=True),
+        ).order_by("-created_datetime")[:10]
+    else:
+        posts = Post.objects.filter(
+            Q(created_datetime__lt=datetime),
+            Q(is_repost=True, repost__clip__compressed_verified=True)
+            | Q(is_repost=False, clip__compressed_verified=True),
+            Q(is_repost=True, repost__game=game) | Q(is_repost=False, game=game),
+        ).order_by("-created_datetime")[:10]
 
     posts_data = PostSerializer(posts, many=True, context={"me": request.user}).data
 
@@ -112,6 +121,8 @@ def world_feed_view(request):
 def get_profile_posts_view(request):
     datetime = request.data.get("datetime", None)
     username = request.data.get("username", None)
+    game_id = request.data.get("game_id", None)
+    game = None
     if datetime is None:
         return JsonResponse(
             {"detail": "datetime is required"}, status=status.HTTP_400_BAD_REQUEST
@@ -132,9 +143,22 @@ def get_profile_posts_view(request):
             {"detail": "Invalid username"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    posts = Post.objects.filter(created_datetime__lt=datetime, posted_by=user).order_by(
-        "-created_datetime"
-    )[:10]
+    if game_id is not None:
+        try:
+            game = Game.objects.get(pk=game_id)
+        except Game.DoesNotExist:
+            game = None
+
+    if game is None:
+        posts = Post.objects.filter(
+            created_datetime__lt=datetime, posted_by=user
+        ).order_by("-created_datetime")[:10]
+    else:
+        posts = Post.objects.filter(
+            Q(created_datetime__lt=datetime),
+            Q(posted_by=user),
+            Q(is_repost=True, repost__game=game) | Q(is_repost=False, game=game),
+        ).order_by("-created_datetime")[:10]
 
     posts_data = PostSerializer(posts, many=True, context={"me": request.user}).data
     payload = {"posts": posts_data}
