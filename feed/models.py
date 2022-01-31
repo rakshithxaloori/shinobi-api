@@ -47,7 +47,7 @@ class Post(models.Model):
     )
 
     def __str__(self) -> str:
-        return "{}'s {} {} || {}".format(
+        return "{}'s {} {} || {} days ago".format(
             self.posted_by.username,
             self.id,
             "REPOST" if self.is_repost else "POST",
