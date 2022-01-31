@@ -43,7 +43,7 @@ class Clip(models.Model):
     url = models.URLField(unique=True)
 
     def __str__(self) -> str:
-        return "{}".format(self.id)
+        return "{} || {}".format(self.id, (timezone.now() - self.created_datetime).days)
 
     class Meta:
         ordering = ["-created_datetime"]
