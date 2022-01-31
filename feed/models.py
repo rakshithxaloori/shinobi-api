@@ -47,8 +47,11 @@ class Post(models.Model):
     )
 
     def __str__(self) -> str:
-        return "{}'s {} {}".format(
-            self.posted_by.username, self.id, "repost" if self.is_repost else "post"
+        return "{}'s {} {} || {}".format(
+            self.posted_by.username,
+            self.id,
+            "REPOST" if self.is_repost else "POST",
+            (timezone.now() - self.created_datetime).days,
         )
 
     class Meta:
