@@ -3,7 +3,11 @@ from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
 
 
-from shinobi.utils import now_date
+def today_date():
+    # Use this, not shinobi.utils.now_date,
+    # cause for now_date to load, it needs
+    # User model
+    return timezone.now().date()
 
 
 # Create your models here.
@@ -19,7 +23,7 @@ class User(AbstractUser):
         default=timezone.now
     )  # The last time the user closed the app
     online = models.BooleanField(default=False)
-    last_action_date = models.DateField(default=now_date)
+    last_action_date = models.DateField(default=today_date)
     action_count = models.PositiveSmallIntegerField(default=0)
 
     def __str__(self):
