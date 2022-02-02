@@ -34,6 +34,7 @@ urlpatterns = [
     path("clips/", include("clips.urls")),
     path("ux/", include("ux.urls")),
     path("settings/", include("settings.urls")),
+    path("support/", include("user_support.urls")),
     path("ht/", include("health_checks.urls")),
 ]
 
