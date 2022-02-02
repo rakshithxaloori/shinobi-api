@@ -35,6 +35,9 @@ class Game(models.Model):
     def __str__(self):
         return "{} || {}".format(self.name, self.game_code)
 
+    class Meta:
+        ordering = ["name"]
+
 
 class Profile(models.Model):
     # Stuff that you wanna show in user's profile

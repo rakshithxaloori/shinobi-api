@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     "clips",
     "ux",
     "settings",
+    "user_support"
 ]
 
 MIDDLEWARE = [
