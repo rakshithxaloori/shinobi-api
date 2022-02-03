@@ -31,4 +31,4 @@ class User(AbstractUser):
         return "{} || {} || {} days ago".format(self.username, self.email, days_diff)
 
     class Meta:
-        ordering = ["username"]
+        ordering = ["-last_open"]
