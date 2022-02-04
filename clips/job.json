@@ -25,8 +25,8 @@
             "Width": 1280,
             "Height": 720,
             "CodecSettings": {
-              "Codec": "H_265",
-              "H265Settings": {
+              "Codec": "H_264",
+              "H264Settings": {
                 "RateControlMode": "QVBR",
                 "SceneChangeDetect": "TRANSITION_DETECTION",
                 "MaxBitrate": 4000000,
@@ -59,8 +59,8 @@
             "Width": 1280,
             "Height": 720,
             "CodecSettings": {
-              "Codec": "H_265",
-              "H265Settings": {
+              "Codec": "H_264",
+              "H264Settings": {
                 "RateControlMode": "QVBR",
                 "SceneChangeDetect": "TRANSITION_DETECTION",
                 "MaxBitrate": 2000000,
@@ -93,8 +93,8 @@
             "Width": 640,
             "Height": 360,
             "CodecSettings": {
-              "Codec": "H_265",
-              "H265Settings": {
+              "Codec": "H_264",
+              "H264Settings": {
                 "RateControlMode": "QVBR",
                 "SceneChangeDetect": "TRANSITION_DETECTION",
                 "MaxBitrate": 1000000,
@@ -127,8 +127,8 @@
             "Width": 640,
             "Height": 360,
             "CodecSettings": {
-              "Codec": "H_265",
-              "H265Settings": {
+              "Codec": "H_264",
+              "H264Settings": {
                 "RateControlMode": "QVBR",
                 "SceneChangeDetect": "TRANSITION_DETECTION",
                 "MaxBitrate": 700000,
