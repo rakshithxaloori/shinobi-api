@@ -64,13 +64,13 @@ class Profile(models.Model):
 
 
 class Following(models.Model):
-    # profile follows user
+    # user follows profile
     user = models.ForeignKey(User, on_delete=models.PROTECT)
     profile = models.ForeignKey(Profile, on_delete=models.PROTECT)
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
-        return "{} follows {}".format(self.profile.user.username, self.user.username)
+        return "{} follows {}".format(self.user.username, self.profile.user.username)
 
 
 class PlaysGame(models.Model):

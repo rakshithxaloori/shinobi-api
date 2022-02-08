@@ -35,6 +35,9 @@ class Post(models.Model):
         Game, related_name="game_posts", blank=True, null=True, on_delete=models.PROTECT
     )
     title = models.CharField(max_length=POST_TITLE_LENGTH, blank=True, null=True)
+    tags = models.ManyToManyField(
+        User, related_name="tegged_in", blank=True, through="Tag"
+    )
     liked_by = models.ManyToManyField(
         User, related_name="liked_posts", blank=True, through="Like"
     )
@@ -63,10 +66,19 @@ class Like(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.PROTECT)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
-    created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
         return "{} liked {} post".format(self.user.username, self.post.id)
+
+
+class Tag(models.Model):
+    created_datetime = models.DateTimeField(default=timezone.now)
+
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return "{} tagged in {} post".format(self.user.username, self.post.id)
 
 
 class Report(models.Model):

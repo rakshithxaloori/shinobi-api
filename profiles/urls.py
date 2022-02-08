@@ -8,6 +8,11 @@ urlpatterns = [
     path("update/", views.update_profile_view, name="update profile"),
     path("u/<str:username>/", views.profile_view, name="profile"),
     path("search/<str:username>/", views.search_view, name="search"),
+    path(
+        "search/followers/<str:username>/",
+        views.search_my_followers_view,
+        name="search followers",
+    ),
     path("follow/<str:username>/", views.follow_user_view, name="follow user"),
     path("unfollow/<str:username>/", views.unfollow_user_view, name="unfollow user"),
     path(
