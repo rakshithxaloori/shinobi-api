@@ -34,7 +34,11 @@ def check_upload_after_delay(clip_pk):
             else:
                 clip.upload_verified = True
                 clip.save(update_fields=["upload_verified"])
-                create_job(file_path=file_path, rotate=clip.height > clip.width)
+                create_job(
+                    file_path=file_path,
+                    height=clip.height,
+                    width=clip.width,
+                )
 
 
 @celery_app.task(queue="celery")
@@ -55,7 +59,11 @@ def check_upload_successful_task(file_path):
         else:
             clip.upload_verified = True
             clip.save(update_fields=["upload_verified"])
-            create_job(file_path=file_path, rotate=clip.height > clip.width)
+            create_job(
+                file_path=file_path,
+                height=clip.height,
+                width=clip.width,
+            )
 
 
 @celery_app.task(queue="celery")

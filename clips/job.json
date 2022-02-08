@@ -22,8 +22,6 @@
       "Outputs": [
         {
           "VideoDescription": {
-            "Width": 1280,
-            "Height": 720,
             "CodecSettings": {
               "Codec": "H_264",
               "H264Settings": {
@@ -56,8 +54,6 @@
         },
         {
           "VideoDescription": {
-            "Width": 1280,
-            "Height": 720,
             "CodecSettings": {
               "Codec": "H_264",
               "H264Settings": {
@@ -90,8 +86,6 @@
         },
         {
           "VideoDescription": {
-            "Width": 640,
-            "Height": 360,
             "CodecSettings": {
               "Codec": "H_264",
               "H264Settings": {
@@ -124,8 +118,6 @@
         },
         {
           "VideoDescription": {
-            "Width": 640,
-            "Height": 360,
             "CodecSettings": {
               "Codec": "H_264",
               "H264Settings": {
