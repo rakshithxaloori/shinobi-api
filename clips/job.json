@@ -90,8 +90,8 @@
         },
         {
           "VideoDescription": {
-            "Width": 640,
-            "Height": 360,
+            "Width": 848,
+            "Height": 480,
             "CodecSettings": {
               "Codec": "H_264",
               "H264Settings": {
