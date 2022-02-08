@@ -67,7 +67,7 @@ def check_upload_successful_task(file_path):
 
 
 @celery_app.task(queue="celery")
-def check_compressed_successful_task(input_s3_url: str):
+def check_compressed_successful_task(input_s3_url, jobID, durationInMs, videoDetails):
     # s3://plx-dev-static/clips/uploads/20secs.mov
     if input_s3_url is None:
         return
@@ -99,9 +99,29 @@ def check_compressed_successful_task(input_s3_url: str):
             file_cdn_url = file_cdn_url.replace("%7D", "}")
 
             clip = Clip.objects.get(url=get_media_file_url(upload_file_key))
+
             clip.compressed_verified = True
             clip.url = file_cdn_url
-            clip.save(update_fields=["compressed_verified", "url"])
+            clip.duration = durationInMs / 1000
+            clip.job_id = jobID
+            if clip.height == 0 or clip.width == 0:
+                clip.width = videoDetails["widthInPx"]
+                clip.height = videoDetails["heightInPx"]
+                clip.save(
+                    update_fields=[
+                        "compressed_verified",
+                        "url",
+                        "duration",
+                        "width",
+                        "height",
+                        "job_id",
+                    ]
+                )
+
+            else:
+                clip.save(
+                    update_fields=["compressed_verified", "url", "duration", "job_id"]
+                )
 
             clip_post = clip.clip_post
             send_clip_notifications_task.delay(

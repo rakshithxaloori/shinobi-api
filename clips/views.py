@@ -199,10 +199,6 @@ def generate_s3_presigned_url_view(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    if clip_height == 0 or clip_width == 0:
-        clip_height = 720
-        clip_width = 1280
-
     file_path = "{prefix}/{filename}.{type}".format(
         prefix=settings.S3_FILE_UPLOAD_PATH_PREFIX,
         filename=uuid.uuid4(),
@@ -304,13 +300,23 @@ def mediaconvert_sns_view(request):
         )
         if response["ResponseMetadata"]["HTTPStatusCode"] != 200:
             print(response)
+            # TODO get input url from
 
     else:
         try:
             message = json.loads(json_data["Message"])
             # Fire a task that verifies the clip
-            check_compressed_successful_task.delay(message["input_url"])
+            check_compressed_successful_task.delay(
+                message["input_url"],
+                message["jobID"],
+                message["fullDetails"]["outputGroupDetails"][0]["outputDetails"][0][
+                    "durationInMs"
+                ],
+                message["fullDetails"]["outputGroupDetails"][0]["outputDetails"][0][
+                    "videoDetails"
+                ],
+            )
         except Exception as e:
-            print(e)
+            print("EXCEPTION", e)
 
     return HttpResponse(status=status.HTTP_200_OK)
