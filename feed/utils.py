@@ -1,6 +1,7 @@
 from authentication.models import User
 
 POST_TITLE_LENGTH = 80
+TAGS_MAX_COUNT = 10
 
 
 def is_upload_count_zero(user):
