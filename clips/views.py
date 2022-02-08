@@ -24,8 +24,9 @@ from knox.auth import TokenAuthentication
 from analytics.tasks import add_view_analytics_task
 
 
+from authentication.models import User
 from feed.models import Post
-from feed.utils import POST_TITLE_LENGTH
+from feed.utils import POST_TITLE_LENGTH, get_users_for_tags
 from profiles.models import Game
 from clips.models import Clip
 from clips.tasks import (
@@ -111,6 +112,7 @@ def generate_s3_presigned_url_view(request):
     clip_type = request.data.get("clip_type", None)
     game_id = request.data.get("game_code", None)
     title = request.data.get("title", None)
+    tags = request.data.get("tags", None)
 
     duration = request.data.get("duration", None)
     clip_height = request.data.get("clip_height", None)
@@ -244,6 +246,7 @@ def generate_s3_presigned_url_view(request):
         game=game,
         title=title,
     )
+    new_post.tags.set(get_users_for_tags(request.user, tags))
     new_post.save()
     check_upload_after_delay.apply_async(
         args=[new_clip.pk], eta=timezone.now() + timezone.timedelta(hours=1, minutes=10)

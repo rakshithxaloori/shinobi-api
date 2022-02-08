@@ -10,6 +10,7 @@ class PostSerializer(ModelSerializer):
     posted_by = SerializerMethodField()
     game = SerializerMethodField()
     title = SerializerMethodField()
+    tags = SerializerMethodField()
     likes = SerializerMethodField()
     reposts = SerializerMethodField()
     shares = SerializerMethodField()
@@ -25,6 +26,7 @@ class PostSerializer(ModelSerializer):
             "posted_by",
             "game",
             "title",
+            "tags",
             "likes",
             "reposts",
             "shares",
@@ -62,6 +64,13 @@ class PostSerializer(ModelSerializer):
                 return None
             return obj.repost.title
         return obj.title
+
+    def get_tags(self, obj):
+        if obj.is_repost:
+            if obj.repost is None:
+                return None
+            return UserSerializer(obj.repost.tags, many=True).data
+        return UserSerializer(obj.tags, many=True).data
 
     def get_likes(self, obj):
         if obj.is_repost:

@@ -53,7 +53,6 @@ def trending_profiles_view(request):
 @permission_classes([IsAuthenticated, HasAPIKey])
 def my_profile_view(request):
     profile_data = FullProfileSerializer(request.user.profile).data
-    print(profile_data)
     return JsonResponse(
         {
             "detail": "My profile data",
@@ -103,6 +102,23 @@ def search_view(request, username):
         {
             "detail": "usernamess that start with {}".format(username),
             "payload": {"users": profiles_data},
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def search_my_followers_view(request, username):
+    followers = Following.objects.filter(
+        user=request.user, profile__user__username__startswith=username
+    )[:10]
+    followers_serializers_data = FollowersSerializer(followers, many=True).data
+    return JsonResponse(
+        {
+            "detail": "followers that start with {}".format(username),
+            "payload": {"users": followers_serializers_data},
         },
         status=status.HTTP_200_OK,
     )

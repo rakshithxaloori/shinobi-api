@@ -22,7 +22,7 @@ from profiles.models import Game
 from notification.models import Notification
 from notification.tasks import create_inotif_task
 from profiles.utils import get_action_approve
-from feed.utils import POST_TITLE_LENGTH, is_upload_count_zero
+from feed.utils import POST_TITLE_LENGTH, get_users_for_tags, is_upload_count_zero
 
 
 @api_view(["POST"])
@@ -203,6 +203,7 @@ def update_post_view(request):
     post_id = request.data.get("post_id", None)
     game_id = request.data.get("game_id", None)
     title = request.data.get("title", None)
+    tags = request.data.get("tags", None)
     if post_id is None:
         return JsonResponse(
             {"detail": "post_id is required"}, status=status.HTTP_400_BAD_REQUEST
@@ -253,6 +254,11 @@ def update_post_view(request):
             )
     if title is not None:
         post.title = title
+
+    if tags is not None and type(tags) == list:
+        tags_instances = get_users_for_tags(request.user, tags)
+        post.tags.set(tags_instances)
+
     post.save(update_fields=["game", "title"])
 
     return JsonResponse({"detail": "Post updated!"}, status=status.HTTP_200_OK)
