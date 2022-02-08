@@ -22,7 +22,12 @@ from profiles.models import Game
 from notification.models import Notification
 from notification.tasks import create_inotif_task
 from profiles.utils import get_action_approve
-from feed.utils import POST_TITLE_LENGTH, get_users_for_tags, is_upload_count_zero
+from feed.utils import (
+    POST_TITLE_LENGTH,
+    TAGS_MAX_COUNT,
+    get_users_for_tags,
+    is_upload_count_zero,
+)
 
 
 @api_view(["POST"])
@@ -256,6 +261,11 @@ def update_post_view(request):
         post.title = title
 
     if tags is not None and type(tags) == list:
+        if len(tags) > TAGS_MAX_COUNT:
+            return JsonResponse(
+                {"detail": "You can only add upto {} tags".format(TAGS_MAX_COUNT)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         tags_instances = get_users_for_tags(request.user, tags)
         post.tags.set(tags_instances)
 
