@@ -199,12 +199,9 @@ def generate_s3_presigned_url_view(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    if clip_height > clip_width:
-        clip_height = 16
-        clip_width = 9
-    else:
-        clip_height = 9
-        clip_width = 16
+    if clip_height == 0 or clip_width == 0:
+        clip_height = 720
+        clip_width = 1280
 
     file_path = "{prefix}/{filename}.{type}".format(
         prefix=settings.S3_FILE_UPLOAD_PATH_PREFIX,

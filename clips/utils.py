@@ -8,6 +8,7 @@ from django.conf import settings
 
 VIDEO_MAX_SIZE_IN_BYTES = 500 * 1000 * 1000  # 500 MB
 VIDEO_FILE_ARGS = [4, 3, 2, 1]
+VIDEO_DIMENSIONS = [720, 720, 480, 360]
 
 
 if settings.CI_CD_STAGE == "testing" or settings.CI_CD_STAGE == "production":
@@ -57,7 +58,9 @@ print("mediaconvert_client", mediaconvert_client is not None)
 print("\n----------------------\n")
 
 
-def create_job(file_path, rotate=False):
+def create_job(file_path, height, width):
+    print("HEIGHT", height)
+    print("WIDTH", width)
     sourceS3 = "s3://" + settings.AWS_STORAGE_BUCKET_NAME + "/" + file_path
     destinationS3 = (
         "s3://"
@@ -109,14 +112,13 @@ def create_job(file_path, rotate=False):
                         "Destination"
                     ] = fileDestination
 
-                if rotate:
-                    # Invert height, width
-                    for output in outputGroup["Outputs"]:
-                        buffer = output["VideoDescription"]["Width"]
-                        output["VideoDescription"]["Width"] = output[
-                            "VideoDescription"
-                        ]["Height"]
-                        output["VideoDescription"]["Height"] = buffer
+                for output, dimension_size in zip(
+                    outputGroup["Outputs"], VIDEO_DIMENSIONS
+                ):
+                    if width > height:
+                        output["VideoDescription"]["Height"] = dimension_size
+                    else:
+                        output["VideoDescription"]["Width"] = dimension_size
 
             # Convert the video using AWS Elemental MediaConvert
             job = mediaconvert_client.create_job(
