@@ -115,7 +115,7 @@ def create_job(file_path, height, width):
                 for output, dimension_size in zip(
                     outputGroup["Outputs"], VIDEO_DIMENSIONS
                 ):
-                    if width > height:
+                    if width > height or width == 0 or height == 0:
                         output["VideoDescription"]["Height"] = dimension_size
                     else:
                         output["VideoDescription"]["Width"] = dimension_size
