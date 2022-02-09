@@ -10,6 +10,7 @@ from django.http.response import HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
+
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import (
@@ -33,8 +34,9 @@ from clips.tasks import (
     check_compressed_successful_task,
     check_upload_after_delay,
     check_upload_successful_task,
+    delete_invalid_duration_clip,
 )
-from clips.utils import VIDEO_MAX_SIZE_IN_BYTES, s3_client, sns_client
+from clips.utils import VIDEO_FILE_ARGS, VIDEO_MAX_SIZE_IN_BYTES, s3_client, sns_client
 from shinobi.utils import get_media_file_url
 
 CLIP_DAILY_LIMIT = 20
@@ -189,7 +191,7 @@ def generate_s3_presigned_url_view(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    if duration < MIN_CLIP_DURATION or duration > MAX_CLIP_DURATION:
+    if duration != 0 and (duration < MIN_CLIP_DURATION or duration > MAX_CLIP_DURATION):
         return JsonResponse(
             {"detail": "Duration invalid"}, status=status.HTTP_400_BAD_REQUEST
         )
@@ -305,17 +307,28 @@ def mediaconvert_sns_view(request):
     else:
         try:
             message = json.loads(json_data["Message"])
-            # Fire a task that verifies the clip
-            check_compressed_successful_task.delay(
-                message["input_url"],
-                message["jobID"],
-                message["fullDetails"]["outputGroupDetails"][0]["outputDetails"][0][
-                    "durationInMs"
-                ],
-                message["fullDetails"]["outputGroupDetails"][0]["outputDetails"][0][
-                    "videoDetails"
-                ],
-            )
+            input_url = message["input_url"]
+            jobID = (message["jobID"],)
+            duration = message["fullDetails"]["outputGroupDetails"][0]["outputDetails"][
+                0
+            ]["durationInMs"]
+            videoDetails = message["fullDetails"]["outputGroupDetails"][0][
+                "outputDetails"
+            ][0]["videoDetails"]
+
+            if (
+                duration < MIN_CLIP_DURATION * 1000
+                or duration > MAX_CLIP_DURATION * 1000
+            ):
+                # Delete clip
+                delete_invalid_duration_clip.delay(input_url)
+
+            else:
+                # Fire a task that verifies the clip
+                check_compressed_successful_task.delay(
+                    input_url, jobID, duration, videoDetails
+                )
+
         except Exception as e:
             print("EXCEPTION", e)
 

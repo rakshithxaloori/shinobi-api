@@ -140,8 +140,36 @@ def check_compressed_successful_task(input_s3_url, jobID, durationInMs, videoDet
 
 
 @celery_app.task(queue="celery")
+def delete_invalid_duration_clip(input_s3_url):
+    # Delete clip
+    bucket_url = "s3://{bucket_name}/".format(
+        bucket_name=settings.AWS_STORAGE_BUCKET_NAME
+    )
+    upload_file_key = input_s3_url.split(bucket_url)[1]
+
+    upload_filename = input_s3_url.split(settings.S3_FILE_UPLOAD_PATH_PREFIX + "/")[
+        1
+    ].split(".")[0]
+
+    compressed_file_key = "{}/{}_{}.mp4".format(
+        settings.S3_FILE_COMPRESSED_PATH_PREFIX, upload_filename, "{}"
+    )
+
+    try:
+        clip = Clip.objects.get(url=get_media_file_url(file_path=upload_file_key))
+        clip.delete()
+        delete_clip_task.delay(get_media_file_url(compressed_file_key))
+    except Clip.DoesNotExist:
+        pass
+
+
+@celery_app.task(queue="celery")
 def delete_clip_task(url):
     file_path = get_media_file_path(url)
+    # Replace hex symbols
+    file_path = file_path.replace("%7B", "{")
+    file_path = file_path.replace("%7D", "}")
+
     if default_storage.exists(file_path):
         # Upload
         delete_upload_file(file_path)
