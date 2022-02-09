@@ -90,10 +90,6 @@
         {
           "name": "GOOGLE_ANDROID_APP_CLIENT_ID",
           "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/GOOGLE_ANDROID_APP_CLIENT_ID"
-        },
-        {
-          "name": "ROLLBAR_ACCESS_TOKEN",
-          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/ROLLBAR_ACCESS_TOKEN"
         }
       ],
       "healthCheck": {
@@ -160,10 +156,6 @@
         {
           "name": "GOOGLE_ANDROID_APP_CLIENT_ID",
           "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/GOOGLE_ANDROID_APP_CLIENT_ID"
-        },
-        {
-          "name": "ROLLBAR_ACCESS_TOKEN",
-          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/ROLLBAR_ACCESS_TOKEN"
         }
       ],
       "dependsOn": [
@@ -233,10 +225,6 @@
         {
           "name": "GOOGLE_ANDROID_APP_CLIENT_ID",
           "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/GOOGLE_ANDROID_APP_CLIENT_ID"
-        },
-        {
-          "name": "ROLLBAR_ACCESS_TOKEN",
-          "valueFrom": "arn:aws:ssm:us-east-1:476691507110:parameter/plx-dev/ROLLBAR_ACCESS_TOKEN"
         }
       ],
       "dependsOn": [

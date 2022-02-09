@@ -11,6 +11,7 @@ class Notification(models.Model):
     FOLLOW = "f"
     CLIP = "c"
     LIKE = "l"
+    TAG = "t"
     REPOST = "rp"
 
     # Only inter-user activities
@@ -18,6 +19,7 @@ class Notification(models.Model):
         (FOLLOW, "follow"),
         (CLIP, "clip"),
         (LIKE, "like"),
+        (TAG, "tag"),
         (REPOST, "repost"),
     ]
 

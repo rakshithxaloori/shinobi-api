@@ -1,6 +1,3 @@
-import rollbar
-from celery.schedules import crontab
-
 from django.core.exceptions import ValidationError
 
 from exponent_server_sdk import (
@@ -15,7 +12,6 @@ from requests.exceptions import ConnectionError, HTTPError
 from shinobi.celery import app as celery_app
 
 from authentication.models import User
-from profiles.models import Profile
 from notification.models import Notification, ExponentPushToken
 
 
@@ -26,8 +22,9 @@ def _send_push_message(token, title, message, data=None):
         )
     except PushServerError as exc:
         # Encountered some likely formatting/validation error.
-        rollbar.report_exc_info(
-            extra_data={
+        print(
+            "PushServerError",
+            {
                 "type": "expo_notification",
                 "detail": "Encountered some likely formatting/validation error.",
                 "token": token,
@@ -36,19 +33,20 @@ def _send_push_message(token, title, message, data=None):
                 "extra": data,
                 "errors": exc.errors,
                 "response_data": exc.response_data,
-            }
+            },
         )
     except (ConnectionError, HTTPError) as exc:
         # Encountered some Connection or HTTP error - retry a few times in
         # case it is transient.
-        rollbar.report_exc_info(
-            extra_data={
+        print(
+            "ConnectionError or HTTPError",
+            {
                 "type": "expo_notification",
                 "detail": "Encountered some Connection or HTTP error - retry a few times in case it is transient.",
                 "token": token,
                 "message": message,
                 "extra": data,
-            }
+            },
         )
         # TODO raise self.retry(exc=exc)
 
@@ -63,15 +61,16 @@ def _send_push_message(token, title, message, data=None):
         expo_token.delete()
     except PushTicketError as exc:
         # Encountered some other per-notification error.
-        rollbar.report_exc_info(
-            extra_data={
+        print(
+            "PushTicketError",
+            {
                 "type": "expo_notification",
                 "detail": "Encountered some other per-notification error.",
                 "token": token,
                 "message": message,
                 "extra": data,
                 "push_response": exc.push_response._asdict(),
-            }
+            },
         )
         # TODO raise self.retry(exc=exc)
     except Exception as e:
@@ -120,6 +119,12 @@ def create_inotif_task(type, sender_pk, receiver_pk, extra_data={}):
                 message = "{} liked your post".format(sender.username)
             payload = {"type": type}
 
+        elif type == Notification.TAG:
+            title = "{} tagged you".format(sender.username)
+            message = "{} tagged you in their {} post".format(
+                sender.username, extra_data["game_name"]
+            )
+
         elif type == Notification.REPOST:
             title = "🤘 Reposted!"
             if sender_pk == receiver_pk:
@@ -137,14 +142,15 @@ def create_inotif_task(type, sender_pk, receiver_pk, extra_data={}):
 
     except ValidationError:
         # Report the error
-        rollbar.report_exc_info(
-            extra_data={
+        print(
+            "ValidationError",
+            {
                 "type": "expo_notification",
                 "detail": "Encountered model instance validation error.",
                 "sender": sender.username,
                 "receiver": receiver.username,
                 "notification_type": type,
-            }
+            },
         )
         return
 
