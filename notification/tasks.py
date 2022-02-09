@@ -19,16 +19,6 @@ from profiles.models import Profile
 from notification.models import Notification, ExponentPushToken
 
 
-@celery_app.on_after_finalize.connect
-def setup_periodic_tasks(sender, **kwargs):
-    # Saturday at 7pm
-    sender.add_periodic_task(
-        crontab(minute=0, hour=19, day_of_week="sat"),
-        send_weekend_notifications.s(),
-        name="weekend notifications",
-    )
-
-
 def _send_push_message(token, title, message, data=None):
     try:
         response = PushClient().publish(
@@ -172,10 +162,6 @@ def create_nnotif_task(receiver_pk, type, extra_data={}):
         message = ""
         payload = {}
 
-        if type == Notification.WEEKEND:
-            title = "The Weekend is here 🥳"
-            message = "Can't wait to see which clips you share 🔥"
-
         if title != "":
             for expo_token in expo_tokens:
                 # Send a push notification
@@ -185,12 +171,6 @@ def create_nnotif_task(receiver_pk, type, extra_data={}):
 
     except User.DoesNotExist:
         pass
-
-
-@celery_app.task(queue="celery")
-def send_weekend_notifications():
-    for profile in Profile.objects.all():
-        create_nnotif_task(profile.user.pk, Notification.WEEKEND)
 
 
 @celery_app.task(queue="celery")

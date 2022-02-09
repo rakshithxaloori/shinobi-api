@@ -12,7 +12,6 @@ class Notification(models.Model):
     CLIP = "c"
     LIKE = "l"
     REPOST = "rp"
-    WEEKEND = "w"
 
     # Only inter-user activities
     NOTIFICATION_CHOICES = [
