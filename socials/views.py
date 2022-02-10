@@ -1,4 +1,6 @@
 from django.http import JsonResponse
+from django.core.validators import URLValidator
+from django.core.exceptions import ValidationError
 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -15,6 +17,9 @@ from knox.auth import TokenAuthentication
 
 from socials.models import Socials
 from socials.serializers import SocialsSerializer
+from socials.utils import CUSTOM_LINK_TITLE_LENGTH
+
+url_validate = URLValidator()
 
 
 @api_view(["GET"])
@@ -39,13 +44,33 @@ def save_socials_view(request):
     youtube = request.data.get("youtube", None)
     instagram = request.data.get("instagram", None)
     twitch = request.data.get("twitch", None)
+    custom_title = request.data.get("custom_title", None)
+    custom_url = request.data.get("custom_url", None)
 
     socials = request.user.profile.socials
     socials.youtube = youtube
     socials.instagram = instagram
     socials.twitch = twitch
+    if custom_url is not None and custom_url != "":
+        try:
+            url_validate(custom_url)
+            if len(custom_title) <= CUSTOM_LINK_TITLE_LENGTH:
+                socials.custom_title = custom_title
+                socials.custom_url = custom_url
+            else:
+                return JsonResponse(
+                    {
+                        "detail": "Custom Title has to be less than {} characters".format(
+                            CUSTOM_LINK_TITLE_LENGTH
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        except ValidationError:
+            return JsonResponse(
+                {"detail": "Invalid Custom Link"}, status=status.HTTP_400_BAD_REQUEST
+            )
     socials.save()
-
     return JsonResponse(
         {"detail": "{}'s socials saved!".format(request.user.username)},
         status=status.HTTP_200_OK,
