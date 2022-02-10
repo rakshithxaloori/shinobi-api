@@ -5,6 +5,7 @@ from profiles.models import Game
 
 
 TOTAL_ACTION_COUNT = 1000
+BIO_MAX_LENGTH = 150
 
 
 def get_action_approve(user):
