@@ -68,7 +68,7 @@ INSTALLED_APPS = [
     "clips",
     "ux",
     "settings",
-    "user_support"
+    "user_support",
 ]
 
 MIDDLEWARE = [
@@ -80,7 +80,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
-    "rollbar.contrib.django.middleware.RollbarNotifierMiddleware",
 ]
 
 ROOT_URLCONF = "shinobi.urls"
@@ -244,18 +243,6 @@ CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
-
-
-################################################################################
-# Rollbar
-ROLLBAR = {
-    "access_token": os.environ["ROLLBAR_ACCESS_TOKEN"],
-    "environment": "development" if DEBUG else "production",
-    "root": BASE_DIR,
-}
-import rollbar
-
-rollbar.init(**ROLLBAR)
 
 
 ################################################################################

@@ -6,5 +6,5 @@ from socials.models import Socials
 class SocialsSerializer(ModelSerializer):
     class Meta:
         model = Socials
-        fields = ["youtube", "instagram", "twitch"]
+        fields = ["youtube", "instagram", "twitch", "custom_title", "custom_url"]
         read_only_fields = fields
