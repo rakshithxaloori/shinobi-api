@@ -1,4 +1,5 @@
 from django.http import JsonResponse
+from django.utils import dateparse
 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -16,38 +17,28 @@ from notification.models import Notification, ExponentPushToken
 from notification.serializers import NotificationSerializer
 
 
-@api_view(["GET"])
+@api_view(["GET", "POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
-def notifications_view(request, begin_index, end_index):
-    if begin_index is None or end_index is None:
+def notifications_view(request):
+    datetime = request.data.get("datetime", None)
+    fetch_count = request.data.get("fetch_count", 15)
+    if datetime is None:
         return JsonResponse(
-            {"detail": "Missing query params"}, status=status.HTTP_400_BAD_REQUEST
+            {"detail": "datetime is required"}, status=status.HTTP_400_BAD_REQUEST
         )
-    elif begin_index > end_index:
+    datetime = dateparse.parse_datetime(datetime)
+    if datetime is None:
         return JsonResponse(
-            {"detail": "Invalid indices"}, status=status.HTTP_400_BAD_REQUEST
+            {"detail": "Invalid datetime"}, status=status.HTTP_400_BAD_REQUEST
         )
 
     user = request.user
 
     try:
-        notifications_count = user.notifications.count()
-        if notifications_count <= begin_index:
-            return JsonResponse(
-                {
-                    "detail": "{}'s notifications".format(user.username),
-                    "payload": {"notifications": []},
-                },
-                status=status.HTTP_200_OK,
-            )
-
-        if notifications_count <= end_index:
-            notifications = user.notifications.order_by("-sent_at")[begin_index:]
-        else:
-            notifications = user.notifications.order_by("-sent_at")[
-                begin_index:end_index
-            ]
+        notifications = request.user.notifications.order_by("-sent_at").filter(
+            sent_at__lt=datetime
+        )[:fetch_count]
 
         notifications_data = NotificationSerializer(notifications, many=True).data
 
