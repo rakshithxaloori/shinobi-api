@@ -29,12 +29,13 @@ class Notification(models.Model):
     receiver = models.ForeignKey(
         User, related_name="notifications", on_delete=models.PROTECT
     )
+    extra_data = models.JSONField(null=True, blank=True)
     type = models.CharField(max_length=2, choices=NOTIFICATION_CHOICES)
     sent_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return "{} | {} | {} | {}".format(
-            self.type, self.sender.username, self.receiver.username, self.sent_at
+        return "{} | {} to {}".format(
+            self.type, self.sender.username, self.receiver.username
         )
 
 

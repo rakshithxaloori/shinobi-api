@@ -26,7 +26,7 @@ from profiles.serializers import (
     FollowersSerializer,
 )
 from profiles.tasks import update_profile_picture
-from profiles.utils import get_action_approve
+from profiles.utils import BIO_MAX_LENGTH, get_action_approve
 
 
 @api_view(["GET"])
@@ -214,18 +214,24 @@ def remove_follower_view(request, username):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def update_profile_view(request):
-    bio = request.POST.get("bio", None)
+    bio = request.data.get("bio", None)
+    print("bio", bio)
     picture_obj = request.FILES.get("picture", None)
     if bio is not None:
-        if len(bio) > 150:
+        if len(bio) > BIO_MAX_LENGTH:
             return JsonResponse(
-                {"detail": "bio has to be less than 150 characters"},
+                {
+                    "detail": "bio has to be less than {} characters".format(
+                        BIO_MAX_LENGTH
+                    )
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         else:
             profile = request.user.profile
             profile.bio = bio
+            print("SAVING BIO")
             profile.save(update_fields=["bio"])
 
     if picture_obj is not None:

@@ -84,7 +84,7 @@ def create_inotif_task(type, sender_pk, receiver_pk, extra_data={}):
         sender = User.objects.get(pk=sender_pk)
         receiver = User.objects.get(pk=receiver_pk)
         new_notification = Notification.objects.create(
-            type=type, sender=sender, receiver=receiver
+            type=type, sender=sender, receiver=receiver, extra_data=extra_data
         )
         new_notification.clean_fields()
         new_notification.save()
@@ -120,10 +120,11 @@ def create_inotif_task(type, sender_pk, receiver_pk, extra_data={}):
             payload = {"type": type}
 
         elif type == Notification.TAG:
-            title = "{} tagged you".format(sender.username)
+            title = "💥 {} post".format(extra_data["game_name"])
             message = "{} tagged you in their {} post".format(
                 sender.username, extra_data["game_name"]
             )
+            payload = {"type": type, "post_id": extra_data["post_id"]}
 
         elif type == Notification.REPOST:
             title = "🤘 Reposted!"

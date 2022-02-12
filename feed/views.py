@@ -24,6 +24,7 @@ from notification.tasks import create_inotif_task
 from profiles.utils import get_action_approve
 from feed.utils import (
     POST_TITLE_LENGTH,
+    POSTS_FETCH_COUNT,
     TAGS_MAX_COUNT,
     get_users_for_tags,
     is_upload_count_zero,
@@ -36,6 +37,7 @@ from feed.utils import (
 def following_feed_view(request):
     """Response contains the posts of all the followings."""
     datetime = request.data.get("datetime", None)
+    fetch_count = request.data.get("fetch_count", POSTS_FETCH_COUNT)
     if datetime is None:
         return JsonResponse(
             {"detail": "datetime is required"}, status=status.HTTP_400_BAD_REQUEST
@@ -52,7 +54,7 @@ def following_feed_view(request):
         Q(created_datetime__lt=datetime, posted_by__in=following_users),
         Q(is_repost=True, repost__clip__compressed_verified=True)
         | Q(is_repost=False, clip__compressed_verified=True),
-    ).order_by("-created_datetime")[:10]
+    ).order_by("-created_datetime")[:fetch_count]
 
     posts_data = PostSerializer(posts, many=True, context={"me": request.user}).data
 
@@ -74,6 +76,7 @@ def following_feed_view(request):
 def world_feed_view(request):
     """Returns posts from all users of the games that I play."""
     datetime = request.data.get("datetime", None)
+    fetch_count = request.data.get("fetch_count", POSTS_FETCH_COUNT)
     game_id = request.data.get("game_id", None)
     game = None
     if datetime is None:
@@ -97,14 +100,14 @@ def world_feed_view(request):
             Q(created_datetime__lt=datetime),
             Q(is_repost=True, repost__clip__compressed_verified=True)
             | Q(is_repost=False, clip__compressed_verified=True),
-        ).order_by("-created_datetime")[:10]
+        ).order_by("-created_datetime")[:fetch_count]
     else:
         posts = Post.objects.filter(
             Q(created_datetime__lt=datetime),
             Q(is_repost=True, repost__clip__compressed_verified=True)
             | Q(is_repost=False, clip__compressed_verified=True),
             Q(is_repost=True, repost__game=game) | Q(is_repost=False, game=game),
-        ).order_by("-created_datetime")[:10]
+        ).order_by("-created_datetime")[:fetch_count]
 
     posts_data = PostSerializer(posts, many=True, context={"me": request.user}).data
 
@@ -126,6 +129,7 @@ def world_feed_view(request):
 def get_profile_posts_view(request):
     datetime = request.data.get("datetime", None)
     username = request.data.get("username", None)
+    fetch_count = request.data.get("fetch_count", POSTS_FETCH_COUNT)
     game_id = request.data.get("game_id", None)
     game = None
     if datetime is None:
@@ -157,13 +161,13 @@ def get_profile_posts_view(request):
     if game is None:
         posts = Post.objects.filter(
             created_datetime__lt=datetime, posted_by=user
-        ).order_by("-created_datetime")[:10]
+        ).order_by("-created_datetime")[:fetch_count]
     else:
         posts = Post.objects.filter(
             Q(created_datetime__lt=datetime),
             Q(posted_by=user),
             Q(is_repost=True, repost__game=game) | Q(is_repost=False, game=game),
-        ).order_by("-created_datetime")[:10]
+        ).order_by("-created_datetime")[:fetch_count]
 
     posts_data = PostSerializer(posts, many=True, context={"me": request.user}).data
     payload = {"posts": posts_data}
