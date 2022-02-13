@@ -308,7 +308,7 @@ def mediaconvert_sns_view(request):
         try:
             message = json.loads(json_data["Message"])
             input_url = message["input_url"]
-            jobID = (message["jobID"],)
+            jobID = message["jobID"]
             duration = message["fullDetails"]["outputGroupDetails"][0]["outputDetails"][
                 0
             ]["durationInMs"]
