@@ -181,8 +181,7 @@ def get_profile_posts_view(request):
 
 
 @api_view(["POST"])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated, HasAPIKey])
+@permission_classes([HasAPIKey])
 def get_post_view(request):
     post_id = request.data.get("post_id", None)
     if post_id is None:

@@ -44,7 +44,6 @@ def save_socials_view(request):
     youtube = request.data.get("youtube", None)
     instagram = request.data.get("instagram", None)
     twitch = request.data.get("twitch", None)
-    custom_title = request.data.get("custom_title", None)
     custom_url = request.data.get("custom_url", None)
 
     socials = request.user.profile.socials
@@ -54,18 +53,8 @@ def save_socials_view(request):
     if custom_url is not None and custom_url != "":
         try:
             url_validate(custom_url)
-            if len(custom_title) <= CUSTOM_LINK_TITLE_LENGTH:
-                socials.custom_title = custom_title
-                socials.custom_url = custom_url
-            else:
-                return JsonResponse(
-                    {
-                        "detail": "Custom Title has to be less than {} characters".format(
-                            CUSTOM_LINK_TITLE_LENGTH
-                        )
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+            socials.custom_url = custom_url
+            
         except ValidationError:
             return JsonResponse(
                 {"detail": "Invalid Custom Link"}, status=status.HTTP_400_BAD_REQUEST
