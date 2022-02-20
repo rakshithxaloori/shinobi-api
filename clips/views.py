@@ -37,7 +37,7 @@ from clips.tasks import (
     delete_invalid_duration_clip,
 )
 from clips.utils import VIDEO_FILE_ARGS, VIDEO_MAX_SIZE_IN_BYTES, s3_client, sns_client
-from shinobi.utils import get_media_file_url
+from shinobi.utils import get_country_code, get_ip_address, get_media_file_url
 
 CLIP_DAILY_LIMIT = 20
 MIN_CLIP_DURATION = 5
@@ -240,6 +240,7 @@ def generate_s3_presigned_url_view(request):
         posted_by=request.user,
         game=game,
         title=title,
+        country_code=get_country_code(get_ip_address(request=request)),
     )
     new_post.tags.set(get_users_for_tags(request.user, tags))
     new_post.save()
@@ -247,7 +248,10 @@ def generate_s3_presigned_url_view(request):
         args=[new_clip.pk], eta=timezone.now() + timezone.timedelta(hours=1, minutes=10)
     )
 
-    return JsonResponse({"detail": "", "payload": url}, status=status.HTTP_200_OK)
+    return JsonResponse(
+        {"detail": "", "payload": {"url": url, "post_id": new_post.id}},
+        status=status.HTTP_200_OK,
+    )
 
 
 @api_view(["POST"])

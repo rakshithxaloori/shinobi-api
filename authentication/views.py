@@ -19,6 +19,7 @@ from authentication.utils import get_info_from_access_token, token_response, cre
 from authentication.models import User
 from notification.tasks import delete_push_token
 from authentication.tasks import user_offline, user_online
+from shinobi.utils import get_country_code, get_ip_address
 
 
 @api_view(["POST"])
@@ -64,7 +65,12 @@ def google_login_view(request):
                 {"detail": "Account disabled"}, status=status.HTTP_406_NOT_ACCEPTABLE
             )
 
-        user_online.delay(user.pk)
+        x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(",")[0]
+        else:
+            ip = request.META.get("REMOTE_ADDR")
+        user_online.delay(user.pk, ip)
         return token_response(user)
 
     except ValueError:
@@ -145,7 +151,8 @@ def google_signup_view(request):
 @permission_classes([IsAuthenticated, HasAPIKey])
 def online_view(request):
     user = request.user
-    user_online.delay(user.pk)
+
+    user_online.delay(user.pk, get_ip_address(request))
 
     return JsonResponse(
         {
@@ -189,18 +196,6 @@ def valid_token_view(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def update_country_view(request):
-    country_code = request.data.get("country_code", None)
-    if country_code is None:
-        return JsonResponse(
-            {"detail": "country_code required"}, status=status.HTTP_400_BAD_REQUEST
-        )
-
-    try:
-        country = countries.get(country_code)
-        request.user.country_code = country.alpha2
-        request.user.save(update_fields=["country_code"])
-        return JsonResponse({"detail": "country updated!"}, status=status.HTTP_200_OK)
-    except KeyError:
-        return JsonResponse(
-            {"detail": "country_code invalid"}, status=status.HTTP_400_BAD_REQUEST
-        )
+    request.user.country_code = get_country_code(get_ip_address(request))
+    request.user.save(update_fields=["country_code"])
+    return JsonResponse({"detail": "country updated!"}, status=status.HTTP_200_OK)

@@ -38,6 +38,8 @@ class Post(models.Model):
     tags = models.ManyToManyField(
         User, related_name="tegged_in", blank=True, through="Tag"
     )
+    # ISO alpha_2 code
+    country_code = models.CharField(max_length=2, null=True, blank=True)
     liked_by = models.ManyToManyField(
         User, related_name="liked_posts", blank=True, through="Like"
     )
