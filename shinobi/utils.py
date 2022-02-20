@@ -1,4 +1,5 @@
 import os
+import requests
 
 from channels.auth import AuthMiddlewareStack
 from channels.db import database_sync_to_async
@@ -64,3 +65,21 @@ def get_media_file_url(file_path):
 
 def now_date():
     return timezone.now().date()
+
+
+def get_ip_address(request):
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(",")[0]
+    else:
+        ip = request.META.get("REMOTE_ADDR")
+    return ip
+
+
+def get_country_code(ip):
+    r = requests.get("http://www.geoplugin.net/json.gp?ip={}".format(ip))
+    if not r.ok:
+        return ""
+    data = r.json()
+    country_code = data["geoplugin_countryCode"]
+    return country_code

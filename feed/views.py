@@ -181,6 +181,32 @@ def get_profile_posts_view(request):
 
 
 @api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, HasAPIKey])
+def post_status_view(request):
+    post_id = request.data.get("post_id", None)
+    if post_id is None:
+        return JsonResponse(
+            {"detail": "post_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        post = Post.objects.get(pk=post_id, is_repost=False)
+
+        return JsonResponse(
+            {
+                "detail": "clip status",
+                "payload": {"status": post.clip.compressed_verified},
+            },
+            status=status.HTTP_200_OK,
+        )
+    except Post.DoesNotExist:
+        return JsonResponse(
+            {"detail": "clip status", "payload": {"status": None}},
+            status=status.HTTP_200_OK,
+        )
+
+
+@api_view(["POST"])
 @permission_classes([HasAPIKey])
 def get_post_view(request):
     post_id = request.data.get("post_id", None)
