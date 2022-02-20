@@ -248,7 +248,10 @@ def generate_s3_presigned_url_view(request):
         args=[new_clip.pk], eta=timezone.now() + timezone.timedelta(hours=1, minutes=10)
     )
 
-    return JsonResponse({"detail": "", "payload": url}, status=status.HTTP_200_OK)
+    return JsonResponse(
+        {"detail": "", "payload": {"url": url, "post_id": new_post.id}},
+        status=status.HTTP_200_OK,
+    )
 
 
 @api_view(["POST"])
