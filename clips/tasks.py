@@ -40,6 +40,8 @@ def check_upload_after_delay(clip_pk):
                     height=clip.height,
                     width=clip.width,
                 )
+        else:
+            clip.delete()
 
 
 @celery_app.task(queue="celery")
