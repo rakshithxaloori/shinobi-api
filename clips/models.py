@@ -41,6 +41,7 @@ class Clip(models.Model):
     width = models.PositiveSmallIntegerField()
     duration = models.PositiveSmallIntegerField(default=0)
     url = models.URLField(unique=True)
+    thumbnail = models.URLField(unique=True, null=True, blank=True)
     job_id = models.CharField(max_length=40, null=True, blank=True)
 
     def __str__(self) -> str:
