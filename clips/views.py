@@ -36,7 +36,11 @@ from clips.tasks import (
     check_upload_successful_task,
     delete_invalid_duration_clip,
 )
-from clips.utils import VIDEO_FILE_ARGS, VIDEO_MAX_SIZE_IN_BYTES, s3_client, sns_client
+from clips.utils import (
+    VIDEO_MAX_SIZE_IN_BYTES,
+    create_presigned_s3_url,
+    sns_client,
+)
 from shinobi.utils import get_country_code, get_ip_address, get_media_file_url
 
 CLIP_DAILY_LIMIT = 20
@@ -201,34 +205,31 @@ def generate_s3_presigned_url_view(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    file_path = "{prefix}/{filename}.{type}".format(
+    clip_file_path = "{prefix}/{filename}.{type}".format(
         prefix=settings.S3_FILE_UPLOAD_PATH_PREFIX,
         filename=uuid.uuid4(),
         type=clip_type,
     )
-    fields = {
-        "Content-Type": "multipart/form-data",
-    }
 
-    conditions = [
-        ["content-length-range", clip_size - 10, clip_size + 10],
-        {"content-type": "multipart/form-data"},
-        # {"content-length": clip_size},
-    ]
-    expires_in = 3600
-    url = s3_client.generate_presigned_post(
-        Bucket=settings.AWS_STORAGE_BUCKET_NAME,
-        Key=file_path,
-        Fields=fields,
-        Conditions=conditions,
-        ExpiresIn=expires_in,
-    )
+    clip_s3_url = create_presigned_s3_url(clip_size, clip_file_path)
 
-    file_url = get_media_file_url(file_path)
+    clip_file_url = get_media_file_url(clip_file_path)
+
+    thumbnail_size = request.data.get("thumbnail_size", None)
+    thumbnail_type = request.data.get("thumbnail_type", None)
+    if thumbnail_size is not None and thumbnail_type is not None:
+        thumbnail_file_path = "{prefix}/{filename}.{type}".format(
+            prefix=settings.S3_FILE_THUMBNAIL_PATH_PREFIX,
+            filename=uuid.uuid4(),
+            type=thumbnail_type,
+        )
+        thumbnail_s3_url = create_presigned_s3_url(thumbnail_size, thumbnail_file_path)
+        thumbnail_file_url = get_media_file_url(thumbnail_file_path)
+
     # Create Clip
-
     new_clip = Clip.objects.create(
-        url=file_url,
+        url=clip_file_url,
+        thumbnail=thumbnail_file_url,
         duration=duration,
         height=clip_height,
         width=clip_width,
@@ -249,7 +250,14 @@ def generate_s3_presigned_url_view(request):
     )
 
     return JsonResponse(
-        {"detail": "", "payload": {"url": url, "post_id": new_post.id}},
+        {
+            "detail": "",
+            "payload": {
+                "url": clip_s3_url,
+                "thumbnail_url": thumbnail_s3_url,
+                "post_id": new_post.id,
+            },
+        },
         status=status.HTTP_200_OK,
     )
 

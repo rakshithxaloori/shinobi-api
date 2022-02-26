@@ -58,6 +58,26 @@ print("mediaconvert_client", mediaconvert_client is not None)
 print("\n----------------------\n")
 
 
+def create_presigned_s3_url(file_size, file_path):
+    fields = {
+        "Content-Type": "multipart/form-data",
+    }
+
+    conditions = [
+        ["content-length-range", file_size - 10, file_size + 10],
+        {"content-type": "multipart/form-data"},
+    ]
+    expires_in = 3600
+    url = s3_client.generate_presigned_post(
+        Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+        Key=file_path,
+        Fields=fields,
+        Conditions=conditions,
+        ExpiresIn=expires_in,
+    )
+    return url
+
+
 def create_job(file_path, height, width):
     print("HEIGHT", height)
     print("WIDTH", width)
