@@ -10,6 +10,14 @@ VIDEO_MAX_SIZE_IN_BYTES = 500 * 1000 * 1000  # 500 MB
 VIDEO_FILE_ARGS = [4, 3, 2, 1]
 VIDEO_DIMENSIONS = [720, 720, 480, 360]
 
+AWS_UPLOADS_BUCKET_NAME = settings.AWS_UPLOADS_BUCKET_NAME
+AWS_STORAGE_BUCKET_NAME = settings.AWS_STORAGE_BUCKET_NAME
+
+
+class UPLOAD_TYPE:
+    CLIP = "c"
+    THUMBNAIL = "t"
+
 
 if settings.CI_CD_STAGE == "testing" or settings.CI_CD_STAGE == "production":
     s3_client = boto3.client(
@@ -51,14 +59,16 @@ if settings.CI_CD_STAGE == "testing" or settings.CI_CD_STAGE == "production":
 else:
     mediaconvert_client = None
 
-print("\n----------------------\n")
-print("s3_client", s3_client is not None)
-print("sns_client", sns_client is not None)
-print("mediaconvert_client", mediaconvert_client is not None)
-print("\n----------------------\n")
 
+def create_presigned_s3_url(file_size, file_path, upload_type):
+    # Toggle bucket based on clip or thumbnail
+    if upload_type == UPLOAD_TYPE.CLIP:
+        bucket = AWS_UPLOADS_BUCKET_NAME
+    elif upload_type == UPLOAD_TYPE.THUMBNAIL:
+        bucket = AWS_STORAGE_BUCKET_NAME
+    else:
+        return None
 
-def create_presigned_s3_url(file_size, file_path):
     fields = {
         "Content-Type": "multipart/form-data",
     }
@@ -68,8 +78,9 @@ def create_presigned_s3_url(file_size, file_path):
         {"content-type": "multipart/form-data"},
     ]
     expires_in = 3600
+
     url = s3_client.generate_presigned_post(
-        Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+        Bucket=bucket,
         Key=file_path,
         Fields=fields,
         Conditions=conditions,
@@ -79,14 +90,9 @@ def create_presigned_s3_url(file_size, file_path):
 
 
 def create_job(file_path, height, width):
-    print("HEIGHT", height)
-    print("WIDTH", width)
-    sourceS3 = "s3://" + settings.AWS_STORAGE_BUCKET_NAME + "/" + file_path
+    sourceS3 = "s3://" + AWS_UPLOADS_BUCKET_NAME + "/" + file_path
     destinationS3 = (
-        "s3://"
-        + settings.AWS_STORAGE_BUCKET_NAME
-        + "/"
-        + settings.S3_FILE_COMPRESSED_PATH_PREFIX
+        "s3://" + AWS_STORAGE_BUCKET_NAME + "/" + settings.S3_FILE_CONVERT_PATH_PREFIX
     )
     jobs = []
 
@@ -104,9 +110,7 @@ def create_job(file_path, height, width):
 
             with open(os.path.join("clips", "job.json")) as json_data:
                 jobInput["filename"] = "Default"
-
                 jobInput["settings"] = json.load(json_data)
-
                 jobs.append(jobInput)
 
         for j in jobs:
@@ -150,3 +154,10 @@ def create_job(file_path, height, width):
 
     except Exception as e:
         print(e)
+
+
+print("\n----------------------\n")
+print("s3_client", s3_client is not None)
+print("sns_client", sns_client is not None)
+print("mediaconvert_client", mediaconvert_client is not None)
+print("\n----------------------\n")

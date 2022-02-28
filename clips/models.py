@@ -30,7 +30,7 @@ class Clip(models.Model):
     created_date = models.DateField(default=now_date)
     created_datetime = models.DateTimeField(default=timezone.now)
     upload_verified = models.BooleanField(default=False)
-    compressed_verified = models.BooleanField(default=False)
+    convert_verified = models.BooleanField(default=False)
     uploaded_from = models.CharField(max_length=1, choices=UPLOADED_FROM_CHOICES)
     viewed_by = models.ManyToManyField(
         User, related_name="viewed_clips", blank=True, through="View"
@@ -40,7 +40,9 @@ class Clip(models.Model):
     height = models.PositiveSmallIntegerField()
     width = models.PositiveSmallIntegerField()
     duration = models.PositiveSmallIntegerField(default=0)
-    url = models.URLField(unique=True)
+    file_uuid = models.UUIDField(null=True, blank=True)
+    upload_path = models.CharField(null=True, blank=True, max_length=100)
+    url = models.URLField(unique=True, null=True, blank=True)
     thumbnail = models.URLField(unique=True, null=True, blank=True)
     job_id = models.CharField(max_length=40, null=True, blank=True)
 

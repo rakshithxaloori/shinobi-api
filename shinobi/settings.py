@@ -186,11 +186,12 @@ elif CI_CD_STAGE == "testing" or CI_CD_STAGE == "production":
     AWS_S3_ACCESS_KEY_ID = os.environ["AWS_S3_ACCESS_KEY_ID"]
     AWS_S3_SECRET_ACCESS_KEY = os.environ["AWS_S3_SECRET_ACCESS_KEY"]
     AWS_STORAGE_BUCKET_NAME = os.environ["AWS_STORAGE_BUCKET_NAME"]
+    AWS_UPLOADS_BUCKET_NAME = os.environ["AWS_UPLOADS_BUCKET_NAME"]
     AWS_S3_REGION_NAME = os.environ["AWS_S3_REGION_NAME"]
     AWS_S3_CUSTOM_DOMAIN = os.environ["AWS_S3_CUSTOM_DOMAIN"]
     AWS_QUERYSTRING_AUTH = False
-    S3_FILE_UPLOAD_PATH_PREFIX = "clips/uploads"
-    S3_FILE_COMPRESSED_PATH_PREFIX = "clips/compressed"
+    S3_FILE_UPLOAD_PATH_PREFIX = "clips"
+    S3_FILE_CONVERT_PATH_PREFIX = "clips"
     S3_FILE_THUMBNAIL_PATH_PREFIX = "thumbnails"
 
     STATIC_URL = "https://{}/static/".format(AWS_S3_CUSTOM_DOMAIN)

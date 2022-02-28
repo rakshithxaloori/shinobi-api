@@ -52,8 +52,8 @@ def following_feed_view(request):
     following_users |= User.objects.filter(pk=request.user.pk)
     posts = Post.objects.filter(
         Q(created_datetime__lt=datetime, posted_by__in=following_users),
-        Q(is_repost=True, repost__clip__compressed_verified=True)
-        | Q(is_repost=False, clip__compressed_verified=True),
+        Q(is_repost=True, repost__clip__convert_verified=True)
+        | Q(is_repost=False, clip__convert_verified=True),
     ).order_by("-created_datetime")[:fetch_count]
 
     posts_data = PostSerializer(posts, many=True, context={"me": request.user}).data
@@ -98,14 +98,14 @@ def world_feed_view(request):
     if game is None:
         posts = Post.objects.filter(
             Q(created_datetime__lt=datetime),
-            Q(is_repost=True, repost__clip__compressed_verified=True)
-            | Q(is_repost=False, clip__compressed_verified=True),
+            Q(is_repost=True, repost__clip__convert_verified=True)
+            | Q(is_repost=False, clip__convert_verified=True),
         ).order_by("-created_datetime")[:fetch_count]
     else:
         posts = Post.objects.filter(
             Q(created_datetime__lt=datetime),
-            Q(is_repost=True, repost__clip__compressed_verified=True)
-            | Q(is_repost=False, clip__compressed_verified=True),
+            Q(is_repost=True, repost__clip__convert_verified=True)
+            | Q(is_repost=False, clip__convert_verified=True),
             Q(is_repost=True, repost__game=game) | Q(is_repost=False, game=game),
         ).order_by("-created_datetime")[:fetch_count]
 
@@ -195,7 +195,7 @@ def post_status_view(request):
         return JsonResponse(
             {
                 "detail": "clip status",
-                "payload": {"status": post.clip.compressed_verified},
+                "payload": {"status": post.clip.convert_verified},
             },
             status=status.HTTP_200_OK,
         )
