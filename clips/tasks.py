@@ -16,11 +16,15 @@ from notification.models import Notification
 
 
 AWS_UPLOADS_BUCKET_NAME = settings.AWS_UPLOADS_BUCKET_NAME
+S3_FILE_UPLOAD_PATH_PREFIX = settings.S3_FILE_UPLOAD_PATH_PREFIX
+S3_FILE_CONVERT_PATH_PREFIX = settings.S3_FILE_CONVERT_PATH_PREFIX
+S3_FILE_THUMBNAIL_PATH_PREFIX = settings.S3_FILE_THUMBNAIL_PATH_PREFIX
 
 
-def _delete_upload_file(file_path):
+def _delete_upload_file(file_path: str):
     try:
-        s3_client.delete_object(Bucket=AWS_UPLOADS_BUCKET_NAME, Key=file_path)
+        if file_path.startswith(S3_FILE_UPLOAD_PATH_PREFIX):
+            s3_client.delete_object(Bucket=AWS_UPLOADS_BUCKET_NAME, Key=file_path)
 
     except s3_client.exceptions.NoSuchKey:
         pass
@@ -83,7 +87,7 @@ def check_convert_successful_task(upload_s3_url, jobID, durationInMs, videoDetai
     ].split(".")[0]
 
     convert_file_key = "{convert_prefix}/{filename}_4.mp4".format(
-        convert_prefix=settings.S3_FILE_CONVERT_PATH_PREFIX,
+        convert_prefix=S3_FILE_CONVERT_PATH_PREFIX,
         filename=upload_filename,
     )
 
@@ -93,7 +97,7 @@ def check_convert_successful_task(upload_s3_url, jobID, durationInMs, videoDetai
 
         try:
             convert_file_key = "{}/{}_{}.mp4".format(
-                settings.S3_FILE_CONVERT_PATH_PREFIX, upload_filename, "{}"
+                S3_FILE_CONVERT_PATH_PREFIX, upload_filename, "{}"
             )
             file_cdn_url = get_media_file_url(convert_file_key)
 
@@ -126,7 +130,7 @@ def check_convert_successful_task(upload_s3_url, jobID, durationInMs, videoDetai
 
         except Clip.DoesNotExist:
             print("Clip.DoesNotExist", upload_file_key, convert_file_key)
-            delete_clip_files.delay(upload_file_key, convert_file_key)
+            delete_clip_files.delay(upload_file_key, convert_file_key, None)
 
 
 @celery_app.task(queue="celery")
@@ -139,19 +143,31 @@ def delete_invalid_duration_clip(upload_s3_url):
 
     try:
         clip = Clip.objects.get(upload_path=upload_file_key)
-        delete_clip_files(clip.upload_path, get_media_file_path(clip.url))
+        delete_clip_files(
+            clip.upload_path,
+            get_media_file_path(clip.url),
+            get_media_file_path(clip.thumbnail),
+        )
         clip.delete()
     except Clip.DoesNotExist:
         pass
 
 
 @celery_app.task(queue="celery")
-def delete_clip_files(upload_path, convert_path):
+def delete_clip_files(upload_path: str, convert_path: str, tb_path: str):
     # Delete upload file
     _delete_upload_file(upload_path)
 
+    # Delete thumbnail
+    if tb_path.startswith(S3_FILE_THUMBNAIL_PATH_PREFIX) and default_storage.exists(
+        tb_path
+    ):
+        default_storage.delete(tb_path)
+
     # Delete convert files
-    if convert_path is not None:
+    if convert_path is not None and convert_path.startswith(
+        S3_FILE_CONVERT_PATH_PREFIX
+    ):
         fileargs = VIDEO_FILE_ARGS
         for filearg in fileargs:
             vid_file_key = convert_path.format(filearg)
