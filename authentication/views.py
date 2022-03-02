@@ -24,6 +24,23 @@ from shinobi.utils import get_country_code, get_ip_address
 
 @api_view(["POST"])
 @permission_classes([HasAPIKey])
+def check_email_view(request):
+    email = request.data.get("email", None)
+    if email is None:
+        return JsonResponse(
+            {"detail": "email is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        User.objects.get(email=email)
+        return JsonResponse(
+            {"detail": "email in use"}, status=status.HTTP_406_NOT_ACCEPTABLE
+        )
+    except User.DoesNotExist:
+        return JsonResponse({"detail": "email available"}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@permission_classes([HasAPIKey])
 def check_username_view(request):
     username = request.data.get("username", None)
 

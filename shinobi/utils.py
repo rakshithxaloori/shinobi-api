@@ -55,12 +55,18 @@ def get_media_file_path(file_url):
 
 
 def get_media_file_url(file_path):
+    url = ""
     if settings.CI_CD_STAGE == "development":
-        return "{base_url}{path}".format(
+        url = "{base_url}{path}".format(
             base_url=os.environ["BASE_URL"], path=default_storage.url(file_path)
         )
     elif settings.CI_CD_STAGE == "testing" or settings.CI_CD_STAGE == "production":
-        return default_storage.url(file_path)
+        url = default_storage.url(file_path)
+
+    url = url.replace("%7B", "{")
+    url = url.replace("%7D", "}")
+
+    return url
 
 
 def now_date():
