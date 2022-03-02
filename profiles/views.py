@@ -324,8 +324,7 @@ def following_list_view(request, username=None, begin_index=0, end_index=10):
 
 
 @api_view(["POST"])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated, HasAPIKey])
+@permission_classes([HasAPIKey])
 def search_games_view(request):
     search_text = request.data.get("search", None)
     if search_text is None:
