@@ -31,12 +31,12 @@ from feed.utils import POST_TITLE_LENGTH, get_users_for_tags
 from profiles.models import Game
 from clips.models import Clip
 from clips.tasks import (
-    check_compressed_successful_task,
-    check_upload_after_delay,
-    check_upload_successful_task,
+    check_convert_successful_task,
+    check_upload_task,
     delete_invalid_duration_clip,
 )
 from clips.utils import (
+    UPLOAD_TYPE,
     VIDEO_MAX_SIZE_IN_BYTES,
     create_presigned_s3_url,
     sns_client,
@@ -205,30 +205,34 @@ def generate_s3_presigned_url_view(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    clip_uuid = uuid.uuid4()
     clip_file_path = "{prefix}/{filename}.{type}".format(
         prefix=settings.S3_FILE_UPLOAD_PATH_PREFIX,
-        filename=uuid.uuid4(),
+        filename=clip_uuid,
         type=clip_type,
     )
 
-    clip_s3_url = create_presigned_s3_url(clip_size, clip_file_path)
-
-    clip_file_url = get_media_file_url(clip_file_path)
+    clip_s3_url = create_presigned_s3_url(clip_size, clip_file_path, UPLOAD_TYPE.CLIP)
 
     thumbnail_size = request.data.get("thumbnail_size", None)
     thumbnail_type = request.data.get("thumbnail_type", None)
+    thumbnail_file_url = None
+    thumbnail_s3_url = None
     if thumbnail_size is not None and thumbnail_type is not None:
         thumbnail_file_path = "{prefix}/{filename}.{type}".format(
             prefix=settings.S3_FILE_THUMBNAIL_PATH_PREFIX,
             filename=uuid.uuid4(),
             type=thumbnail_type,
         )
-        thumbnail_s3_url = create_presigned_s3_url(thumbnail_size, thumbnail_file_path)
+        thumbnail_s3_url = create_presigned_s3_url(
+            thumbnail_size, thumbnail_file_path, UPLOAD_TYPE.THUMBNAIL
+        )
         thumbnail_file_url = get_media_file_url(thumbnail_file_path)
 
     # Create Clip
     new_clip = Clip.objects.create(
-        url=clip_file_url,
+        file_uuid=clip_uuid,
+        upload_path=clip_file_path,
         thumbnail=thumbnail_file_url,
         duration=duration,
         height=clip_height,
@@ -245,8 +249,9 @@ def generate_s3_presigned_url_view(request):
     )
     new_post.tags.set(get_users_for_tags(request.user, tags))
     new_post.save()
-    check_upload_after_delay.apply_async(
-        args=[new_clip.pk], eta=timezone.now() + timezone.timedelta(hours=1, minutes=10)
+    check_upload_task.apply_async(
+        args=[new_clip.upload_path],
+        eta=timezone.now() + timezone.timedelta(hours=1, minutes=10),
     )
 
     return JsonResponse(
@@ -266,13 +271,13 @@ def generate_s3_presigned_url_view(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
 def upload_successful_view(request):
-    file_key = request.data.get("file_key", None)
-    if file_key is None:
+    upload_path = request.data.get("file_key", None)
+    if upload_path is None:
         return JsonResponse(
             {"detail": "file_key is required"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    check_upload_successful_task.delay(file_key)
+    check_upload_task.delay(upload_path)
 
     return JsonResponse({"detail": ""}, status=status.HTTP_200_OK)
 
@@ -337,7 +342,7 @@ def mediaconvert_sns_view(request):
 
             else:
                 # Fire a task that verifies the clip
-                check_compressed_successful_task.delay(
+                check_convert_successful_task.delay(
                     input_url, jobID, duration, videoDetails
                 )
 
