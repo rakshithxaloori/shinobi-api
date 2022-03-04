@@ -27,9 +27,9 @@
               "H264Settings": {
                 "RateControlMode": "QVBR",
                 "SceneChangeDetect": "TRANSITION_DETECTION",
-                "MaxBitrate": 4000000,
+                "MaxBitrate": 6000000,
                 "QvbrSettings": {
-                  "QvbrQualityLevel": 8
+                  "QvbrQualityLevel": 9
                 }
               }
             }
@@ -59,9 +59,9 @@
               "H264Settings": {
                 "RateControlMode": "QVBR",
                 "SceneChangeDetect": "TRANSITION_DETECTION",
-                "MaxBitrate": 2000000,
+                "MaxBitrate": 4000000,
                 "QvbrSettings": {
-                  "QvbrQualityLevel": 7
+                  "QvbrQualityLevel": 8
                 }
               }
             }
