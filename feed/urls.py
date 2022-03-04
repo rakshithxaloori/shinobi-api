@@ -3,6 +3,7 @@ from django.urls import path
 from feed import views
 
 urlpatterns = [
+    path("count/", views.posts_count_view, name="posts count"),
     path("posts/following/", views.following_feed_view, name="feed"),
     path(
         "posts/world/",

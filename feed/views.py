@@ -31,6 +31,18 @@ from feed.utils import (
 )
 
 
+@api_view(["GET"])
+@permission_classes([HasAPIKey])
+def posts_count_view(request):
+    return JsonResponse(
+        {
+            "detail": "Total posts count",
+            "payload": {"count": Post.objects.all().count()},
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, HasAPIKey])
