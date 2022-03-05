@@ -8,7 +8,7 @@ class ClipSerializer(ModelSerializer):
 
     class Meta:
         model = Clip
-        fields = ["id", "height", "width", "url", "thumbnail", "view_count"]
+        fields = ["id", "height", "width", "duration", "url", "thumbnail", "view_count"]
         read_only_fields = fields
 
     def get_view_count(self, obj):
