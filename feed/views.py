@@ -228,6 +228,8 @@ def get_post_view(request):
         )
     try:
         post = Post.objects.get(id=post_id)
+        post.fetch_count += 1
+        post.save(update_fields=["fetch_count"])
         post_data = PostSerializer(post, context={"me": request.user}).data
         return JsonResponse(
             {"detail": "post {}".format(post_id), "payload": {"post": post_data}},

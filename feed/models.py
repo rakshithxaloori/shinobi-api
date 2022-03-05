@@ -43,7 +43,10 @@ class Post(models.Model):
     liked_by = models.ManyToManyField(
         User, related_name="liked_posts", blank=True, through="Like"
     )
+
+    # Analytics
     share_count = models.PositiveIntegerField(default=0)
+    fetch_count = models.PositiveIntegerField(default=0)  # Post open count on web
 
     # REPOST
     is_repost = models.BooleanField(default=False)
