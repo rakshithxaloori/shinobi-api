@@ -26,11 +26,16 @@
               "Codec": "H_264",
               "H264Settings": {
                 "RateControlMode": "QVBR",
-                "SceneChangeDetect": "TRANSITION_DETECTION",
                 "MaxBitrate": 6000000,
                 "QvbrSettings": {
                   "QvbrQualityLevel": 9
-                }
+                },
+                "SceneChangeDetect": "TRANSITION_DETECTION",
+                "FramerateControl": "SPECIFIED",
+                "FramerateNumerator": 30,
+                "FramerateDenominator": 1,
+                "FramerateConversionAlgorithm": "DUPLICATE_DROP",
+                "InterlaceMode": "PROGRESSIVE"
               }
             }
           },
@@ -58,11 +63,16 @@
               "Codec": "H_264",
               "H264Settings": {
                 "RateControlMode": "QVBR",
-                "SceneChangeDetect": "TRANSITION_DETECTION",
                 "MaxBitrate": 4000000,
                 "QvbrSettings": {
                   "QvbrQualityLevel": 8
-                }
+                },
+                "SceneChangeDetect": "TRANSITION_DETECTION",
+                "FramerateControl": "SPECIFIED",
+                "FramerateNumerator": 30,
+                "FramerateDenominator": 1,
+                "FramerateConversionAlgorithm": "DUPLICATE_DROP",
+                "InterlaceMode": "PROGRESSIVE"
               }
             }
           },
@@ -90,11 +100,16 @@
               "Codec": "H_264",
               "H264Settings": {
                 "RateControlMode": "QVBR",
-                "SceneChangeDetect": "TRANSITION_DETECTION",
                 "MaxBitrate": 1000000,
                 "QvbrSettings": {
                   "QvbrQualityLevel": 7
-                }
+                },
+                "SceneChangeDetect": "TRANSITION_DETECTION",
+                "FramerateControl": "SPECIFIED",
+                "FramerateNumerator": 30,
+                "FramerateDenominator": 1,
+                "FramerateConversionAlgorithm": "DUPLICATE_DROP",
+                "InterlaceMode": "PROGRESSIVE"
               }
             }
           },
@@ -122,11 +137,16 @@
               "Codec": "H_264",
               "H264Settings": {
                 "RateControlMode": "QVBR",
-                "SceneChangeDetect": "TRANSITION_DETECTION",
                 "MaxBitrate": 700000,
                 "QvbrSettings": {
                   "QvbrQualityLevel": 7
-                }
+                },
+                "SceneChangeDetect": "TRANSITION_DETECTION",
+                "FramerateControl": "SPECIFIED",
+                "FramerateNumerator": 30,
+                "FramerateDenominator": 1,
+                "FramerateConversionAlgorithm": "DUPLICATE_DROP",
+                "InterlaceMode": "PROGRESSIVE"
               }
             }
           },
